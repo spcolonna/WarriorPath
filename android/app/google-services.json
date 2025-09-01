@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "736305070285",
+    "project_id": "colaboraplus-bd22c",
+    "storage_bucket": "colaboraplus-bd22c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:736305070285:android:b6feee7ba46b207d8a6984",
+        "android_client_info": {
+          "package_name": "com.example.colabora_plus"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyClWfKatvO1TmfSDK7LSdWu0obklYZKueE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
