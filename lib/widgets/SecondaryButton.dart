@@ -20,8 +20,8 @@ class SecondaryButton extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16.0),
           // 2. Usa el color primario para el borde y el texto
-          side: const BorderSide(color: AppColors.primaryBlue, width: 2), // <-- ANTES: Colors.deepPurple
-          foregroundColor: AppColors.primaryBlue, // <-- Color para efectos (splash)
+          side: const BorderSide(color: AppColors.primaryColor, width: 2), // <-- ANTES: Colors.deepPurple
+          foregroundColor: AppColors.primaryColor, // <-- Color para efectos (splash)
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -32,7 +32,7 @@ class SecondaryButton extends StatelessWidget {
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold, // Opcional: un poco más de énfasis
-            color: AppColors.primaryBlue, // <-- ANTES: Colors.deepPurple
+            color: AppColors.primaryColor, // <-- ANTES: Colors.deepPurple
           ),
         ),
       ),

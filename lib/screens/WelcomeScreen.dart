@@ -1,13 +1,13 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:warrior_path/screens/teacher_dashboard_screen.dart';
+import 'package:warrior_path/screens/wizard_profile_screen.dart'; // Asegúrate de que esta ruta sea correcta
+import 'package:warrior_path/services/auth_service.dart'; // Asegúrate de que esta ruta sea correcta
+import 'package:warrior_path/theme/AppColors.dart';
 import 'package:warrior_path/widgets/CustomInputField.dart';
 import 'package:warrior_path/widgets/CustomPasswordField.dart';
 import 'package:warrior_path/widgets/PrimaryButton.dart';
 import 'package:warrior_path/widgets/SecondaryButton.dart';
-
-import '../services/auth_service.dart';
-import '../theme/AppColors.dart';
-import 'HomeScreen.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -22,34 +22,46 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   bool _isLoading = false;
   final AuthService _authService = AuthService();
 
+  // NUEVA FUNCIÓN CENTRALIZADA PARA NAVEGAR
+  Future<void> _navigateAfterAuth(User user) async {
+    final userProfile = await _authService.getUserProfile(user.uid);
+
+    if (!mounted) return;
+
+    if (userProfile == null) {
+      _showErrorDialog('Error de Perfil', 'No se pudo cargar tu perfil. Intenta de nuevo.');
+      setState(() { _isLoading = false; });
+      return;
+    }
+
+    // LÓGICA DEL GUARDIÁN: Decide a dónde enviar al usuario
+    if (userProfile.wizardStep < 99) { // 99 significa que el wizard está completo
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const WizardProfileScreen()),
+      );
+    } else {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const TeacherDashboardScreen()),
+      );
+    }
+  }
+
   Future<void> _performLogin() async {
     if (_isLoading) return;
-
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() { _isLoading = true; });
 
     try {
-      // Usamos el email y la contraseña de los controladores
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
-      //TODO: SACAR
-      // final email = "seba@mail.com";
-      // final password = "123456";
 
-
-      // PASO 1: Intentamos hacer login directamente con Firebase
       final userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => HomeScreen(),
-          ),
-        );
+      // CAMBIO: Usamos la nueva función de navegación
+      if (userCredential.user != null) {
+        await _navigateAfterAuth(userCredential.user!);
       }
 
     } on FirebaseAuthException catch (e) {
@@ -59,22 +71,20 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           errorMessage = 'No se encontró un usuario con ese correo electrónico.';
           break;
         case 'wrong-password':
-          errorMessage = 'La contraseña es incorrecta. Por favor, inténtalo de nuevo.';
+          errorMessage = 'La contraseña es incorrecta.';
           break;
         case 'invalid-credential':
           errorMessage = 'Las credenciales son incorrectas.';
           break;
         default:
-          errorMessage = 'Ocurrió un error inesperado. Por favor, inténtalo más tarde.';
+          errorMessage = 'Ocurrió un error inesperado.';
       }
       _showErrorDialog('Error de Login', errorMessage);
     } catch (e) {
       _showErrorDialog('Error', 'Ocurrió un error: ${e.toString()}');
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+      if (mounted && _isLoading) { // Solo si aún está cargando
+        setState(() { _isLoading = false; });
       }
     }
   }
@@ -87,24 +97,21 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
 
-      // Llamada única y limpia a nuestro servicio
       final userModel = await _authService.signUpWithEmailPassword(email, password);
 
+      // CAMBIO: Usamos la nueva función de navegación
       if (userModel != null) {
-        // ¡Éxito! El usuario se creó en Auth Y su perfil en Firestore
-        if (mounted) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const HomeScreen()),
-          );
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          await _navigateAfterAuth(user);
         }
       } else {
-        // El servicio devolvió null, lo que significa que hubo un error
         _showErrorDialog('Error de Registro', 'No se pudo completar el registro. El correo puede ya estar en uso o la contraseña es muy débil.');
       }
     } catch (e) {
       _showErrorDialog('Error', 'Ocurrió un error inesperado: ${e.toString()}');
     } finally {
-      if (mounted) {
+      if (mounted && _isLoading) {
         setState(() { _isLoading = false; });
       }
     }
@@ -138,39 +145,45 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // El resto de tu widget de UI no cambia
     return Scaffold(
-      backgroundColor: AppColors.backgroundGray, // Fondo general gris claro
+      backgroundColor: AppColors.backgroundGray,
       body: Column(
         children: [
-          // 1. Contenedor superior con el color oscuro
           Container(
             width: double.infinity,
-            height: MediaQuery.of(context).size.height * 0.35, // Ocupa el 35% de la pantalla
+            height: MediaQuery.of(context).size.height * 0.35,
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             decoration: const BoxDecoration(
-              color: AppColors.primaryBlue,
+              color: AppColors.primaryColor,
               borderRadius: BorderRadius.vertical(
-                bottom: Radius.circular(50), // <-- ESTO APLICA LA CURVA A AMBAS ESQUINAS INFERIORES
+                bottom: Radius.circular(50),
               ),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Image.asset('assets/logo/Logo.jpeg', height: 90),
+                ClipOval(
+                  child: Image.asset(
+                    'assets/logo/Logo.png',
+                    height: 90, // Define la altura
+                    width: 90,  // Define el ancho, igual a la altura para un círculo perfecto
+                    fit: BoxFit.cover, // Asegura que la imagen cubra el círculo
+                  ),
+                ),
                 const SizedBox(height: 16),
-                Text(
-                  'Colabora+',
+                const Text(
+                  'Warrior Path',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 42.0,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textWhite, // Texto blanco
+                    color: AppColors.textWhite,
                   ),
                 ),
               ],
             ),
           ),
-          // 2. Espacio para el formulario
           Expanded(
             child: SingleChildScrollView(
               child: Padding(
@@ -196,7 +209,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     const SizedBox(height: 32.0),
                     if (_isLoading)
                       const CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.accentGreen),
+                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.secondaryColor),
                       )
                     else
                       Column(

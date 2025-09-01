@@ -1,12 +1,12 @@
 
-class UserModel {
+class UserModel2 {
   final String uid;
   final String email;
   String? name;
   String? phoneNumber;
   final List<String> fcmTokens;
 
-  UserModel({
+  UserModel2({
     required this.uid,
     required this.email,
     this.name,
@@ -14,9 +14,9 @@ class UserModel {
     this.fcmTokens = const [],
   });
 
-  factory UserModel.fromMap(Map<String, dynamic> data, String documentId) {
+  factory UserModel2.fromMap(Map<String, dynamic> data, String documentId) {
 
-    return UserModel(
+    return UserModel2(
       uid: documentId,
       email: data['mail'] ?? '',
       name: data['name'],

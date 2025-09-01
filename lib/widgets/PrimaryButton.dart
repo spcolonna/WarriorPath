@@ -20,7 +20,7 @@ class PrimaryButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 16.0),
           // 2. Usa los colores de tu marca
-          backgroundColor: AppColors.accentGreen, // <-- ANTES: Colors.deepPurple
+          backgroundColor: AppColors.secondaryColor, // <-- ANTES: Colors.deepPurple
           foregroundColor: AppColors.textWhite,      // <-- ANTES: Colors.white
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),

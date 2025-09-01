@@ -52,8 +52,10 @@ dependencies:
   url_launcher: ^6.3.2
   firebase_messaging: ^15.2.10
   flutter_local_notifications: ^19.4.1
+  flutter_colorpicker: ^1.1.0
 
 dev_dependencies:
+  change_app_package_name: ^1.1.0
   flutter_test:
     sdk: flutter
 
@@ -110,4 +112,4 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/logo/Logo.jpeg"
+  image_path: "assets/logo/Logo.png"

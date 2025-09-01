@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "736305070285",
-    "project_id": "colaboraplus-bd22c",
-    "storage_bucket": "colaboraplus-bd22c.firebasestorage.app"
+    "project_number": "891576872027",
+    "project_id": "warriorpath-89a85",
+    "storage_bucket": "warriorpath-89a85.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:736305070285:android:b6feee7ba46b207d8a6984",
+        "mobilesdk_app_id": "1:891576872027:android:c0b199ef6daf889757237e",
         "android_client_info": {
-          "package_name": "com.example.warrior_path"
+          "package_name": "com.warriorpath.app"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyClWfKatvO1TmfSDK7LSdWu0obklYZKueE"
+          "current_key": "AIzaSyB-8Uj9ycOFdyk2D3drrKnPa3ps3FHytvY"
         }
       ],
       "services": {
