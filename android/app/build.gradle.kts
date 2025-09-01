@@ -17,12 +17,12 @@ val flutterVersionCode: String = localProperties.getProperty("flutter.versionCod
 val flutterVersionName: String = localProperties.getProperty("flutter.versionName") ?: "1.0"
 
 android {
-    namespace = "com.example.colabora_plus"
+    namespace = "com.example.warrior_path"
     compileSdk = 35
     ndkVersion = "27.0.12077973"
 
     defaultConfig {
-        applicationId = "com.example.colabora_plus"
+        applicationId = "com.example.warrior_path"
         minSdk = 23
         targetSdk = 34
         versionCode = flutterVersionCode.toInt()

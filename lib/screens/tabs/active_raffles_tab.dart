@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:colabora_plus/services/raffle_service.dart';
-import 'package:colabora_plus/widgets/raffle_card.dart';
-import 'package:colabora_plus/theme/AppColors.dart';
+import 'package:warrior_path/services/raffle_service.dart';
+import 'package:warrior_path/widgets/raffle_card.dart';
+import 'package:warrior_path/theme/AppColors.dart';
 
 import '../../models/raffle_model.dart';
 

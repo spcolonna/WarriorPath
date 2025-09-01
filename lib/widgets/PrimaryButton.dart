@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:colabora_plus/theme/AppColors.dart'; // <-- 1. Importa tus colores
+import 'package:warrior_path/theme/AppColors.dart'; // <-- 1. Importa tus colores
 
 class PrimaryButton extends StatelessWidget {
   final String text;

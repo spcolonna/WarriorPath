@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:colabora_plus/models/prize_model.dart';
-import 'package:colabora_plus/models/winner_model.dart';
+import 'package:warrior_path/models/prize_model.dart';
+import 'package:warrior_path/models/winner_model.dart';
 
 import '../enums/raffle_status.dart';
 

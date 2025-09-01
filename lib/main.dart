@@ -1,10 +1,10 @@
-import 'package:colabora_plus/services/remote_config_service.dart';
-import 'package:colabora_plus/theme/AppColors.dart';
+import 'package:warrior_path/services/remote_config_service.dart';
+import 'package:warrior_path/theme/AppColors.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
-import 'package:colabora_plus/screens/WelcomeScreen.dart';
+import 'package:warrior_path/screens/WelcomeScreen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

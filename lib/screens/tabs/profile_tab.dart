@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:colabora_plus/models/UserModel.dart';
+import 'package:warrior_path/models/UserModel.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:colabora_plus/theme/AppColors.dart';
+import 'package:warrior_path/theme/AppColors.dart';
 import '../../models/raffle_model.dart';
 import '../../services/raffle_service.dart';
 import '../raffle_management_screen.dart';

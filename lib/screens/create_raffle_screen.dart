@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:colabora_plus/services/raffle_service.dart';
-import 'package:colabora_plus/theme/AppColors.dart';
+import 'package:warrior_path/services/raffle_service.dart';
+import 'package:warrior_path/theme/AppColors.dart';
 import 'package:intl/intl.dart';
 
 import '../models/prize_model.dart';

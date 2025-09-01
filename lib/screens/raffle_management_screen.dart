@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:colabora_plus/widgets/winners_podium.dart';
+import 'package:warrior_path/widgets/winners_podium.dart';
 import 'package:intl/intl.dart';
 
 import '../enums/payment_method.dart';

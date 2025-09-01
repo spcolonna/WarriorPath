@@ -1,15 +1,15 @@
-import 'package:colabora_plus/screens/tabs/active_raffles_tab.dart';
-import 'package:colabora_plus/screens/tabs/history_tab.dart';
-import 'package:colabora_plus/screens/tabs/my_participations_tab.dart';
+import 'package:warrior_path/screens/tabs/active_raffles_tab.dart';
+import 'package:warrior_path/screens/tabs/history_tab.dart';
+import 'package:warrior_path/screens/tabs/my_participations_tab.dart';
 import 'package:flutter/material.dart';
-import 'package:colabora_plus/models/UserModel.dart';
-import 'package:colabora_plus/theme/AppColors.dart';
-import 'package:colabora_plus/widgets/placeholder_tab.dart';
+import 'package:warrior_path/models/UserModel.dart';
+import 'package:warrior_path/theme/AppColors.dart';
+import 'package:warrior_path/widgets/placeholder_tab.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 // --- 1. IMPORTAMOS LA NUEVA PESTAÑA DE PERFIL ---
-import 'package:colabora_plus/screens/tabs/profile_tab.dart';
+import 'package:warrior_path/screens/tabs/profile_tab.dart';
 
 import '../services/notification_service.dart';
 import 'create_raffle_screen.dart';

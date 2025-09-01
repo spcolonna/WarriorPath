@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:colabora_plus/theme/AppColors.dart';
-import 'package:colabora_plus/screens/raffle_detail_screen.dart';
+import 'package:warrior_path/theme/AppColors.dart';
+import 'package:warrior_path/screens/raffle_detail_screen.dart';
 
 import '../models/raffle_model.dart';
 

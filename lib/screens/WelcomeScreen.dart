@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:colabora_plus/widgets/CustomInputField.dart';
-import 'package:colabora_plus/widgets/CustomPasswordField.dart';
-import 'package:colabora_plus/widgets/PrimaryButton.dart';
-import 'package:colabora_plus/widgets/SecondaryButton.dart';
+import 'package:warrior_path/widgets/CustomInputField.dart';
+import 'package:warrior_path/widgets/CustomPasswordField.dart';
+import 'package:warrior_path/widgets/PrimaryButton.dart';
+import 'package:warrior_path/widgets/SecondaryButton.dart';
 
 import '../services/auth_service.dart';
 import '../theme/AppColors.dart';

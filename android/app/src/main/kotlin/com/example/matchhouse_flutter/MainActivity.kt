@@ -1,4 +1,4 @@
-package com.example.colabora_plus
+package com.example.warrior_path
 
 import io.flutter.embedding.android.FlutterActivity
 

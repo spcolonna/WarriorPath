@@ -1,4 +1,4 @@
-# colabora_plus
+# warrior_path
 
 A new Flutter project.
 
