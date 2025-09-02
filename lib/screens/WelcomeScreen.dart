@@ -25,7 +25,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   bool _isLoading = false;
   final AuthService _authService = AuthService();
 
-  // NUEVA FUNCIÓN CENTRALIZADA PARA NAVEGAR
   Future<void> _navigateAfterAuth(User user) async {
     final userProfileDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
 
@@ -40,37 +39,28 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     final userData = userProfileDoc.data()!;
     final int wizardStep = userData['wizardStep'] ?? 0;
 
-    // LÓGICA DEL GUARDIÁN MEJORADA
     if (wizardStep < 99) {
-      // Si el wizard no está completo, lo mandamos al paso que corresponda.
-      // (Aquí podríamos añadir lógica para ir a pasos intermedios, pero por ahora esto funciona)
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const WizardProfileScreen()),
       );
     } else {
-      // El wizard ESTÁ COMPLETO. Ahora, ¿qué tipo de usuario es?
       final memberships = userData['activeMemberships'] as Map<String, dynamic>? ?? {};
       final pendingApplication = userData['pendingApplication'] as Map<String, dynamic>?;
 
       if (memberships.containsValue('maestro')) {
-        // Si es maestro en alguna escuela, va al dashboard de profesor.
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const TeacherDashboardScreen()),
         );
-      } else if (memberships.containsValue('alumno')) {
-        // Si es alumno en alguna escuela, va al dashboard de estudiante.
+      }
+      else if (memberships.containsValue('alumno') || memberships.containsValue('instructor')) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const StudentDashboardScreen()),
         );
       } else if (pendingApplication != null) {
-        // Si no tiene membresías activas pero tiene una postulación pendiente,
-        // lo enviamos a la pantalla de "solicitud enviada".
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => ApplicationSentScreen(schoolName: pendingApplication['schoolName'] ?? '')),
         );
       } else {
-        // Caso de fallback: wizard completo pero sin rol.
-        // Podría ser un usuario rechazado. Lo dejamos en la pantalla de bienvenida.
         _showErrorDialog('Acceso Denegado', 'No tienes un rol activo en ninguna escuela.');
         setState(() { _isLoading = false; });
       }

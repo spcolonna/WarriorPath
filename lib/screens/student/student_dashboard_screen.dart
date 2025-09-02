@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
+import 'package:warrior_path/screens/student/tabs/community_tab_screen.dart';
 import 'package:warrior_path/screens/student/tabs/payments_tab_screen.dart';
 import 'package:warrior_path/screens/student/tabs/profile_tab_screen.dart';
 import 'package:warrior_path/screens/student/tabs/progress_tab_screen.dart';
@@ -43,7 +44,10 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
 
       final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
       final memberships = userDoc.data()?['activeMemberships'] as Map<String, dynamic>? ?? {};
-      final schoolId = memberships.keys.firstWhere((k) => memberships[k] == 'alumno', orElse: () => '');
+      final schoolId = memberships.keys.firstWhere(
+            (k) => memberships[k] == 'alumno' || memberships[k] == 'instructor',
+        orElse: () => '',
+      );
 
       if (schoolId.isEmpty) throw Exception('No perteneces a ninguna escuela.');
 
@@ -104,7 +108,8 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
         : <Widget>[
       SchoolInfoTabScreen(schoolId: _schoolId!),
       ProgressTabScreen(schoolId: _schoolId!, memberId: _memberId!),
-      PaymentsTabScreen(schoolId: _schoolId!, memberId: _memberId!), // <-- 1. PANTALLA AÑADIDA
+      CommunityTabScreen(schoolId: _schoolId!),
+      PaymentsTabScreen(schoolId: _schoolId!, memberId: _memberId!),
       StudentProfileTabScreen(memberId: _memberId!),
     ];
 
@@ -126,7 +131,8 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
             items: const <BottomNavigationBarItem>[
               BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Mi Escuela'),
               BottomNavigationBarItem(icon: Icon(Icons.leaderboard), label: 'Mi Progreso'),
-              BottomNavigationBarItem(icon: Icon(Icons.payment), label: 'Mis Pagos'), // <-- 2. ITEM AÑADIDO
+              BottomNavigationBarItem(icon: Icon(Icons.groups), label: 'Comunidad'),
+              BottomNavigationBarItem(icon: Icon(Icons.payment), label: 'Mis Pagos'),
               BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Mi Perfil'),
             ],
             currentIndex: _selectedIndex,

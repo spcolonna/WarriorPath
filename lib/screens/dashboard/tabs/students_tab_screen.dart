@@ -165,6 +165,7 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
           'status': 'active',
           'currentLevelId': initialLevelId,
           'joinDate': FieldValue.serverTimestamp(),
+          'role': 'alumno',
         });
 
         batch.set(userRef, {

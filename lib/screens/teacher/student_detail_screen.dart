@@ -30,6 +30,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
   String _studentName = '';
   String? _photoUrl;
   Map<String, dynamic>? _currentLevelData;
+  String _currentRole = 'alumno';
 
   @override
   void initState() {
@@ -70,6 +71,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
       if (mounted) {
         setState(() {
           _studentName = memberData['displayName'] ?? 'Alumno';
+          _currentRole = memberData['role'] ?? 'alumno';
           _currentLevelData = levelData;
           _photoUrl = photoUrl;
           _isHeaderLoading = false;
@@ -88,7 +90,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
     _tabController.removeListener(() {});
     _tabController.dispose();
     _confettiController.dispose();
-    _memberSubscription?.cancel(); // Se cancela la suscripción al stream
+    _memberSubscription?.cancel();
     super.dispose();
   }
 
@@ -190,6 +192,93 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
     }
   }
 
+  Future<void> _showChangeRoleDialog(String currentRole) async {
+    String? newRole = currentRole;
+    showDialog(context: context, builder: (context) => StatefulBuilder(builder: (context, setDialogState) {
+      return AlertDialog(
+        title: const Text('Cambiar Rol del Miembro'),
+        content: Column(mainAxisSize: MainAxisSize.min, children: ['alumno', 'instructor', 'maestro'].map((role) {
+          return RadioListTile<String>(
+            title: Text(role[0].toUpperCase() + role.substring(1)),
+            value: role,
+            groupValue: newRole,
+            onChanged: (value) => setDialogState(() => newRole = value),
+          );
+        }).toList()),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancelar')),
+          ElevatedButton(
+            onPressed: newRole == null || newRole == currentRole ? null : () {
+              _changeStudentRole(newRole!);
+              Navigator.of(context).pop();
+            },
+            child: const Text('Guardar'),
+          ),
+        ],
+      );
+    }));
+  }
+
+  Future<void> _changeStudentRole(String newRole) async {
+    try {
+      final firestore = FirebaseFirestore.instance;
+      final batch = firestore.batch();
+      final memberRef = firestore.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId);
+      batch.update(memberRef, {'role': newRole});
+      final userRef = firestore.collection('users').doc(widget.studentId);
+      batch.set(userRef, {'activeMemberships': { widget.schoolId: newRole }}, SetOptions(merge: true));
+      await batch.commit();
+      if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Rol actualizado con éxito.')));
+    } catch (e) {
+      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al cambiar el rol: ${e.toString()}')));
+    }
+  }
+
+  Widget _buildProgressionHistoryTab() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('schools').doc(widget.schoolId)
+          .collection('members').doc(widget.studentId)
+          .collection('progressionHistory')
+          .orderBy('date', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text('Este alumno no tiene historial de promociones.'));
+        }
+
+        return ListView.builder(
+          itemCount: snapshot.data!.docs.length,
+          itemBuilder: (context, index) {
+            final history = snapshot.data!.docs[index].data() as Map<String, dynamic>;
+            final date = (history['date'] as Timestamp).toDate();
+            final formattedDate = DateFormat('dd/MM/yyyy').format(date);
+
+            // Usamos un FutureBuilder para obtener el nombre del nivel, ya que solo tenemos el ID
+            return FutureBuilder<DocumentSnapshot>(
+              future: FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('levels').doc(history['newLevelId']).get(),
+              builder: (context, levelSnapshot) {
+                String levelName = '...';
+                if (levelSnapshot.hasData) {
+                  levelName = levelSnapshot.data?['name'] ?? 'Nivel Desconocido';
+                }
+                return ListTile(
+                  leading: const Icon(Icons.military_tech),
+                  title: Text('Promovido a $levelName'),
+                  subtitle: Text(history['notes'] ?? 'Sin notas'),
+                  trailing: Text(formattedDate),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -198,6 +287,22 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
         Scaffold(
           appBar: AppBar(
             title: Text(_studentName.isEmpty ? 'Cargando...' : _studentName),
+            // --- 3. AÑADIMOS EL MENÚ DE ACCIONES AQUÍ ---
+            actions: [
+              PopupMenuButton<String>(
+                onSelected: (value) {
+                  if (value == 'change_role') {
+                    _showChangeRoleDialog(_currentRole);
+                  }
+                },
+                itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                  const PopupMenuItem<String>(
+                    value: 'change_role',
+                    child: Text('Cambiar Rol'),
+                  ),
+                ],
+              ),
+            ],
           ),
           body: _isHeaderLoading
               ? const Center(child: CircularProgressIndicator())
@@ -217,10 +322,16 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(_studentName, style: Theme.of(context).textTheme.headlineSmall),
+                        const SizedBox(height: 4),
+                        Text(
+                          _currentRole.toUpperCase(),
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
+                        ),
+                        const SizedBox(height: 8),
                         Chip(
                           label: Text(
                             _currentLevelData?['name'] ?? 'Sin Nivel',
-                            style: const TextStyle(color: Colors.white),
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                           ),
                           backgroundColor: _currentLevelData != null ? Color(_currentLevelData!['colorValue']) : Colors.grey,
                         ),
@@ -246,7 +357,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
                     _buildGeneralInfoTab(),
                     _buildAttendanceHistoryTab(),
                     _buildPaymentsHistoryTab(),
-                    const Center(child: Text('Historial de Exámenes y Promociones')),
+                    _buildProgressionHistoryTab(),
                   ],
                 ),
               ),
