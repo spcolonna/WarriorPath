@@ -1,20 +1,188 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:warrior_path/screens/WelcomeScreen.dart';
 
-class StudentProfileTabScreen extends StatelessWidget {
-  final String memberId; // 1. Añadimos la variable para el ID del miembro
+class StudentProfileTabScreen extends StatefulWidget {
+  final String memberId;
+  const StudentProfileTabScreen({Key? key, required this.memberId}) : super(key: key);
 
-  // 2. Actualizamos el constructor
-  const StudentProfileTabScreen({
-    Key? key,
-    required this.memberId,
-  }) : super(key: key);
+  @override
+  State<StudentProfileTabScreen> createState() => _StudentProfileTabScreenState();
+}
+
+class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
+  late Future<DocumentSnapshot> _userDataFuture;
+
+  // Controladores para los campos del formulario
+  final _nameController = TextEditingController();
+  final _emergencyContactNameController = TextEditingController();
+  final _emergencyContactPhoneController = TextEditingController();
+  final _medicalEmergencyServiceController = TextEditingController(); // <-- NUEVO
+  final _medicalInfoController = TextEditingController();
+
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _userDataFuture = _fetchUserData();
+  }
+
+  Future<DocumentSnapshot> _fetchUserData() async {
+    final userDoc = await FirebaseFirestore.instance.collection('users').doc(widget.memberId).get();
+
+    if (userDoc.exists) {
+      final data = userDoc.data() as Map<String, dynamic>;
+      _nameController.text = data['displayName'] ?? '';
+      _emergencyContactNameController.text = data['emergencyContactName'] ?? '';
+      _emergencyContactPhoneController.text = data['emergencyContactPhone'] ?? '';
+      _medicalEmergencyServiceController.text = data['medicalEmergencyService'] ?? ''; // <-- NUEVO
+      _medicalInfoController.text = data['medicalInfo'] ?? '';
+    }
+    return userDoc;
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emergencyContactNameController.dispose();
+    _emergencyContactPhoneController.dispose();
+    _medicalEmergencyServiceController.dispose(); // <-- NUEVO
+    _medicalInfoController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveProfileChanges() async {
+    setState(() { _isLoading = true; });
+    try {
+      final dataToUpdate = {
+        'displayName': _nameController.text.trim(),
+        'emergencyContactName': _emergencyContactNameController.text.trim(),
+        'emergencyContactPhone': _emergencyContactPhoneController.text.trim(),
+        'medicalEmergencyService': _medicalEmergencyServiceController.text.trim(), // <-- NUEVO
+        'medicalInfo': _medicalInfoController.text.trim(),
+      };
+
+      await FirebaseFirestore.instance.collection('users').doc(widget.memberId).update(dataToUpdate);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Perfil actualizado con éxito.'), backgroundColor: Colors.green),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al actualizar el perfil: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() { _isLoading = false; });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Mi Perfil')),
-      // Ahora puedes usar el memberId para buscar y editar los datos del usuario
-      body: const Center(child: Text('Aquí editarás tu perfil y datos de emergencia.')),
+      appBar: AppBar(
+        title: const Text('Mi Perfil'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Cerrar Sesión',
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+              if (context.mounted) {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+                      (route) => false,
+                );
+              }
+            },
+          )
+        ],
+      ),
+      body: FutureBuilder<DocumentSnapshot>(
+        future: _userDataFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError || !snapshot.data!.exists) {
+            return const Center(child: Text('No se pudo cargar tu perfil.'));
+          }
+
+          return AbsorbPointer(
+            absorbing: _isLoading,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text('Mis Datos', style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(labelText: 'Nombre y Apellido', border: OutlineInputBorder()),
+                  ),
+                  const SizedBox(height: 32),
+                  Text('Información de Emergencia', style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Esta información solo será visible para los maestros de tu escuela en caso de ser necesario.',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _emergencyContactNameController,
+                    decoration: const InputDecoration(labelText: 'Nombre del Contacto de Emergencia', border: OutlineInputBorder()),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _emergencyContactPhoneController,
+                    decoration: const InputDecoration(labelText: 'Teléfono del Contacto de Emergencia', border: OutlineInputBorder()),
+                    keyboardType: TextInputType.phone,
+                  ),
+                  const SizedBox(height: 16),
+                  // --- CAMPO AÑADIDO ---
+                  TextFormField(
+                    controller: _medicalEmergencyServiceController,
+                    decoration: const InputDecoration(
+                      labelText: 'Servicio de Emergencia Médica',
+                      hintText: 'Ej: SEMM, Emergencia Uno, UCM',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  // ---------------------
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _medicalInfoController,
+                    decoration: const InputDecoration(
+                      labelText: 'Información Médida Relevante',
+                      hintText: 'Ej: Alergias, asma, medicación, etc.',
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLines: 4,
+                  ),
+                  const SizedBox(height: 32),
+                  if (_isLoading)
+                    const Center(child: CircularProgressIndicator())
+                  else
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.save),
+                      label: const Text('Guardar Cambios'),
+                      style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+                      onPressed: _saveProfileChanges,
+                    ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }

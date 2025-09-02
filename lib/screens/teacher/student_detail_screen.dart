@@ -30,7 +30,6 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
     _tabController = TabController(length: 4, vsync: this);
     _confettiController = ConfettiController(duration: const Duration(seconds: 3));
 
-    // Listener para reconstruir la pantalla y mostrar el FAB correcto al cambiar de pestaña
     _tabController.addListener(() {
       if (mounted) {
         setState(() {});
@@ -212,7 +211,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
                   ]),
                   Expanded(
                     child: TabBarView(controller: _tabController, children: [
-                      const Center(child: Text('Información de Contacto y Emergencia')),
+                      _buildGeneralInfoTab(),
                       _buildAttendanceHistoryTab(),
                       _buildPaymentsHistoryTab(),
                       const Center(child: Text('Historial de Exámenes y Promociones')),
@@ -239,15 +238,12 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
     );
   }
 
-  // Widget para construir el FAB dependiendo de la pestaña activa
+  // --- WIDGETS DE AYUDA ---
+
   Widget? _buildFloatingActionButton(String? currentLevelId) {
     switch (_tabController.index) {
       case 2: // Pestaña "Pagos"
-        return FloatingActionButton.extended(
-          onPressed: _showRegisterPaymentDialog,
-          label: const Text('Registrar Pago'),
-          icon: const Icon(Icons.payment),
-        );
+        return FloatingActionButton.extended(onPressed: _showRegisterPaymentDialog, label: const Text('Registrar Pago'), icon: const Icon(Icons.payment));
       case 3: // Pestaña "Progreso"
         return FloatingActionButton.extended(
           onPressed: () {
@@ -262,12 +258,61 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
           label: const Text('Promover Nivel'),
           icon: const Icon(Icons.arrow_upward),
         );
-      default: // Para las otras pestañas, no mostramos ningún botón
-        return null;
+      default: return null;
     }
   }
 
-  // Widget para la pestaña de historial de pagos
+  Widget _buildGeneralInfoTab() {
+    return FutureBuilder<DocumentSnapshot>(
+      future: FirebaseFirestore.instance.collection('users').doc(widget.studentId).get(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+        if (!snapshot.hasData || !snapshot.data!.exists) return const Center(child: Text('No se encontró el perfil del usuario.'));
+
+        final userData = snapshot.data!.data() as Map<String, dynamic>;
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(children: [
+            _buildInfoCard(title: 'Datos de Contacto', icon: Icons.contact_page, children: [
+              _buildInfoRow('Email:', userData['email'] ?? 'No especificado'),
+              _buildInfoRow('Teléfono:', userData['phoneNumber'] ?? 'No especificado'),
+            ]),
+            const SizedBox(height: 16),
+            _buildInfoCard(title: 'Información de Emergencia', icon: Icons.emergency, iconColor: Colors.red, children: [
+              _buildInfoRow('Contacto:', userData['emergencyContactName'] ?? 'No especificado'),
+              _buildInfoRow('Teléfono:', userData['emergencyContactPhone'] ?? 'No especificado'),
+              _buildInfoRow('Servicio Médico:', userData['medicalEmergencyService'] ?? 'No especificado'),
+              const Divider(),
+              _buildInfoRow('Info Médica:', userData['medicalInfo'] ?? 'Sin observaciones'),
+            ]),
+          ]),
+        );
+      },
+    );
+  }
+
+  Widget _buildInfoCard({required String title, required IconData icon, Color? iconColor, required List<Widget> children}) {
+    return Card(
+      child: Padding(padding: const EdgeInsets.all(16.0), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(icon, color: iconColor ?? Theme.of(context).primaryColor),
+          const SizedBox(width: 8),
+          Text(title, style: Theme.of(context).textTheme.titleLarge),
+        ]),
+        const Divider(height: 20),
+        ...children,
+      ])),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(padding: const EdgeInsets.symmetric(vertical: 4.0), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+      const SizedBox(width: 8),
+      Expanded(child: Text(value.isEmpty ? 'No especificado' : value)),
+    ]));
+  }
+
   Widget _buildPaymentsHistoryTab() {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId).collection('payments').orderBy('paymentDate', descending: true).snapshots(),
@@ -284,7 +329,6 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
     );
   }
 
-  // Widget para la pestaña de historial de asistencia
   Widget _buildAttendanceHistoryTab() {
     return StreamBuilder<QuerySnapshot>(
       stream: _attendanceStream,
