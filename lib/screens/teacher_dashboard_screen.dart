@@ -1,10 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:warrior_path/screens/dashboard/tabs/home_tab_screen.dart';
 import 'package:warrior_path/screens/dashboard/tabs/management_tab_screen.dart';
 import 'package:warrior_path/screens/dashboard/tabs/profile_tab_screen.dart';
 import 'package:warrior_path/screens/dashboard/tabs/students_tab_screen.dart';
+
+import '../providers/theme_provider.dart';
 
 class TeacherDashboardScreen extends StatefulWidget {
   const TeacherDashboardScreen({Key? key}) : super(key: key);
@@ -36,6 +39,10 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
       final schoolId = memberships.keys.firstWhere((k) => memberships[k] == 'maestro', orElse: () => '');
 
       if (schoolId.isEmpty) throw Exception('No se encontró una escuela para gestionar.');
+
+      if (schoolId.isNotEmpty) {
+        Provider.of<ThemeProvider>(context, listen: false).loadThemeFromSchool(schoolId);
+      }
 
       if (mounted) {
         setState(() {

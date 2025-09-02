@@ -611,6 +611,13 @@
             </list>
           </value>
         </entry>
+        <entry key="nested">
+          <value>
+            <list>
+              <option value="$USER_HOME$/.pub-cache/hosted/pub.dev/nested-1.0.0/lib" />
+            </list>
+          </value>
+        </entry>
         <entry key="path">
           <value>
             <list>
@@ -692,6 +699,13 @@
           <value>
             <list>
               <option value="$USER_HOME$/.pub-cache/hosted/pub.dev/proj4dart-2.1.0/lib" />
+            </list>
+          </value>
+        </entry>
+        <entry key="provider">
+          <value>
+            <list>
+              <option value="$USER_HOME$/.pub-cache/hosted/pub.dev/provider-6.1.5+1/lib" />
             </list>
           </value>
         </entry>
@@ -971,6 +985,7 @@
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/meta-1.16.0/lib" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/mgrs_dart-2.0.0/lib" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/mime-2.0.0/lib" />
+      <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/nested-1.0.0/lib" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/path-1.9.1/lib" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/path_provider-2.1.5/lib" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/path_provider_android-2.2.17/lib" />
@@ -983,6 +998,7 @@
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/plugin_platform_interface-2.1.8/lib" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/posix-6.0.3/lib" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/proj4dart-2.1.0/lib" />
+      <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/provider-6.1.5+1/lib" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/source_span-1.10.1/lib" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/sprintf-7.0.0/lib" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/stack_trace-1.12.1/lib" />

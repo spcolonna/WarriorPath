@@ -1,3 +1,5 @@
+import 'package:provider/provider.dart';
+import 'package:warrior_path/providers/theme_provider.dart';
 import 'package:warrior_path/services/remote_config_service.dart';
 import 'package:warrior_path/theme/AppColors.dart';
 import 'package:flutter/material.dart';
@@ -13,7 +15,13 @@ void main() async {
   );
   final remoteConfigService = await RemoteConfigService.getInstance();
   await remoteConfigService.fetchAndActivate();
-  runApp(const MyApp());
+
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => ThemeProvider(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -21,25 +29,24 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Warrior Path',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        scaffoldBackgroundColor: AppColors.backgroundGray,
-
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: AppColors.primaryColor,
-          primary: AppColors.primaryColor,
-          secondary: AppColors.secondaryColor,
-          background: AppColors.backgroundGray,
-        ),
-
-        textTheme: const TextTheme(
-          displayLarge: TextStyle(color: AppColors.textDark),
-          bodyMedium: TextStyle(color: AppColors.textDark),
-        ),
-      ),
-      home: const WelcomeScreen(),
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return MaterialApp(
+          title: 'Warrior Path',
+          theme: ThemeData(
+            primarySwatch: Colors.blue, // Esto se sobrescribirá
+            primaryColor: themeProvider.theme.primaryColor, // <-- Color dinámico
+            appBarTheme: AppBarTheme(
+              backgroundColor: themeProvider.theme.primaryColor, // <-- Color dinámico para AppBars
+            ),
+            floatingActionButtonTheme: FloatingActionButtonThemeData(
+              backgroundColor: themeProvider.theme.accentColor, // <-- Color dinámico para FABs
+            ),
+            // ... puedes configurar más colores y estilos aquí
+          ),
+          home: const WelcomeScreen(), // O tu pantalla inicial
+        );
+      },
     );
   }
 }
