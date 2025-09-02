@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:confetti/confetti.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -20,9 +21,15 @@ class StudentDetailScreen extends StatefulWidget {
 
 class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  late Stream<DocumentSnapshot> _memberStream;
   late Stream<QuerySnapshot> _attendanceStream;
   late ConfettiController _confettiController;
+
+  // Variables de estado para la cabecera para evitar parpadeos
+  StreamSubscription? _memberSubscription;
+  bool _isHeaderLoading = true;
+  String _studentName = '';
+  String? _photoUrl;
+  Map<String, dynamic>? _currentLevelData;
 
   @override
   void initState() {
@@ -31,14 +38,49 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
     _confettiController = ConfettiController(duration: const Duration(seconds: 3));
 
     _tabController.addListener(() {
-      if (mounted) {
-        setState(() {});
-      }
+      if (mounted) setState(() {});
     });
 
-    final firestore = FirebaseFirestore.instance;
-    _memberStream = firestore.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId).snapshots();
-    _attendanceStream = firestore.collection('schools').doc(widget.schoolId).collection('attendanceRecords').where('presentStudentIds', arrayContains: widget.studentId).orderBy('date', descending: true).snapshots();
+    _listenToMemberData(); // Empezamos a escuchar los datos del miembro
+
+    // El stream de asistencia se define una vez
+    _attendanceStream = FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('attendanceRecords').where('presentStudentIds', arrayContains: widget.studentId).orderBy('date', descending: true).snapshots();
+  }
+
+  void _listenToMemberData() {
+    final memberStream = FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId).snapshots();
+
+    _memberSubscription = memberStream.listen((memberSnapshot) async {
+      if (!memberSnapshot.exists) {
+        if (mounted) setState(() => _isHeaderLoading = false);
+        return;
+      }
+
+      final memberData = memberSnapshot.data()!;
+      final currentLevelId = memberData['currentLevelId'] ?? memberData['initialLevelId'];
+
+      final results = await Future.wait([
+        _fetchLevelDetails(currentLevelId),
+        _fetchUserPhotoUrl(),
+      ]);
+
+      final levelData = results[0] as Map<String, dynamic>?;
+      final photoUrl = results[1] as String?;
+
+      if (mounted) {
+        setState(() {
+          _studentName = memberData['displayName'] ?? 'Alumno';
+          _currentLevelData = levelData;
+          _photoUrl = photoUrl;
+          _isHeaderLoading = false;
+        });
+      }
+    });
+  }
+
+  Future<String?> _fetchUserPhotoUrl() async {
+    final userDoc = await FirebaseFirestore.instance.collection('users').doc(widget.studentId).get();
+    return (userDoc.data() as Map<String, dynamic>)['photoUrl'] as String?;
   }
 
   @override
@@ -46,10 +88,9 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
     _tabController.removeListener(() {});
     _tabController.dispose();
     _confettiController.dispose();
+    _memberSubscription?.cancel(); // Se cancela la suscripción al stream
     super.dispose();
   }
-
-  // --- MÉTODOS DE LÓGICA ---
 
   Future<void> _showRegisterPaymentDialog() async {
     final schoolDoc = await FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).get();
@@ -149,79 +190,69 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
     }
   }
 
-  // --- MÉTODO build() COMPLETO ---
   @override
   Widget build(BuildContext context) {
     return Stack(
       alignment: Alignment.topCenter,
       children: [
-        StreamBuilder<DocumentSnapshot>(
-          stream: _memberStream,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Scaffold(appBar: AppBar(), body: const Center(child: CircularProgressIndicator()));
-            }
-            if (!snapshot.hasData || !snapshot.data!.exists) {
-              return Scaffold(appBar: AppBar(), body: const Center(child: Text('No se encontró al alumno.')));
-            }
-
-            final memberData = snapshot.data!.data() as Map<String, dynamic>;
-            final studentName = memberData['displayName'] ?? 'Alumno';
-            final currentLevelId = memberData['currentLevelId'] ?? memberData['initialLevelId'];
-
-            return Scaffold(
-              appBar: AppBar(title: Text(studentName)),
-              body: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: FutureBuilder<Map<String, dynamic>?>(
-                      future: _fetchLevelDetails(currentLevelId),
-                      builder: (context, levelSnapshot) {
-                        if (levelSnapshot.connectionState == ConnectionState.waiting) {
-                          return Row(children: [const CircleAvatar(radius: 40), const SizedBox(width: 16), Expanded(child: Text(studentName, style: Theme.of(context).textTheme.headlineSmall))]);
-                        }
-
-                        final levelData = levelSnapshot.data;
-                        final levelName = levelData?['name'] ?? 'Sin Nivel';
-                        final levelColor = levelData != null ? Color(levelData['colorValue']) : Colors.grey;
-
-                        return Row(
-                          children: [
-                            FutureBuilder<DocumentSnapshot>(
-                              future: FirebaseFirestore.instance.collection('users').doc(widget.studentId).get(),
-                              builder: (context, userSnapshot) {
-                                if (!userSnapshot.hasData) return const CircleAvatar(radius: 40);
-                                final photoUrl = (userSnapshot.data!.data() as Map<String, dynamic>)['photoUrl'] as String?;
-                                return CircleAvatar(radius: 40, backgroundImage: (photoUrl != null && photoUrl.isNotEmpty) ? NetworkImage(photoUrl) : null, child: (photoUrl == null || photoUrl.isEmpty) ? const Icon(Icons.person, size: 40) : null);
-                              },
-                            ),
-                            const SizedBox(width: 16),
-                            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                              Text(studentName, style: Theme.of(context).textTheme.headlineSmall),
-                              Chip(label: Text(levelName, style: const TextStyle(color: Colors.white)), backgroundColor: levelColor),
-                            ]),
-                          ],
-                        );
-                      },
+        Scaffold(
+          appBar: AppBar(
+            title: Text(_studentName.isEmpty ? 'Cargando...' : _studentName),
+          ),
+          body: _isHeaderLoading
+              ? const Center(child: CircularProgressIndicator())
+              : Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 40,
+                      backgroundImage: (_photoUrl != null && _photoUrl!.isNotEmpty) ? NetworkImage(_photoUrl!) : null,
+                      child: (_photoUrl == null || _photoUrl!.isEmpty) ? const Icon(Icons.person, size: 40) : null,
                     ),
-                  ),
-                  TabBar(controller: _tabController, isScrollable: true, tabs: const [
-                    Tab(text: 'General'), Tab(text: 'Asistencia'), Tab(text: 'Pagos'), Tab(text: 'Progreso'),
-                  ]),
-                  Expanded(
-                    child: TabBarView(controller: _tabController, children: [
-                      _buildGeneralInfoTab(),
-                      _buildAttendanceHistoryTab(),
-                      _buildPaymentsHistoryTab(),
-                      const Center(child: Text('Historial de Exámenes y Promociones')),
-                    ]),
-                  ),
+                    const SizedBox(width: 16),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(_studentName, style: Theme.of(context).textTheme.headlineSmall),
+                        Chip(
+                          label: Text(
+                            _currentLevelData?['name'] ?? 'Sin Nivel',
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                          backgroundColor: _currentLevelData != null ? Color(_currentLevelData!['colorValue']) : Colors.grey,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              TabBar(
+                controller: _tabController,
+                isScrollable: true,
+                tabs: const [
+                  Tab(text: 'General'),
+                  Tab(text: 'Asistencia'),
+                  Tab(text: 'Pagos'),
+                  Tab(text: 'Progreso'),
                 ],
               ),
-              floatingActionButton: _buildFloatingActionButton(currentLevelId),
-            );
-          },
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildGeneralInfoTab(),
+                    _buildAttendanceHistoryTab(),
+                    _buildPaymentsHistoryTab(),
+                    const Center(child: Text('Historial de Exámenes y Promociones')),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          floatingActionButton: _buildFloatingActionButton(),
         ),
         ConfettiWidget(
           confettiController: _confettiController,
@@ -238,22 +269,18 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
     );
   }
 
-  // --- WIDGETS DE AYUDA ---
-
-  Widget? _buildFloatingActionButton(String? currentLevelId) {
+  Widget? _buildFloatingActionButton() {
     switch (_tabController.index) {
-      case 2: // Pestaña "Pagos"
+      case 2: // Pagos
         return FloatingActionButton.extended(onPressed: _showRegisterPaymentDialog, label: const Text('Registrar Pago'), icon: const Icon(Icons.payment));
-      case 3: // Pestaña "Progreso"
+      case 3: // Progreso
         return FloatingActionButton.extended(
           onPressed: () {
-            _fetchLevelDetails(currentLevelId).then((levelData) {
-              if (levelData != null) {
-                _showPromotionDialog(levelData['id'], levelData['order']);
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No se pudo cargar el nivel actual del alumno.')));
-              }
-            });
+            if (_currentLevelData != null) {
+              _showPromotionDialog(_currentLevelData!['id'], _currentLevelData!['order']);
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No se pudo cargar el nivel actual del alumno.')));
+            }
           },
           label: const Text('Promover Nivel'),
           icon: const Icon(Icons.arrow_upward),
@@ -268,7 +295,6 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
         if (!snapshot.hasData || !snapshot.data!.exists) return const Center(child: Text('No se encontró el perfil del usuario.'));
-
         final userData = snapshot.data!.data() as Map<String, dynamic>;
         return SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
