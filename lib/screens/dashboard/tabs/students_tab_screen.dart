@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
+import '../../teacher/student_detail_screen.dart';
+
 class StudentsTabScreen extends StatefulWidget {
   final String schoolId;
   final int initialTabIndex;
@@ -90,7 +92,17 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
               child: ListTile(
                 leading: const CircleAvatar(child: Icon(Icons.person)),
                 title: Text(data['displayName'] ?? 'Sin Nombre'),
-                // Aquí podrías mostrar más info, como el nivel actual
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => StudentDetailScreen(
+                        schoolId: widget.schoolId,
+                        studentId: doc.id,
+                      ),
+                    ),
+                  );
+                },
               ),
             );
           },

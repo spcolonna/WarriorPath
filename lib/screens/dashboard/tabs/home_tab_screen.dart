@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../../teacher/attendance_checklist_screen.dart';
+
 class HomeTabScreen extends StatefulWidget {
   final String schoolId;
   final Function(int, {int? subTabIndex}) onNavigateToTab;
@@ -51,77 +53,137 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Inicio'),
-      ),
-      // CAMBIO: Usamos StreamBuilder en lugar de FutureBuilder
-      body: StreamBuilder<Map<String, dynamic>>(
-        stream: _getDashboardStreams(), // Usamos el nuevo stream
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No se encontraron datos.'));
-          }
+    return StreamBuilder<Map<String, dynamic>>(
+      stream: _getDashboardStreams(),
+      builder: (context, snapshot) {
+        // Mientras carga, mostramos un Scaffold simple
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Scaffold(appBar: AppBar(title: const Text('Inicio')), body: const Center(child: CircularProgressIndicator()));
+        }
+        if (snapshot.hasError) {
+          return Scaffold(appBar: AppBar(title: const Text('Inicio')), body: Center(child: Text('Error: ${snapshot.error}')));
+        }
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return Scaffold(appBar: AppBar(title: const Text('Inicio')), body: const Center(child: Text('No se encontraron datos.')));
+        }
 
-          final data = snapshot.data!;
-          final int activeStudents = data['activeStudents'] ?? 0;
-          // ... (resto del código de build es idéntico)
-          final int pendingRequests = data['pendingRequests'] ?? 0;
-          final String schoolName = data['schoolName'];
-          final String userName = data['userName'];
+        // Una vez que tenemos datos, construimos el Scaffold completo
+        final data = snapshot.data!;
+        final int activeStudents = data['activeStudents'] ?? 0;
+        final int pendingRequests = data['pendingRequests'] ?? 0;
+        final String schoolName = data['schoolName'];
+        final String userName = data['userName'];
+        final List<QueryDocumentSnapshot> todaySchedules = data['todaySchedules'] ?? [];
 
-          return ListView(
-            padding: const EdgeInsets.all(16.0),
-            children: [
-              Text('¡Bienvenido, $userName!', style: Theme.of(context).textTheme.headlineSmall),
-              Text(schoolName, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey)),
-              const SizedBox(height: 24),
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Inicio'),
+          ),
+          body: RefreshIndicator(
+            onRefresh: () async {
+              // El RefreshIndicator sigue funcionando igual
+              setState(() {});
+            },
+            child: ListView(
+              padding: const EdgeInsets.all(16.0),
+              children: [
+                Text('¡Bienvenido, $userName!', style: Theme.of(context).textTheme.headlineSmall),
+                Text(schoolName, style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey)),
+                const SizedBox(height: 24),
 
-              GridView.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  _buildStatCard(
-                    title: 'Alumnos Activos',
-                    value: activeStudents.toString(),
-                    icon: Icons.groups,
-                    color: Colors.blue,
-                  ),
-                  _buildStatCard(
-                    title: 'Solicitudes Pendientes',
-                    value: pendingRequests.toString(),
-                    icon: Icons.person_add,
-                    color: pendingRequests > 0 ? Colors.orange : Colors.green,
-                    onTap: () {
-                      widget.onNavigateToTab(1, subTabIndex: 1);
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
+                GridView.count(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  children: [
+                    _buildStatCard(
+                      title: 'Alumnos Activos',
+                      value: activeStudents.toString(),
+                      icon: Icons.groups,
+                      color: Colors.blue,
+                    ),
+                    _buildStatCard(
+                      title: 'Solicitudes Pendientes',
+                      value: pendingRequests.toString(),
+                      icon: Icons.person_add,
+                      color: pendingRequests > 0 ? Colors.orange : Colors.green,
+                      onTap: () {
+                        widget.onNavigateToTab(1, subTabIndex: 1);
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
 
-              Text('Clases de Hoy', style: Theme.of(context).textTheme.headlineSmall),
-              const SizedBox(height: 8),
+                Text('Clases de Hoy', style: Theme.of(context).textTheme.headlineSmall),
+                const SizedBox(height: 8),
 
-              _buildTodaySchedules(data['todaySchedules'] as List<QueryDocumentSnapshot>),
-            ],
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {},
-        label: const Text('Tomar Asistencia'),
-        icon: const Icon(Icons.check_circle_outline),
-      ),
+                _buildTodaySchedules(todaySchedules),
+              ],
+            ),
+          ),
+          // El FloatingActionButton ahora está DENTRO del StreamBuilder
+          // por lo que SÍ tiene acceso a la variable 'data' y a 'todaySchedules'
+          floatingActionButton: FloatingActionButton.extended(
+            onPressed: () {
+              // Esta lógica ahora funciona sin errores
+              _showSelectClassDialog(todaySchedules);
+            },
+            label: const Text('Tomar Asistencia'),
+            icon: const Icon(Icons.check_circle_outline),
+          ),
+        );
+      },
+    );
+  }
+
+  // Dentro de la clase _HomeTabScreenState
+
+  void _showSelectClassDialog(List<QueryDocumentSnapshot> schedules) {
+    if (schedules.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No hay clases programadas para hoy.')),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Seleccionar Clase'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: schedules.length,
+              itemBuilder: (context, index) {
+                final schedule = schedules[index].data() as Map<String, dynamic>;
+                final scheduleTitle = schedule['title'];
+                final scheduleTime = '${schedule['startTime']} - ${schedule['endTime']}';
+
+                return ListTile(
+                  title: Text(scheduleTitle),
+                  subtitle: Text(scheduleTime),
+                  onTap: () {
+                    Navigator.of(context).pop(); // Cierra el diálogo
+                    Navigator.of(context).push( // Abre la pantalla de asistencia
+                      MaterialPageRoute(
+                        builder: (context) => AttendanceChecklistScreen(
+                          schoolId: widget.schoolId,
+                          scheduleTitle: scheduleTitle,
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 
