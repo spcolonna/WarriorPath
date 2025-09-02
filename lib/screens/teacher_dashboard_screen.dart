@@ -2,12 +2,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:warrior_path/providers/theme_provider.dart';
 import 'package:warrior_path/screens/dashboard/tabs/home_tab_screen.dart';
 import 'package:warrior_path/screens/dashboard/tabs/management_tab_screen.dart';
 import 'package:warrior_path/screens/dashboard/tabs/profile_tab_screen.dart';
 import 'package:warrior_path/screens/dashboard/tabs/students_tab_screen.dart';
-
-import '../providers/theme_provider.dart';
 
 class TeacherDashboardScreen extends StatefulWidget {
   const TeacherDashboardScreen({Key? key}) : super(key: key);
@@ -18,6 +17,7 @@ class TeacherDashboardScreen extends StatefulWidget {
 
 class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   int _selectedIndex = 0;
+  int _studentSubTabIndex = 0; // Estado para recordar la sub-pestaña de alumnos
   String? _schoolId;
   bool _isLoading = true;
   String? _error;
@@ -40,9 +40,9 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
 
       if (schoolId.isEmpty) throw Exception('No se encontró una escuela para gestionar.');
 
-      if (schoolId.isNotEmpty) {
-        Provider.of<ThemeProvider>(context, listen: false).loadThemeFromSchool(schoolId);
-      }
+      // Cargar el tema de la escuela usando el Provider
+      // listen: false porque solo lo hacemos una vez al cargar
+      Provider.of<ThemeProvider>(context, listen: false).loadThemeFromSchool(schoolId);
 
       if (mounted) {
         setState(() {
@@ -60,9 +60,11 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     }
   }
 
-  void _onItemTapped(int index) {
+  // Función actualizada que puede recibir un subTabIndex
+  void _onItemTapped(int index, {int? subTabIndex}) {
     setState(() {
       _selectedIndex = index;
+      _studentSubTabIndex = (index == 1 && subTabIndex != null) ? subTabIndex : 0;
     });
   }
 
@@ -75,12 +77,18 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
       return Scaffold(body: Center(child: Text('Error: $_error')));
     }
 
-    // Una vez que tenemos el schoolId, construimos la lista de pantallas
+    // La lista de pantallas se construye aquí para pasar los datos correctos
     final List<Widget> widgetOptions = <Widget>[
-      HomeTabScreen(schoolId: _schoolId!),
-      StudentsTabScreen(schoolId: _schoolId!),
+      HomeTabScreen(
+        schoolId: _schoolId!,
+        onNavigateToTab: (index, {subTabIndex}) => _onItemTapped(index, subTabIndex: subTabIndex),
+      ),
+      StudentsTabScreen(
+        schoolId: _schoolId!,
+        initialTabIndex: _studentSubTabIndex,
+      ),
       ManagementTabScreen(schoolId: _schoolId!),
-      const ProfileTabScreen(), // El perfil no necesita el schoolId
+      const ProfileTabScreen(),
     ];
 
     return Scaffold(
@@ -98,7 +106,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
         currentIndex: _selectedIndex,
         selectedItemColor: Theme.of(context).primaryColor,
         unselectedItemColor: Colors.grey,
-        onTap: _onItemTapped,
+        onTap: (index) => _onItemTapped(index), // El tap normal no necesita subTabIndex
         type: BottomNavigationBarType.fixed,
       ),
     );

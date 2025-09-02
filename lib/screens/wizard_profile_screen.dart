@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:warrior_path/screens/student/school_search_screen.dart';
 import 'package:warrior_path/screens/teacher_dashboard_screen.dart';
 import 'package:warrior_path/screens/wizard_create_school_screen.dart';
 
@@ -81,9 +82,10 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
 
       // 4. Navegar al siguiente paso
       if (_selectedRole == UserRole.student) {
-        await userRef.update({'wizardStep': 99});
+        await userRef.update({'wizardStep': 1});
         Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const TeacherDashboardScreen()));
+            MaterialPageRoute(builder: (context) => const SchoolSearchScreen())
+        );
       } else {
         Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (context) => const WizardCreateSchoolScreen()));

@@ -4,7 +4,12 @@ import 'package:flutter/material.dart';
 
 class HomeTabScreen extends StatefulWidget {
   final String schoolId;
-  const HomeTabScreen({Key? key, required this.schoolId}) : super(key: key);
+  final Function(int, {int? subTabIndex}) onNavigateToTab;
+  const HomeTabScreen({
+    Key? key,
+    required this.schoolId,
+    required this.onNavigateToTab,
+  }) : super(key: key);
 
   @override
   State<HomeTabScreen> createState() => _HomeTabScreenState();
@@ -96,7 +101,9 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
                     value: pendingRequests.toString(),
                     icon: Icons.person_add,
                     color: pendingRequests > 0 ? Colors.orange : Colors.green,
-                    onTap: () {},
+                    onTap: () {
+                      widget.onNavigateToTab(1, subTabIndex: 1);
+                    },
                   ),
                 ],
               ),
