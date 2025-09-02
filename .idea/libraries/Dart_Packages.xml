@@ -121,6 +121,13 @@
             </list>
           </value>
         </entry>
+        <entry key="confetti">
+          <value>
+            <list>
+              <option value="$USER_HOME$/.pub-cache/hosted/pub.dev/confetti-0.8.0/lib" />
+            </list>
+          </value>
+        </entry>
         <entry key="cross_file">
           <value>
             <list>
@@ -918,6 +925,7 @@
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/cloud_functions_platform_interface-5.8.2/lib" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/cloud_functions_web-4.11.5/lib" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/collection-1.19.1/lib" />
+      <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/confetti-0.8.0/lib" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/cross_file-0.3.4+2/lib" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/crypto-3.0.6/lib" />
       <root url="file://$USER_HOME$/.pub-cache/hosted/pub.dev/cupertino_icons-1.0.8/lib" />
