@@ -178,7 +178,6 @@ class _WizardReviewScreenState extends State<WizardReviewScreen> {
                   child: _isLoading
                       ? const Center(child: CircularProgressIndicator())
                       : ElevatedButton.icon(
-                    icon: const Icon(Icons.rocket_launch, color: Colors.white),
                     label: const Text('Finalizar y Abrir mi Escuela', style: TextStyle(color: Colors.white, fontSize: 18)),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),

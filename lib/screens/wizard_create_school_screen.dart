@@ -125,15 +125,20 @@ class _WizardCreateSchoolScreenState extends State<WizardCreateSchoolScreen> {
         },
       );
 
-      // Guardar la nueva escuela en Firestore y obtener su referencia
-      final schoolDocRef = await FirebaseFirestore.instance.collection('schools').add(newSchool.toJson());
+      final firestore = FirebaseFirestore.instance;
+      final schoolDocRef = await firestore.collection('schools').add(newSchool.toJson());
 
-      // Actualizar el progreso del wizard del usuario
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).update({'wizardStep': 2});
+      final userRef = firestore.collection('users').doc(user.uid);
+      await userRef.set({
+        'activeMemberships': {
+          schoolDocRef.id: 'maestro'
+        }
+      }, SetOptions(merge: true));
+
+      await userRef.update({'wizardStep': 2});
 
       if (!mounted) return;
 
-      // Navegar a la siguiente pantalla del wizard, pasando los datos necesarios
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (context) => WizardConfigureLevelsScreen(
