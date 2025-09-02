@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
+import 'package:warrior_path/screens/student/tabs/payments_tab_screen.dart';
 import 'package:warrior_path/screens/student/tabs/profile_tab_screen.dart';
 import 'package:warrior_path/screens/student/tabs/progress_tab_screen.dart';
 import 'package:warrior_path/screens/student/tabs/school_info_tab_screen.dart';
@@ -96,8 +97,17 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
-    // Usamos un Stack para poder mostrar el confeti sobre toda la pantalla
+    final List<Widget> widgetOptions = _isLoading || _error != null
+        ? []
+        : <Widget>[
+      SchoolInfoTabScreen(schoolId: _schoolId!),
+      ProgressTabScreen(schoolId: _schoolId!, memberId: _memberId!),
+      PaymentsTabScreen(schoolId: _schoolId!, memberId: _memberId!), // <-- 1. PANTALLA AÑADIDA
+      StudentProfileTabScreen(memberId: _memberId!),
+    ];
+
     return Stack(
       alignment: Alignment.topCenter,
       children: [
@@ -108,20 +118,20 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
               ? Center(child: Text('Error: $_error'))
               : IndexedStack(
             index: _selectedIndex,
-            children: <Widget>[
-              SchoolInfoTabScreen(schoolId: _schoolId!),
-              ProgressTabScreen(schoolId: _schoolId!, memberId: _memberId!),
-              StudentProfileTabScreen(memberId: _memberId!),
-            ],
+            children: widgetOptions, // Usamos la nueva lista
           ),
-          bottomNavigationBar: _isLoading || _error != null ? null : BottomNavigationBar(
+          bottomNavigationBar: _isLoading || _error != null
+              ? null
+              : BottomNavigationBar(
             items: const <BottomNavigationBarItem>[
               BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Mi Escuela'),
               BottomNavigationBarItem(icon: Icon(Icons.leaderboard), label: 'Mi Progreso'),
+              BottomNavigationBarItem(icon: Icon(Icons.payment), label: 'Mis Pagos'), // <-- 2. ITEM AÑADIDO
               BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Mi Perfil'),
             ],
             currentIndex: _selectedIndex,
             onTap: _onItemTapped,
+            type: BottomNavigationBarType.fixed, // Importante para que se vean +3 items
           ),
         ),
         ConfettiWidget(

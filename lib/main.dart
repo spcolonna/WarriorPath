@@ -1,7 +1,7 @@
 import 'package:provider/provider.dart';
 import 'package:warrior_path/providers/theme_provider.dart';
 import 'package:warrior_path/services/remote_config_service.dart';
-import 'package:warrior_path/theme/AppColors.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -15,6 +15,11 @@ void main() async {
   );
   final remoteConfigService = await RemoteConfigService.getInstance();
   await remoteConfigService.fetchAndActivate();
+
+  // --- LÍNEA AÑADIDA AQUÍ ---
+  // Carga los datos de formato para el idioma español (para meses, etc.)
+  await initializeDateFormatting('es_ES', null);
+  // -------------------------
 
   runApp(
     ChangeNotifierProvider(
@@ -34,17 +39,17 @@ class MyApp extends StatelessWidget {
         return MaterialApp(
           title: 'Warrior Path',
           theme: ThemeData(
-            primarySwatch: Colors.blue, // Esto se sobrescribirá
-            primaryColor: themeProvider.theme.primaryColor, // <-- Color dinámico
+            primarySwatch: Colors.blue,
+            primaryColor: themeProvider.theme.primaryColor,
             appBarTheme: AppBarTheme(
-              backgroundColor: themeProvider.theme.primaryColor, // <-- Color dinámico para AppBars
+              backgroundColor: themeProvider.theme.primaryColor,
             ),
             floatingActionButtonTheme: FloatingActionButtonThemeData(
-              backgroundColor: themeProvider.theme.accentColor, // <-- Color dinámico para FABs
+              backgroundColor: themeProvider.theme.accentColor,
             ),
             // ... puedes configurar más colores y estilos aquí
           ),
-          home: const WelcomeScreen(), // O tu pantalla inicial
+          home: const WelcomeScreen(),
         );
       },
     );
