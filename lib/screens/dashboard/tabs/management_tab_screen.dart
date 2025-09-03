@@ -3,6 +3,11 @@ import 'package:provider/provider.dart';
 import 'package:warrior_path/providers/session_provider.dart';
 import 'package:warrior_path/screens/schedule/schedule_management_screen.dart';
 
+import '../../teacher/management/edit_school_data_screen.dart';
+import '../../teacher/management/finance_management_screen.dart';
+import '../../teacher/management/level_management_screen.dart';
+import '../../teacher/management/technique_management_screen.dart';
+
 class ManagementTabScreen extends StatelessWidget {
   // 1. EL CONSTRUCTOR YA NO NECESITA schoolId
   const ManagementTabScreen({Key? key}) : super(key: key);
@@ -34,7 +39,6 @@ class ManagementTabScreen extends StatelessWidget {
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  // 3. USAMOS EL schoolId OBTENIDO DEL PROVIDER
                   builder: (context) => ScheduleManagementScreen(schoolId: schoolId),
                 ),
               );
@@ -47,7 +51,9 @@ class ManagementTabScreen extends StatelessWidget {
             title: 'Gestionar Niveles',
             subtitle: 'Edita los nombres, colores y orden de las fajas/cinturones.',
             onTap: () {
-              // TODO: Navegar a la pantalla de gestión de niveles
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => LevelManagementScreen(schoolId: schoolId)),
+              );
             },
           ),
           const Divider(),
@@ -57,7 +63,9 @@ class ManagementTabScreen extends StatelessWidget {
             title: 'Gestionar Técnicas',
             subtitle: 'Añade o modifica el currículo de tu escuela.',
             onTap: () {
-              // TODO: Navegar a la pantalla de gestión de técnicas
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => TechniqueManagementScreen(schoolId: schoolId)),
+              );
             },
           ),
           const Divider(),
@@ -67,7 +75,9 @@ class ManagementTabScreen extends StatelessWidget {
             title: 'Gestionar Finanzas',
             subtitle: 'Ajusta los precios y planes de pago.',
             onTap: () {
-              // TODO: Navegar a la pantalla de gestión de finanzas
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => FinanceManagementScreen(schoolId: schoolId)),
+              );
             },
           ),
           const Divider(),
@@ -77,7 +87,9 @@ class ManagementTabScreen extends StatelessWidget {
             title: 'Editar Datos de la Escuela',
             subtitle: 'Modifica la dirección, teléfono, descripción, etc.',
             onTap: () {
-              // TODO: Navegar a la pantalla de edición de datos
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => EditSchoolDataScreen(schoolId: schoolId)),
+              );
             },
           ),
         ],

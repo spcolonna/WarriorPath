@@ -1,17 +1,29 @@
 import 'package:flutter/material.dart';
 
 class LevelModel {
+  String? id;
   String name;
   Color color;
   int order;
 
-  LevelModel({required this.name, required this.color, this.order = 0});
+  LevelModel({this.id, required this.name, required this.color, this.order = 0});
 
-  // Método para convertir el objeto a un mapa para Firestore
+  factory LevelModel.fromModel(LevelModel another) {
+    return LevelModel(id: another.id, name: another.name, color: another.color, order: another.order);
+  }
+
+  factory LevelModel.fromFirestore(String id, Map<String, dynamic> data) {
+    return LevelModel(
+      id: id,
+      name: data['name'],
+      color: Color(data['colorValue']),
+      order: data['order'],
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'name': name,
-      // Guardamos el color como un entero (formato ARGB)
       'colorValue': color.value,
       'order': order,
     };

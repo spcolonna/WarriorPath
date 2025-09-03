@@ -22,8 +22,8 @@ class WizardConfigureTechniquesScreen extends StatefulWidget {
 class _WizardConfigureTechniquesScreenState extends State<WizardConfigureTechniquesScreen> {
   final _categoryController = TextEditingController();
 
-  // Listas para manejar el estado de la UI
-  List<String> _categories = ['Formas', 'Técnicas Básicas', 'Armas']; // Ejemplos iniciales
+  // CAMBIO 1: La lista de categorías ahora empieza vacía.
+  List<String> _categories = [];
   List<TechniqueModel> _techniques = [];
 
   bool _isLoading = false;
@@ -42,7 +42,6 @@ class _WizardConfigureTechniquesScreenState extends State<WizardConfigureTechniq
   void _removeCategory(String category) {
     setState(() {
       _categories.remove(category);
-      // Opcional: eliminar técnicas de esa categoría o reasignarlas
       _techniques.removeWhere((tech) => tech.category == category);
     });
   }
@@ -64,9 +63,8 @@ class _WizardConfigureTechniquesScreenState extends State<WizardConfigureTechniq
   }
 
   Future<void> _saveAndContinue() async {
-    // Validación
     if (_categories.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Debes tener al menos una categoría.')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Debes crear al menos una categoría.')));
       return;
     }
     if (_techniques.any((tech) => tech.name.trim().isEmpty || tech.category.isEmpty)) {
@@ -84,18 +82,14 @@ class _WizardConfigureTechniquesScreenState extends State<WizardConfigureTechniq
       final schoolRef = firestore.collection('schools').doc(widget.schoolId);
       final batch = firestore.batch();
 
-      // 1. Guardar la lista de categorías en el documento de la escuela
       batch.update(schoolRef, {'techniqueCategories': _categories});
 
-      // 2. Guardar cada técnica en la sub-colección 'techniques'
       for (final technique in _techniques) {
         final techniqueRef = schoolRef.collection('techniques').doc();
         batch.set(techniqueRef, technique.toJson());
       }
 
       await batch.commit();
-
-      // 3. Actualizar el progreso del wizard del usuario
       await firestore.collection('users').doc(user.uid).update({'wizardStep': 4});
 
       if (!mounted) return;
@@ -131,7 +125,6 @@ class _WizardConfigureTechniquesScreenState extends State<WizardConfigureTechniq
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // --- SECCIÓN DE CATEGORÍAS ---
               Text('1. Define tus Categorías', style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 8),
               Row(
@@ -139,7 +132,11 @@ class _WizardConfigureTechniquesScreenState extends State<WizardConfigureTechniq
                   Expanded(
                     child: TextField(
                       controller: _categoryController,
-                      decoration: const InputDecoration(labelText: 'Nombre de la Categoría'),
+                      decoration: const InputDecoration(
+                        labelText: 'Nombre de la Categoría',
+                        // CAMBIO 2: Añadimos un hintText con ejemplos.
+                        hintText: 'Ej: Formas, Katas, Técnicas, Armas',
+                      ),
                     ),
                   ),
                   IconButton(
@@ -150,23 +147,24 @@ class _WizardConfigureTechniquesScreenState extends State<WizardConfigureTechniq
                 ],
               ),
               const SizedBox(height: 16),
-              Wrap(
-                spacing: 8.0,
-                runSpacing: 4.0,
-                children: _categories.map((category) => Chip(
-                  label: Text(category),
-                  onDeleted: () => _removeCategory(category),
-                )).toList(),
-              ),
+              if (_categories.isEmpty)
+                const Text('Las categorías que añadas aparecerán aquí.', style: TextStyle(color: Colors.grey))
+              else
+                Wrap(
+                  spacing: 8.0,
+                  runSpacing: 4.0,
+                  children: _categories.map((category) => Chip(
+                    label: Text(category),
+                    onDeleted: () => _removeCategory(category),
+                  )).toList(),
+                ),
               const SizedBox(height: 24),
               const Divider(),
               const SizedBox(height: 16),
-
-              // --- SECCIÓN DE TÉCNICAS ---
               Text('2. Añade tus Técnicas', style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 16),
               if (_techniques.isEmpty)
-                const Text('Añade tu primera técnica abajo.', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
+                const Text('Crea categorías y luego añade tu primera técnica.', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
               ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -182,46 +180,23 @@ class _WizardConfigureTechniquesScreenState extends State<WizardConfigureTechniq
                         children: [
                           Row(
                             children: [
-                              Expanded(
-                                child: Text('Técnica #${index + 1}', style: Theme.of(context).textTheme.titleMedium),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete_outline, color: Colors.red),
-                                onPressed: () => _removeTechnique(technique.localId),
-                              ),
+                              Expanded(child: Text('Técnica #${index + 1}', style: Theme.of(context).textTheme.titleMedium)),
+                              IconButton(icon: const Icon(Icons.delete_outline, color: Colors.red), onPressed: () => _removeTechnique(technique.localId!)),
                             ],
                           ),
-                          TextFormField(
-                            initialValue: technique.name,
-                            onChanged: (value) => technique.name = value,
-                            decoration: const InputDecoration(labelText: 'Nombre de la Técnica *'),
-                          ),
+                          TextFormField(initialValue: technique.name, onChanged: (value) => technique.name = value, decoration: const InputDecoration(labelText: 'Nombre de la Técnica *')),
                           const SizedBox(height: 12),
                           DropdownButtonFormField<String>(
                             value: technique.category.isNotEmpty && _categories.contains(technique.category) ? technique.category : null,
                             hint: const Text('Selecciona una categoría'),
                             items: _categories.map((cat) => DropdownMenuItem(value: cat, child: Text(cat))).toList(),
-                            onChanged: (value) {
-                              if (value != null) {
-                                setState(() => technique.category = value);
-                              }
-                            },
+                            onChanged: (value) { if (value != null) setState(() => technique.category = value); },
                             decoration: const InputDecoration(labelText: 'Categoría *'),
                           ),
                           const SizedBox(height: 12),
-                          TextFormField(
-                            initialValue: technique.description,
-                            onChanged: (value) => technique.description = value,
-                            decoration: const InputDecoration(labelText: 'Descripción (opcional)'),
-                            maxLines: 2,
-                          ),
+                          TextFormField(initialValue: technique.description, onChanged: (value) => technique.description = value, decoration: const InputDecoration(labelText: 'Descripción (opcional)'), maxLines: 2),
                           const SizedBox(height: 12),
-                          TextFormField(
-                            initialValue: technique.videoUrl,
-                            onChanged: (value) => technique.videoUrl = value,
-                            decoration: const InputDecoration(labelText: 'Enlace a Video (opcional)', hintText: 'https://youtube.com/...'),
-                            keyboardType: TextInputType.url,
-                          ),
+                          TextFormField(initialValue: technique.videoUrl, onChanged: (value) => technique.videoUrl = value, decoration: const InputDecoration(labelText: 'Enlace a Video (opcional)', hintText: 'https://youtube.com/...'), keyboardType: TextInputType.url),
                         ],
                       ),
                     ),
@@ -232,34 +207,21 @@ class _WizardConfigureTechniquesScreenState extends State<WizardConfigureTechniq
               ElevatedButton.icon(
                 icon: const Icon(Icons.add),
                 label: const Text('Añadir Técnica'),
-                onPressed: _addTechnique,
+                // CAMBIO 3: Deshabilitamos el botón si no hay categorías creadas.
+                onPressed: _categories.isEmpty ? null : _addTechnique,
               ),
-
               const SizedBox(height: 24),
-              // --- MENSAJE INFORMATIVO ---
               Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Text(
-                  'No te preocupes por añadir todo ahora. Siempre podrás gestionar tus técnicas desde el panel de control de tu escuela.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontStyle: FontStyle.italic),
-                ),
+                decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(8)),
+                child: const Text('No te preocupes por añadir todo ahora. Siempre podrás gestionar tus técnicas desde el panel de control de tu escuela.', textAlign: TextAlign.center, style: TextStyle(fontStyle: FontStyle.italic)),
               ),
               const SizedBox(height: 32),
-
-              // --- BOTÓN DE CONTINUAR ---
               if (_isLoading)
                 const Center(child: CircularProgressIndicator())
               else
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: widget.martialArtTheme.primaryColor,
-                  ),
+                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16), backgroundColor: widget.martialArtTheme.primaryColor),
                   onPressed: _saveAndContinue,
                   child: const Text('Guardar y Continuar', style: TextStyle(color: Colors.white)),
                 ),
