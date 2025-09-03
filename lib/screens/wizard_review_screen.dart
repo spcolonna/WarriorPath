@@ -1,8 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:warrior_path/screens/teacher_dashboard_screen.dart';
 import 'package:warrior_path/theme/martial_art_themes.dart';
+
+import '../providers/session_provider.dart';
 
 class WizardReviewScreen extends StatefulWidget {
   final String schoolId;
@@ -57,15 +60,14 @@ class _WizardReviewScreenState extends State<WizardReviewScreen> {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception("Usuario no autenticado.");
 
-      // Marcamos el wizard como completado
       await FirebaseFirestore.instance.collection('users').doc(user.uid).update({'wizardStep': 99});
+      Provider.of<SessionProvider>(context, listen: false).setActiveSession(widget.schoolId, 'maestro');
 
       if (!mounted) return;
 
-      // Navegamos al Dashboard y eliminamos todas las pantallas anteriores del historial
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (context) => const TeacherDashboardScreen()),
-            (Route<dynamic> route) => false, // Este predicado elimina todas las rutas
+            (Route<dynamic> route) => false,
       );
 
     } catch (e) {

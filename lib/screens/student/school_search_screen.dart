@@ -1,9 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:warrior_path/screens/student/application_sent_screen.dart';
 
 class SchoolSearchScreen extends StatefulWidget {
-  const SchoolSearchScreen({Key? key}) : super(key: key);
+  // Añadimos un flag para saber si venimos del wizard de un nuevo usuario
+  final bool isFromWizard;
+
+  const SchoolSearchScreen({Key? key, this.isFromWizard = false}) : super(key: key);
 
   @override
   State<SchoolSearchScreen> createState() => _SchoolSearchScreenState();
@@ -12,12 +16,11 @@ class SchoolSearchScreen extends StatefulWidget {
 class _SchoolSearchScreenState extends State<SchoolSearchScreen> {
   final _searchController = TextEditingController();
 
-  // Usamos un Future para cargar los datos una vez y luego filtramos en memoria
   late Future<List<QueryDocumentSnapshot>> _schoolsFuture;
   List<QueryDocumentSnapshot> _allSchools = [];
   List<QueryDocumentSnapshot> _filteredSchools = [];
 
-  Set<String> _userSchoolIds = {}; // Guardaremos los IDs de las escuelas del usuario aquí
+  Set<String> _userSchoolIds = {};
   bool _isLoading = false;
 
   @override
@@ -32,7 +35,6 @@ class _SchoolSearchScreenState extends State<SchoolSearchScreen> {
     super.dispose();
   }
 
-  // Función mejorada que carga todas las escuelas y los datos del usuario una vez
   Future<List<QueryDocumentSnapshot>> _fetchSchoolsAndFilter() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
@@ -40,7 +42,6 @@ class _SchoolSearchScreenState extends State<SchoolSearchScreen> {
       if (userDoc.exists) {
         final memberships = userDoc.data()?['activeMemberships'] as Map<String, dynamic>? ?? {};
         final pendingApplications = userDoc.data()?['pendingApplications'] as Map<String, dynamic>? ?? {};
-        // Unimos los IDs de las escuelas donde es miembro y donde tiene solicitud
         _userSchoolIds = {...memberships.keys, ...pendingApplications.keys}.toSet();
       }
     }
@@ -48,40 +49,30 @@ class _SchoolSearchScreenState extends State<SchoolSearchScreen> {
     final schoolsSnapshot = await FirebaseFirestore.instance.collection('schools').get();
     _allSchools = schoolsSnapshot.docs;
 
-    // Aplicamos el filtro inicial (sin texto de búsqueda)
     _applyFilter();
 
     return _filteredSchools;
   }
 
-  // Lógica de filtrado que se ejecuta en el dispositivo
   void _applyFilter() {
     final query = _searchController.text.toLowerCase().trim();
     setState(() {
       _filteredSchools = _allSchools.where((schoolDoc) {
-        // Condición 1: El ID de la escuela NO debe estar en la lista del usuario
         final isNotMember = !_userSchoolIds.contains(schoolDoc.id);
-
-        // Condición 2: El nombre debe coincidir con la búsqueda (si hay búsqueda)
-        if (query.isEmpty) {
-          return isNotMember; // Si no hay búsqueda, solo filtramos por membresía
-        }
+        if (query.isEmpty) return isNotMember;
         final schoolData = schoolDoc.data() as Map<String, dynamic>;
         final nameMatches = schoolData['name']?.toString().toLowerCase().contains(query) ?? false;
-
         return isNotMember && nameMatches;
       }).toList();
     });
   }
 
-  // Lógica de postulación mejorada
   Future<void> _postulateToSchool(String schoolId, String schoolName) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    // Chequeo extra por si acaso, aunque la lista ya está filtrada
     if (_userSchoolIds.contains(schoolId)) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ya eres miembro o tienes una solicitud pendiente en esta escuela.')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ya tienes un vínculo con esta escuela.')));
       return;
     }
 
@@ -110,27 +101,41 @@ class _SchoolSearchScreenState extends State<SchoolSearchScreen> {
                   'userId': user.uid, 'displayName': displayName, 'status': 'pending', 'applicationDate': FieldValue.serverTimestamp(),
                 });
 
-                batch.update(userRef, {
+                // Lógica unificada para guardar la postulación
+                final Map<String, dynamic> userDataToUpdate = {
                   'pendingApplications.$schoolId': {
-                    'schoolName': schoolName, 'applicationDate': FieldValue.serverTimestamp(),
+                    'schoolName': schoolName,
+                    'applicationDate': FieldValue.serverTimestamp(),
                   }
-                });
+                };
 
+                // Si es un usuario nuevo, también finalizamos su wizard
+                if (widget.isFromWizard) {
+                  userDataToUpdate['wizardStep'] = 99;
+                }
+
+                batch.update(userRef, userDataToUpdate);
                 await batch.commit();
 
                 if (!mounted) return;
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('¡Solicitud para "$schoolName" enviada!'), backgroundColor: Colors.green),
-                );
-                Navigator.of(context).pop();
+                // Lógica de navegación condicional
+                if (widget.isFromWizard) {
+                  // Si es usuario nuevo, lo llevamos a la pantalla final
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (context) => ApplicationSentScreen(schoolName: schoolName)),
+                        (route) => false,
+                  );
+                } else {
+                  // Si es un usuario existente, solo mostramos un mensaje y volvemos
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('¡Solicitud para "$schoolName" enviada!'), backgroundColor: Colors.green));
+                  Navigator.of(context).pop();
+                }
 
               } catch (e) {
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al enviar la solicitud: ${e.toString()}')));
               } finally {
-                if (mounted) {
-                  setState(() { _isLoading = false; });
-                }
+                if (mounted) setState(() { _isLoading = false; });
               }
             },
             child: const Text('Enviar'),
@@ -143,9 +148,7 @@ class _SchoolSearchScreenState extends State<SchoolSearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Buscar Nueva Escuela'),
-      ),
+      appBar: AppBar(title: const Text('Buscar Nueva Escuela')),
       body: AbsorbPointer(
         absorbing: _isLoading,
         child: Column(
@@ -155,11 +158,7 @@ class _SchoolSearchScreenState extends State<SchoolSearchScreen> {
               child: TextField(
                 controller: _searchController,
                 onChanged: (_) => _applyFilter(),
-                decoration: const InputDecoration(
-                  labelText: 'Nombre de la escuela',
-                  prefixIcon: Icon(Icons.search),
-                  border: OutlineInputBorder(),
-                ),
+                decoration: const InputDecoration(labelText: 'Nombre de la escuela', prefixIcon: Icon(Icons.search), border: OutlineInputBorder()),
               ),
             ),
             if (_isLoading) const LinearProgressIndicator(),
@@ -167,31 +166,21 @@ class _SchoolSearchScreenState extends State<SchoolSearchScreen> {
               child: FutureBuilder<List<QueryDocumentSnapshot>>(
                 future: _schoolsFuture,
                 builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  if (snapshot.hasError) {
-                    return const Center(child: Text('Error al cargar las escuelas.'));
-                  }
-                  if (_filteredSchools.isEmpty) {
-                    return const Center(child: Text('No se encontraron nuevas escuelas.'));
-                  }
+                  if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+                  if (snapshot.hasError) return const Center(child: Text('Error al cargar las escuelas.'));
+                  if (_filteredSchools.isEmpty) return const Center(child: Text('No se encontraron nuevas escuelas.'));
 
                   return ListView.builder(
                     itemCount: _filteredSchools.length,
                     itemBuilder: (context, index) {
                       final schoolDoc = _filteredSchools[index];
                       final schoolData = schoolDoc.data() as Map<String, dynamic>;
-
                       return Card(
                         margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
                         child: ListTile(
                           title: Text(schoolData['name'] ?? 'Sin Nombre'),
                           subtitle: Text('${schoolData['martialArt']} - ${schoolData['city'] ?? 'Sin Ciudad'}'),
-                          trailing: ElevatedButton(
-                            child: const Text('Postularme'),
-                            onPressed: () => _postulateToSchool(schoolDoc.id, schoolData['name']),
-                          ),
+                          trailing: ElevatedButton(child: const Text('Postularme'), onPressed: () => _postulateToSchool(schoolDoc.id, schoolData['name'])),
                         ),
                       );
                     },

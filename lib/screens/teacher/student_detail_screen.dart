@@ -24,7 +24,6 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
   late Stream<QuerySnapshot> _attendanceStream;
   late ConfettiController _confettiController;
 
-  // Variables de estado para la cabecera para evitar parpadeos
   StreamSubscription? _memberSubscription;
   bool _isHeaderLoading = true;
   String _studentName = '';
@@ -42,38 +41,27 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
       if (mounted) setState(() {});
     });
 
-    _listenToMemberData(); // Empezamos a escuchar los datos del miembro
+    _listenToMemberData();
 
-    // El stream de asistencia se define una vez
     _attendanceStream = FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('attendanceRecords').where('presentStudentIds', arrayContains: widget.studentId).orderBy('date', descending: true).snapshots();
   }
 
   void _listenToMemberData() {
     final memberStream = FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId).snapshots();
-
     _memberSubscription = memberStream.listen((memberSnapshot) async {
       if (!memberSnapshot.exists) {
         if (mounted) setState(() => _isHeaderLoading = false);
         return;
       }
-
       final memberData = memberSnapshot.data()!;
       final currentLevelId = memberData['currentLevelId'] ?? memberData['initialLevelId'];
-
-      final results = await Future.wait([
-        _fetchLevelDetails(currentLevelId),
-        _fetchUserPhotoUrl(),
-      ]);
-
-      final levelData = results[0] as Map<String, dynamic>?;
-      final photoUrl = results[1] as String?;
-
+      final results = await Future.wait([_fetchLevelDetails(currentLevelId), _fetchUserPhotoUrl()]);
       if (mounted) {
         setState(() {
           _studentName = memberData['displayName'] ?? 'Alumno';
           _currentRole = memberData['role'] ?? 'alumno';
-          _currentLevelData = levelData;
-          _photoUrl = photoUrl;
+          _currentLevelData = results[0] as Map<String, dynamic>?;
+          _photoUrl = results[1] as String?;
           _isHeaderLoading = false;
         });
       }
@@ -82,7 +70,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
 
   Future<String?> _fetchUserPhotoUrl() async {
     final userDoc = await FirebaseFirestore.instance.collection('users').doc(widget.studentId).get();
-    return (userDoc.data() as Map<String, dynamic>)['photoUrl'] as String?;
+    return (userDoc.data() as Map<String, dynamic>?)?['photoUrl'] as String?;
   }
 
   @override
@@ -92,6 +80,108 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
     _confettiController.dispose();
     _memberSubscription?.cancel();
     super.dispose();
+  }
+
+  Future<Map<String, dynamic>?> _fetchLevelDetails(String? levelId) async {
+    if (levelId == null) return null;
+    final levelDoc = await FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('levels').doc(levelId).get();
+    if (!levelDoc.exists) return {'name': 'Nivel Borrado', 'colorValue': Colors.grey.value, 'order': -1, 'id': levelId};
+    return {...levelDoc.data()!, 'id': levelDoc.id};
+  }
+
+  Future<void> _showPromotionDialog(String currentLevelId, int currentLevelOrder) async {
+    final levelsSnapshot = await FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('levels').orderBy('order').get();
+    final List<DocumentSnapshot> availableLevels = levelsSnapshot.docs;
+    DocumentSnapshot? selectedNextLevel;
+    final notesController = TextEditingController();
+
+    showDialog(context: context, builder: (context) => StatefulBuilder(builder: (context, setDialogState) {
+      return AlertDialog(
+        title: const Text('Promover o Corregir Nivel'),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          DropdownButtonFormField<DocumentSnapshot>(
+            hint: const Text('Selecciona el nuevo nivel'), value: selectedNextLevel,
+            items: availableLevels.map((levelDoc) => DropdownMenuItem<DocumentSnapshot>(value: levelDoc, child: Text(levelDoc['name']))).toList(),
+            onChanged: (value) => setDialogState(() => selectedNextLevel = value),
+          ),
+          const SizedBox(height: 16),
+          TextField(controller: notesController, decoration: const InputDecoration(labelText: 'Notas (opcional)'), maxLines: 3),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancelar')),
+          ElevatedButton(
+            onPressed: selectedNextLevel == null ? null : () {
+              _promoteStudent(currentLevelId: currentLevelId, newLevelSnapshot: selectedNextLevel!, notes: notesController.text);
+              Navigator.of(context).pop();
+            },
+            child: const Text('Confirmar'),
+          ),
+        ],
+      );
+    }));
+  }
+
+  Future<void> _promoteStudent({required String currentLevelId, required DocumentSnapshot newLevelSnapshot, required String notes}) async {
+    try {
+      final firestore = FirebaseFirestore.instance;
+      final memberRef = firestore.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId);
+      final newLevelId = newLevelSnapshot.id;
+      final batch = firestore.batch();
+      batch.update(memberRef, {'currentLevelId': newLevelId, 'hasUnseenPromotion': true});
+      final historyRef = memberRef.collection('progressionHistory').doc();
+      batch.set(historyRef, {
+        'date': Timestamp.now(),
+        'previousLevelId': currentLevelId,
+        'newLevelId': newLevelId,
+        'type': 'level_promotion',
+        'notes': notes.trim(),
+        'promotedBy': FirebaseAuth.instance.currentUser?.uid
+      });
+      await batch.commit();
+      _confettiController.play();
+      if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('¡Alumno promovido con éxito!')));
+    } catch (e) {
+      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al promover: ${e.toString()}')));
+    }
+  }
+
+  Future<void> _showChangeRoleDialog(String currentRole) async {
+    String? newRole = currentRole;
+    showDialog(context: context, builder: (context) => StatefulBuilder(builder: (context, setDialogState) {
+      return AlertDialog(
+        title: const Text('Cambiar Rol del Miembro'),
+        content: Column(mainAxisSize: MainAxisSize.min, children: ['alumno', 'instructor', 'maestro'].map((role) {
+          return RadioListTile<String>(title: Text(role[0].toUpperCase() + role.substring(1)), value: role, groupValue: newRole, onChanged: (value) => setDialogState(() => newRole = value));
+        }).toList()),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancelar')),
+          ElevatedButton(
+            onPressed: newRole == null || newRole == currentRole ? null : () {
+              _changeStudentRole(newRole!);
+              Navigator.of(context).pop();
+            },
+            child: const Text('Guardar'),
+          ),
+        ],
+      );
+    }));
+  }
+
+  Future<void> _changeStudentRole(String newRole) async {
+    try {
+      final firestore = FirebaseFirestore.instance;
+      final batch = firestore.batch();
+      final memberRef = firestore.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId);
+      batch.update(memberRef, {'role': newRole});
+      final userRef = firestore.collection('users').doc(widget.studentId);
+      batch.set(userRef, {'activeMemberships': { widget.schoolId: newRole }}, SetOptions(merge: true));
+      final historyRef = memberRef.collection('progressionHistory').doc();
+      batch.set(historyRef, {'date': Timestamp.now(), 'type': 'role_change', 'newRole': newRole, 'promotedBy': FirebaseAuth.instance.currentUser?.uid});
+      await batch.commit();
+      if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Rol actualizado con éxito.')));
+    } catch (e) {
+      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al cambiar el rol: ${e.toString()}')));
+    }
   }
 
   Future<void> _showRegisterPaymentDialog() async {
@@ -133,169 +223,6 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
     }
   }
 
-  Future<Map<String, dynamic>?> _fetchLevelDetails(String? levelId) async {
-    if (levelId == null) return null;
-    final levelDoc = await FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('levels').doc(levelId).get();
-    if (!levelDoc.exists) return {'name': 'Nivel no encontrado', 'colorValue': Colors.red.value, 'order': -1, 'id': levelId};
-    return {...levelDoc.data()!, 'id': levelDoc.id};
-  }
-
-  Future<void> _showPromotionDialog(String currentLevelId, int currentLevelOrder) async {
-    final levelsSnapshot = await FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('levels').orderBy('order').get();
-    final List<DocumentSnapshot> availableLevels = levelsSnapshot.docs;
-    DocumentSnapshot? selectedNextLevel;
-    final notesController = TextEditingController();
-
-    showDialog(context: context, builder: (context) => StatefulBuilder(builder: (context, setDialogState) {
-      return AlertDialog(
-        title: const Text('Promover o Corregir Nivel'),
-        content: Column(mainAxisSize: MainAxisSize.min, children: [
-          DropdownButtonFormField<DocumentSnapshot>(
-            hint: const Text('Selecciona el nuevo nivel'),
-            value: selectedNextLevel,
-            items: availableLevels.map((levelDoc) => DropdownMenuItem<DocumentSnapshot>(value: levelDoc, child: Text(levelDoc['name']))).toList(),
-            onChanged: (value) => setDialogState(() => selectedNextLevel = value),
-          ),
-          const SizedBox(height: 16),
-          TextField(controller: notesController, decoration: const InputDecoration(labelText: 'Notas (opcional)'), maxLines: 3),
-        ]),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancelar')),
-          ElevatedButton(
-            onPressed: selectedNextLevel == null ? null : () {
-              _promoteStudent(currentLevelId: currentLevelId, newLevelSnapshot: selectedNextLevel!, notes: notesController.text);
-              Navigator.of(context).pop();
-            },
-            child: const Text('Confirmar'),
-          ),
-        ],
-      );
-    }));
-  }
-
-  Future<void> _promoteStudent({required String currentLevelId, required DocumentSnapshot newLevelSnapshot, required String notes}) async {
-    try {
-      final firestore = FirebaseFirestore.instance;
-      final memberRef = firestore.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId);
-      final newLevelId = newLevelSnapshot.id;
-      final batch = firestore.batch();
-
-      batch.update(memberRef, {'currentLevelId': newLevelId, 'hasUnseenPromotion': true});
-      final historyRef = memberRef.collection('progressionHistory').doc();
-      batch.set(historyRef, {'date': Timestamp.now(), 'previousLevelId': currentLevelId, 'newLevelId': newLevelId, 'notes': notes.trim(), 'promotedBy': FirebaseAuth.instance.currentUser?.uid});
-      await batch.commit();
-
-      _confettiController.play();
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('¡Alumno promovido con éxito!')));
-    } catch (e) {
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al promover: ${e.toString()}')));
-    }
-  }
-
-  Future<void> _showChangeRoleDialog(String currentRole) async {
-    String? newRole = currentRole;
-    showDialog(context: context, builder: (context) => StatefulBuilder(builder: (context, setDialogState) {
-      return AlertDialog(
-        title: const Text('Cambiar Rol del Miembro'),
-        content: Column(mainAxisSize: MainAxisSize.min, children: ['alumno', 'instructor', 'maestro'].map((role) {
-          return RadioListTile<String>(
-            title: Text(role[0].toUpperCase() + role.substring(1)),
-            value: role,
-            groupValue: newRole,
-            onChanged: (value) => setDialogState(() => newRole = value),
-          );
-        }).toList()),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancelar')),
-          ElevatedButton(
-            onPressed: newRole == null || newRole == currentRole ? null : () {
-              _changeStudentRole(newRole!);
-              Navigator.of(context).pop();
-            },
-            child: const Text('Guardar'),
-          ),
-        ],
-      );
-    }));
-  }
-
-  Future<void> _changeStudentRole(String newRole) async {
-    try {
-      final firestore = FirebaseFirestore.instance;
-      final batch = firestore.batch();
-
-      final memberRef = firestore.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId);
-      final userRef = firestore.collection('users').doc(widget.studentId);
-
-      // 1. Actualizar el rol en la ficha del miembro de la escuela
-      batch.update(memberRef, {'role': newRole});
-
-      // 2. Actualizar el rol en el "llavero" del usuario
-      batch.set(userRef, {
-        'activeMemberships': { widget.schoolId: newRole }
-      }, SetOptions(merge: true));
-
-      // 3. Crear un registro en el historial de progresión
-      final historyRef = memberRef.collection('progressionHistory').doc();
-      batch.set(historyRef, {
-        'date': Timestamp.now(),
-        'type': 'role_change', // Un tipo para diferenciarlo de la promoción de nivel
-        'newRole': newRole,
-        'promotedBy': FirebaseAuth.instance.currentUser?.uid,
-      });
-
-      await batch.commit();
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Rol actualizado con éxito.')));
-    } catch (e) {
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al cambiar el rol: ${e.toString()}')));
-    }
-  }
-
-  Widget _buildProgressionHistoryTab() {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('schools').doc(widget.schoolId)
-          .collection('members').doc(widget.studentId)
-          .collection('progressionHistory')
-          .orderBy('date', descending: true)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const Center(child: Text('Este alumno no tiene historial de promociones.'));
-        }
-
-        return ListView.builder(
-          itemCount: snapshot.data!.docs.length,
-          itemBuilder: (context, index) {
-            final history = snapshot.data!.docs[index].data() as Map<String, dynamic>;
-            final date = (history['date'] as Timestamp).toDate();
-            final formattedDate = DateFormat('dd/MM/yyyy').format(date);
-
-            // Usamos un FutureBuilder para obtener el nombre del nivel, ya que solo tenemos el ID
-            return FutureBuilder<DocumentSnapshot>(
-              future: FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('levels').doc(history['newLevelId']).get(),
-              builder: (context, levelSnapshot) {
-                String levelName = '...';
-                if (levelSnapshot.hasData) {
-                  levelName = levelSnapshot.data?['name'] ?? 'Nivel Desconocido';
-                }
-                return ListTile(
-                  leading: const Icon(Icons.military_tech),
-                  title: Text('Promovido a $levelName'),
-                  subtitle: Text(history['notes'] ?? 'Sin notas'),
-                  trailing: Text(formattedDate),
-                );
-              },
-            );
-          },
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -304,19 +231,13 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
         Scaffold(
           appBar: AppBar(
             title: Text(_studentName.isEmpty ? 'Cargando...' : _studentName),
-            // --- 3. AÑADIMOS EL MENÚ DE ACCIONES AQUÍ ---
             actions: [
               PopupMenuButton<String>(
                 onSelected: (value) {
-                  if (value == 'change_role') {
-                    _showChangeRoleDialog(_currentRole);
-                  }
+                  if (value == 'change_role') _showChangeRoleDialog(_currentRole);
                 },
                 itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                  const PopupMenuItem<String>(
-                    value: 'change_role',
-                    child: Text('Cambiar Rol'),
-                  ),
+                  const PopupMenuItem<String>(value: 'change_role', child: Text('Cambiar Rol')),
                 ],
               ),
             ],
@@ -340,16 +261,10 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
                       children: [
                         Text(_studentName, style: Theme.of(context).textTheme.headlineSmall),
                         const SizedBox(height: 4),
-                        Text(
-                          _currentRole.toUpperCase(),
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
-                        ),
+                        Text(_currentRole.toUpperCase(), style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600)),
                         const SizedBox(height: 8),
                         Chip(
-                          label: Text(
-                            _currentLevelData?['name'] ?? 'Sin Nivel',
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                          ),
+                          label: Text(_currentLevelData?['name'] ?? 'Sin Nivel', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                           backgroundColor: _currentLevelData != null ? Color(_currentLevelData!['colorValue']) : Colors.grey,
                         ),
                       ],
@@ -357,26 +272,16 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
                   ],
                 ),
               ),
-              TabBar(
-                controller: _tabController,
-                isScrollable: true,
-                tabs: const [
-                  Tab(text: 'General'),
-                  Tab(text: 'Asistencia'),
-                  Tab(text: 'Pagos'),
-                  Tab(text: 'Progreso'),
-                ],
-              ),
+              TabBar(controller: _tabController, isScrollable: true, tabs: const [
+                Tab(text: 'General'), Tab(text: 'Asistencia'), Tab(text: 'Pagos'), Tab(text: 'Progreso'),
+              ]),
               Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildGeneralInfoTab(),
-                    _buildAttendanceHistoryTab(),
-                    _buildPaymentsHistoryTab(),
-                    _buildProgressionHistoryTab(),
-                  ],
-                ),
+                child: TabBarView(controller: _tabController, children: [
+                  _buildGeneralInfoTab(),
+                  _buildAttendanceHistoryTab(),
+                  _buildPaymentsHistoryTab(),
+                  _buildProgressionHistoryTab(),
+                ]),
               ),
             ],
           ),
@@ -397,22 +302,22 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
     );
   }
 
+  // --- WIDGETS DE AYUDA ---
+
   Widget? _buildFloatingActionButton() {
     switch (_tabController.index) {
-      case 2: // Pagos
-        return FloatingActionButton.extended(onPressed: _showRegisterPaymentDialog, label: const Text('Registrar Pago'), icon: const Icon(Icons.payment));
-      case 3: // Progreso
-        return FloatingActionButton.extended(
-          onPressed: () {
-            if (_currentLevelData != null) {
-              _showPromotionDialog(_currentLevelData!['id'], _currentLevelData!['order']);
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No se pudo cargar el nivel actual del alumno.')));
-            }
-          },
-          label: const Text('Promover Nivel'),
-          icon: const Icon(Icons.arrow_upward),
-        );
+      case 2: return FloatingActionButton.extended(onPressed: _showRegisterPaymentDialog, label: const Text('Registrar Pago'), icon: const Icon(Icons.payment));
+      case 3: return FloatingActionButton.extended(
+        onPressed: () {
+          if (_currentLevelData != null) {
+            _showPromotionDialog(_currentLevelData!['id'], _currentLevelData!['order']);
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No se pudo cargar el nivel actual del alumno.')));
+          }
+        },
+        label: const Text('Promover Nivel'),
+        icon: const Icon(Icons.arrow_upward),
+      );
       default: return null;
     }
   }
@@ -421,9 +326,8 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
     return FutureBuilder<DocumentSnapshot>(
       future: FirebaseFirestore.instance.collection('users').doc(widget.studentId).get(),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-        if (!snapshot.hasData || !snapshot.data!.exists) return const Center(child: Text('No se encontró el perfil del usuario.'));
-        final userData = snapshot.data!.data() as Map<String, dynamic>;
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        final userData = snapshot.data?.data() as Map<String, dynamic>? ?? {};
         return SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
           child: Column(children: [
@@ -446,23 +350,15 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
   }
 
   Widget _buildInfoCard({required String title, required IconData icon, Color? iconColor, required List<Widget> children}) {
-    return Card(
-      child: Padding(padding: const EdgeInsets.all(16.0), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          Icon(icon, color: iconColor ?? Theme.of(context).primaryColor),
-          const SizedBox(width: 8),
-          Text(title, style: Theme.of(context).textTheme.titleLarge),
-        ]),
-        const Divider(height: 20),
-        ...children,
-      ])),
-    );
+    return Card(child: Padding(padding: const EdgeInsets.all(16.0), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [Icon(icon, color: iconColor ?? Theme.of(context).primaryColor), const SizedBox(width: 8), Text(title, style: Theme.of(context).textTheme.titleLarge)]),
+      const Divider(height: 20), ...children,
+    ])));
   }
 
   Widget _buildInfoRow(String label, String value) {
     return Padding(padding: const EdgeInsets.symmetric(vertical: 4.0), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-      const SizedBox(width: 8),
+      Text(label, style: const TextStyle(fontWeight: FontWeight.bold)), const SizedBox(width: 8),
       Expanded(child: Text(value.isEmpty ? 'No especificado' : value)),
     ]));
   }
@@ -471,8 +367,8 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId).collection('payments').orderBy('paymentDate', descending: true).snapshots(),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return const Center(child: Text('No hay pagos registrados para este alumno.'));
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        if (snapshot.data!.docs.isEmpty) return const Center(child: Text('No hay pagos registrados para este alumno.'));
         return ListView.builder(itemCount: snapshot.data!.docs.length, itemBuilder: (context, index) {
           final payment = snapshot.data!.docs[index].data() as Map<String, dynamic>;
           final date = (payment['paymentDate'] as Timestamp).toDate();
@@ -487,18 +383,65 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
     return StreamBuilder<QuerySnapshot>(
       stream: _attendanceStream,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-        if (snapshot.hasError) {
-          print('ERROR DEL STREAM DE ASISTENCIA: ${snapshot.error}');
-          return const Center(child: Text('Error al cargar el historial.'));
-        }
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return const Center(child: Text('No hay registros de asistencia para este alumno.'));
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        if (snapshot.hasError) return const Center(child: Text('Error al cargar el historial.'));
+        if (snapshot.data!.docs.isEmpty) return const Center(child: Text('No hay registros de asistencia para este alumno.'));
         return ListView.builder(itemCount: snapshot.data!.docs.length, itemBuilder: (context, index) {
           final record = snapshot.data!.docs[index].data() as Map<String, dynamic>;
           final date = (record['date'] as Timestamp).toDate();
           final formattedDate = '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
           return ListTile(leading: const Icon(Icons.check_circle, color: Colors.green), title: Text(record['scheduleTitle'] ?? 'Clase'), trailing: Text(formattedDate));
         });
+      },
+    );
+  }
+
+  Widget _buildProgressionHistoryTab() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId).collection('progressionHistory').orderBy('date', descending: true).snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        if (snapshot.data!.docs.isEmpty) return const Center(child: Text('Este alumno no tiene historial de promociones.'));
+        return ListView.builder(itemCount: snapshot.data!.docs.length, itemBuilder: (context, index) {
+          final history = snapshot.data!.docs[index].data() as Map<String, dynamic>;
+          final eventType = history['type'] ?? 'level_promotion';
+          if (eventType == 'role_change') return _buildRoleChangeEventTile(history);
+          return _buildLevelPromotionEventTile(history);
+        });
+      },
+    );
+  }
+
+  Widget _buildRoleChangeEventTile(Map<String, dynamic> history) {
+    final date = (history['date'] as Timestamp).toDate();
+    final formattedDate = DateFormat('dd/MM/yyyy').format(date);
+    final newRole = history['newRole'] ?? '';
+    final roleText = 'Rol actualizado a ${newRole[0].toUpperCase()}${newRole.substring(1)}';
+    return Card(margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6), child: ListTile(leading: const Icon(Icons.admin_panel_settings), title: Text(roleText), trailing: Text(formattedDate)));
+  }
+
+  Widget _buildLevelPromotionEventTile(Map<String, dynamic> history) {
+    final date = (history['date'] as Timestamp).toDate();
+    final formattedDate = DateFormat('dd/MM/yyyy').format(date);
+    final notes = history['notes'] as String?;
+    final levelId = history['newLevelId'];
+    if (levelId == null) return Card(margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6), child: ListTile(leading: const Icon(Icons.error, color: Colors.red), title: const Text('Registro de promoción inválido'), trailing: Text(formattedDate)));
+    return FutureBuilder<DocumentSnapshot>(
+      future: FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('levels').doc(levelId).get(),
+      builder: (context, levelSnapshot) {
+        String levelName = 'Cargando...';
+        Color levelColor = Colors.grey;
+        if (levelSnapshot.connectionState == ConnectionState.done) {
+          if (levelSnapshot.hasData && levelSnapshot.data!.exists) {
+            final levelData = levelSnapshot.data!.data() as Map<String, dynamic>;
+            levelName = levelData['name'] ?? 'Nivel Borrado';
+            levelColor = Color(levelData['colorValue']);
+          } else {
+            levelName = 'Nivel Borrado';
+            levelColor = Colors.grey.shade400;
+          }
+        }
+        return Card(margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6), child: ListTile(leading: Icon(Icons.military_tech, color: levelColor), title: Text('Promovido a $levelName'), subtitle: (notes != null && notes.isNotEmpty) ? Text('Notas: "$notes"') : null, trailing: Text(formattedDate)));
       },
     );
   }

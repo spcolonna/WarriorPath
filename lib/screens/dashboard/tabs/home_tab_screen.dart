@@ -7,7 +7,6 @@ import 'package:warrior_path/screens/role_selector_screen.dart';
 import 'package:warrior_path/screens/teacher/attendance_checklist_screen.dart';
 
 class HomeTabScreen extends StatefulWidget {
-  // 1. EL CONSTRUCTOR YA NO RECIBE PARÁMETROS
   const HomeTabScreen({Key? key}) : super(key: key);
 
   @override
@@ -15,169 +14,186 @@ class HomeTabScreen extends StatefulWidget {
 }
 
 class _HomeTabScreenState extends State<HomeTabScreen> {
+  // Ya no necesitamos la función _getDashboardStreams
 
-  // 2. LA FUNCIÓN AHORA RECIBE EL schoolId COMO ARGUMENTO
-  Stream<Map<String, dynamic>> _getDashboardStreams(String schoolId) {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) throw Exception('Usuario no autenticado');
-
-    final schoolRef = FirebaseFirestore.instance.collection('schools').doc(schoolId);
-    final userStream = FirebaseFirestore.instance.collection('users').doc(user.uid).snapshots();
-    final activeStudentsStream = schoolRef.collection('members').where('status', isEqualTo: 'active').snapshots();
-    final pendingRequestsStream = schoolRef.collection('members').where('status', isEqualTo: 'pending').snapshots();
-    final today = DateTime.now().weekday;
-    final todaySchedulesStream = schoolRef.collection('classSchedules').where('dayOfWeek', isEqualTo: today).orderBy('startTime').snapshots();
-
-    return userStream.asyncMap((userDoc) async {
-      final schoolSnap = await schoolRef.get(); // Usamos .get() aquí para eficiencia
-      final activeStudentsSnap = await activeStudentsStream.first;
-      final pendingRequestsSnap = await pendingRequestsStream.first;
-      final todaySchedulesSnap = await todaySchedulesStream.first;
-
-      return {
-        'activeStudents': activeStudentsSnap.docs.length,
-        'pendingRequests': pendingRequestsSnap.docs.length,
-        'schoolName': schoolSnap.data()?['name'] ?? 'Mi Escuela',
-        'userName': userDoc.data()?['displayName'] ?? 'Maestro',
-        'todaySchedules': todaySchedulesSnap.docs,
-      };
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // 3. OBTENEMOS EL ID DE LA ESCUELA ACTIVA DESDE EL PROVIDER
-    final session = Provider.of<SessionProvider>(context);
-    final schoolId = session.activeSchoolId;
-
-    if (schoolId == null) {
-      return const Scaffold(body: Center(child: Text('Error: No hay una escuela activa en la sesión.')));
+  void _showSelectClassDialog(List<QueryDocumentSnapshot> schedules, String schoolId) {
+    if (schedules.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No hay clases programadas para hoy.')),
+      );
+      return;
     }
 
-    return StreamBuilder<Map<String, dynamic>>(
-      stream: _getDashboardStreams(schoolId),
-      builder: (context, snapshot) {
-        // --- 4. EL APPBAR AHORA ES DINÁMICO ---
-        // Construimos el título del AppBar usando el nombre de la escuela del snapshot
-        // o un FutureBuilder si preferimos que sea independiente del stream principal.
-        final schoolName = snapshot.data?['schoolName'] ?? 'Cargando...';
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Seleccionar Clase'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: schedules.length,
+              itemBuilder: (context, index) {
+                final schedule = schedules[index].data() as Map<String, dynamic>;
+                final scheduleTitle = schedule['title'];
+                final scheduleTime = '${schedule['startTime']} - ${schedule['endTime']}';
 
-        return Scaffold(
-          appBar: AppBar(
-            title: InkWell(
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const RoleSelectorScreen()),
+                return ListTile(
+                  title: Text(scheduleTitle),
+                  subtitle: Text(scheduleTime),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => AttendanceChecklistScreen(
+                          schoolId: schoolId,
+                          scheduleTitle: scheduleTitle,
+                        ),
+                      ),
+                    );
+                  },
                 );
               },
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Flexible(child: Text(schoolName, overflow: TextOverflow.ellipsis)),
-                  const Icon(Icons.arrow_drop_down),
-                ],
-              ),
             ),
           ),
-          body: snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData
-              ? const Center(child: CircularProgressIndicator())
-              : snapshot.hasError
-              ? Center(child: Text('Error: ${snapshot.error}'))
-              : _buildDashboardContent(context, snapshot.data!, schoolId), // Pasamos el schoolId
-
-          floatingActionButton: snapshot.hasData
-              ? FloatingActionButton.extended(
-            onPressed: () {
-              final todaySchedules = snapshot.data!['todaySchedules'] as List<QueryDocumentSnapshot>? ?? [];
-              _showSelectClassDialog(todaySchedules, schoolId); // Pasamos el schoolId
-            },
-            label: const Text('Tomar Asistencia'),
-            icon: const Icon(Icons.check_circle_outline),
-          )
-              : null,
         );
       },
     );
   }
 
-  // Extraje el contenido a un widget separado para mayor limpieza
-  Widget _buildDashboardContent(BuildContext context, Map<String, dynamic> data, String schoolId) {
-    final int activeStudents = data['activeStudents'] ?? 0;
-    final int pendingRequests = data['pendingRequests'] ?? 0;
-    final String userName = data['userName'];
-    final List<QueryDocumentSnapshot> todaySchedules = data['todaySchedules'] ?? [];
+  @override
+  Widget build(BuildContext context) {
+    final session = Provider.of<SessionProvider>(context);
+    final schoolId = session.activeSchoolId;
+    final user = FirebaseAuth.instance.currentUser;
 
-    return RefreshIndicator(
-      onRefresh: () async => setState(() {}),
-      child: ListView(
+    if (schoolId == null || user == null) {
+      return const Scaffold(body: Center(child: Text('Error: Sesión no válida.')));
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: _buildSchoolSelector(schoolId),
+      ),
+      body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
-          Text('¡Bienvenido, $userName!', style: Theme.of(context).textTheme.headlineSmall),
-          const SizedBox(height: 24),
-          GridView.count(
-            crossAxisCount: 2,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            children: [
-              _buildStatCard(title: 'Alumnos Activos', value: activeStudents.toString(), icon: Icons.groups, color: Colors.blue),
-              _buildStatCard(
-                title: 'Solicitudes Pendientes',
-                value: pendingRequests.toString(),
-                icon: Icons.person_add,
-                color: pendingRequests > 0 ? Colors.orange : Colors.green,
-                onTap: () {
-                  // Esta navegación ya no se maneja con callback, sino directamente
-                  // Aquí iría la lógica si quisiéramos usar un TabController global
-                },
-              ),
-            ],
+          // StreamBuilder para el saludo de bienvenida
+          StreamBuilder<DocumentSnapshot>(
+            stream: FirebaseFirestore.instance.collection('users').doc(user.uid).snapshots(),
+            builder: (context, snapshot) {
+              final userName = snapshot.data?['displayName'] ?? 'Maestro';
+              return Text('¡Bienvenido, $userName!', style: Theme.of(context).textTheme.headlineSmall);
+            },
           ),
+          const SizedBox(height: 24),
+
+          // StreamBuilder para las estadísticas
+          _buildStatsGrid(schoolId),
+
           const SizedBox(height: 24),
           Text('Clases de Hoy', style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 8),
-          _buildTodaySchedules(todaySchedules),
+
+          // StreamBuilder para los horarios del día
+          _buildTodaySchedules(schoolId),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          final today = DateTime.now().weekday;
+          final snapshot = await FirebaseFirestore.instance
+              .collection('schools').doc(schoolId)
+              .collection('classSchedules').where('dayOfWeek', isEqualTo: today).get();
+          _showSelectClassDialog(snapshot.docs, schoolId);
+        },
+        label: const Text('Tomar Asistencia'),
+        icon: const Icon(Icons.check_circle_outline),
+      ),
+    );
+  }
+
+  // --- WIDGETS DE AYUDA REFACTORIZADOS ---
+
+  Widget _buildSchoolSelector(String schoolId) {
+    return InkWell(
+      onTap: () {
+        Navigator.of(context).push(MaterialPageRoute(builder: (context) => const RoleSelectorScreen()));
+      },
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          StreamBuilder<DocumentSnapshot>(
+            stream: FirebaseFirestore.instance.collection('schools').doc(schoolId).snapshots(),
+            builder: (context, snapshot) {
+              final schoolName = snapshot.data?['name'] ?? 'Cargando...';
+              return Flexible(child: Text(schoolName, overflow: TextOverflow.ellipsis));
+            },
+          ),
+          const Icon(Icons.arrow_drop_down),
         ],
       ),
     );
   }
 
-  // 5. ACTUALIZAMOS EL DIÁLOGO PARA QUE USE EL schoolId
-  void _showSelectClassDialog(List<QueryDocumentSnapshot> schedules, String schoolId) {
-    if (schedules.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No hay clases programadas para hoy.')));
-      return;
-    }
-    showDialog(context: context, builder: (context) => AlertDialog(
-      title: const Text('Seleccionar Clase'),
-      content: SizedBox(
-        width: double.maxFinite,
-        child: ListView.builder(
+  Widget _buildStatsGrid(String schoolId) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('schools').doc(schoolId).collection('members').snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+
+        final allMembers = snapshot.data!.docs;
+        final activeStudents = allMembers.where((doc) => doc['status'] == 'active').length;
+        final pendingRequests = allMembers.where((doc) => doc['status'] == 'pending').length;
+
+        return GridView.count(
+          crossAxisCount: 2,
+          crossAxisSpacing: 16, mainAxisSpacing: 16,
           shrinkWrap: true,
-          itemCount: schedules.length,
-          itemBuilder: (context, index) {
-            final schedule = schedules[index].data() as Map<String, dynamic>;
-            final scheduleTitle = schedule['title'];
-            final scheduleTime = '${schedule['startTime']} - ${schedule['endTime']}';
-            return ListTile(
-              title: Text(scheduleTitle),
-              subtitle: Text(scheduleTime),
+          physics: const NeverScrollableScrollPhysics(),
+          children: [
+            _buildStatCard(title: 'Alumnos Activos', value: activeStudents.toString(), icon: Icons.groups, color: Colors.blue),
+            _buildStatCard(
+              title: 'Solicitudes Pendientes', value: pendingRequests.toString(),
+              icon: Icons.person_add,
+              color: pendingRequests > 0 ? Colors.orange : Colors.green,
               onTap: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => AttendanceChecklistScreen(
-                    schoolId: schoolId, // Usamos el schoolId de la sesión
-                    scheduleTitle: scheduleTitle,
-                  ),
-                ));
+                // TODO: Navegar directamente a la pestaña de pendientes. Por ahora, esto es un placeholder.
               },
-            );
-          },
-        ),
-      ),
-    ));
+            ),
+          ],
+        );
+      },
+    );
   }
+
+  Widget _buildTodaySchedules(String schoolId) {
+    final today = DateTime.now().weekday;
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('schools').doc(schoolId).collection('classSchedules').where('dayOfWeek', isEqualTo: today).orderBy('startTime').snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        if (snapshot.data!.docs.isEmpty) {
+          return const Card(child: ListTile(leading: Icon(Icons.info_outline), title: Text('No hay clases programadas para hoy')));
+        }
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: snapshot.data!.docs.length,
+          itemBuilder: (context, index) {
+            final schedule = snapshot.data!.docs[index].data() as Map<String, dynamic>;
+            return Card(child: ListTile(
+              leading: const Icon(Icons.schedule),
+              title: Text(schedule['title']),
+              trailing: Text('${schedule['startTime']} - ${schedule['endTime']}'),
+            ));
+          },
+        );
+      },
+    );
+  }
+
   Widget _buildStatCard({required String title, required String value, required IconData icon, required Color color, VoidCallback? onTap}) {
     return InkWell(
       onTap: onTap,
@@ -201,33 +217,6 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildTodaySchedules(List<QueryDocumentSnapshot> schedules) {
-    if (schedules.isEmpty) {
-      return const Card(
-        child: ListTile(
-          leading: Icon(Icons.info_outline),
-          title: Text('No hay clases programadas para hoy'),
-        ),
-      );
-    }
-
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: schedules.length,
-      itemBuilder: (context, index) {
-        final schedule = schedules[index].data() as Map<String, dynamic>;
-        return Card(
-          child: ListTile(
-            leading: const Icon(Icons.schedule),
-            title: Text(schedule['title']),
-            trailing: Text('${schedule['startTime']} - ${schedule['endTime']}'),
-          ),
-        );
-      },
     );
   }
 }
