@@ -17,7 +17,6 @@ class WizardCreateSchoolScreen extends StatefulWidget {
 }
 
 class _WizardCreateSchoolScreenState extends State<WizardCreateSchoolScreen> {
-  // Controladores para los campos de texto
   final _schoolNameController = TextEditingController();
   final _addressController = TextEditingController();
   final _cityController = TextEditingController();
@@ -25,14 +24,12 @@ class _WizardCreateSchoolScreenState extends State<WizardCreateSchoolScreen> {
   final _descriptionController = TextEditingController();
   final _searchController = TextEditingController();
 
-  // Variables de estado de la UI
   MartialArtTheme? _selectedMartialArtTheme;
-  File? _logoImageFile; // <-- 1. VARIABLE PARA GUARDAR LA IMAGEN DEL LOGO
+  File? _logoImageFile;
   bool _isSubSchool = false;
   bool _isLoading = false;
   bool _isSearching = false;
 
-  // Variables para la búsqueda de la escuela padre
   List<Map<String, dynamic>> _searchResults = [];
   Map<String, dynamic>? _selectedParentSchool;
 
@@ -61,7 +58,6 @@ class _WizardCreateSchoolScreenState extends State<WizardCreateSchoolScreen> {
     super.dispose();
   }
 
-  // --- 2. FUNCIÓN PARA SELECCIONAR LA IMAGEN DEL LOGO ---
   Future<void> _pickLogoImage() async {
     final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 80);
     if (pickedFile != null) {
@@ -72,14 +68,40 @@ class _WizardCreateSchoolScreenState extends State<WizardCreateSchoolScreen> {
   }
 
   Future<void> _searchSchools(String query) async {
-    // ... (este método no cambia)
+    if (!mounted) return;
+    setState(() { _isSearching = true; });
+    try {
+      final result = await FirebaseFirestore.instance
+          .collection('schools')
+          .where('name_lowercase', isGreaterThanOrEqualTo: query.toLowerCase())
+          .where('name_lowercase', isLessThanOrEqualTo: '${query.toLowerCase()}\uf8ff')
+          .limit(5)
+          .get();
+      if (mounted) {
+        setState(() {
+          _searchResults = result.docs
+              .map((doc) => {'id': doc.id, 'name': doc.data()['name'] as String})
+              .toList();
+          _isSearching = false;
+        });
+      }
+    } catch (e) {
+      print("Error al buscar escuelas: $e");
+      if (mounted) {
+        setState(() { _isSearching = false; });
+      }
+    }
   }
 
   void _onParentSchoolSelected(Map<String, dynamic> school) {
-    // ... (este método no cambia)
+    setState(() {
+      _selectedParentSchool = school;
+      _searchResults = [];
+      _searchController.clear();
+      FocusScope.of(context).unfocus();
+    });
   }
 
-  // --- 3. FUNCIÓN DE GUARDADO ACTUALIZADA ---
   Future<void> _continueToNextStep() async {
     if (_schoolNameController.text.trim().isEmpty || _selectedMartialArtTheme == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Nombre y Arte Marcial son requeridos.')));
@@ -97,16 +119,17 @@ class _WizardCreateSchoolScreenState extends State<WizardCreateSchoolScreen> {
       if (user == null) throw Exception("Usuario no autenticado.");
 
       String? logoUrl;
-      // Lógica para subir la imagen del logo a Firebase Storage
       if (_logoImageFile != null) {
         final ref = FirebaseStorage.instance.ref().child('school_logos').child('${user.uid}_${DateTime.now().toIso8601String()}.jpg');
         await ref.putFile(_logoImageFile!);
         logoUrl = await ref.getDownloadURL();
       }
 
+      final schoolName = _schoolNameController.text.trim();
+
       final newSchool = SchoolModel(
-        name: _schoolNameController.text.trim(),
-        logoUrl: logoUrl, // Se pasa la URL de la imagen
+        name: schoolName,
+        logoUrl: logoUrl,
         martialArt: _selectedMartialArtTheme!.name,
         ownerId: user.uid,
         address: _addressController.text.trim(),
@@ -123,7 +146,11 @@ class _WizardCreateSchoolScreenState extends State<WizardCreateSchoolScreen> {
       );
 
       final firestore = FirebaseFirestore.instance;
-      final schoolDocRef = await firestore.collection('schools').add(newSchool.toJson());
+      final schoolData = newSchool.toJson();
+      schoolData['name_lowercase'] = schoolName.toLowerCase();
+
+      final schoolDocRef = await firestore.collection('schools').add(schoolData);
+      // ------------------------
 
       final userRef = firestore.collection('users').doc(user.uid);
       await userRef.set({'activeMemberships': { schoolDocRef.id: 'maestro' }}, SetOptions(merge: true));
@@ -163,7 +190,6 @@ class _WizardCreateSchoolScreenState extends State<WizardCreateSchoolScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // --- 4. WIDGET PARA EL LOGO AÑADIDO A LA UI ---
               Center(
                 child: Stack(
                   children: [
@@ -188,7 +214,6 @@ class _WizardCreateSchoolScreenState extends State<WizardCreateSchoolScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              // --- (El resto del formulario es idéntico al que me pasaste) ---
               TextField(controller: _schoolNameController, decoration: const InputDecoration(labelText: 'Nombre de tu Escuela *')),
               const SizedBox(height: 24),
               Text('Selecciona el Arte Marcial principal *', style: Theme.of(context).textTheme.titleMedium),
