@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:warrior_path/screens/WelcomeScreen.dart';
 
+import '../../wizard_create_school_screen.dart';
+
 class StudentProfileTabScreen extends StatefulWidget {
   final String memberId;
   const StudentProfileTabScreen({Key? key, required this.memberId}) : super(key: key);
@@ -14,11 +16,11 @@ class StudentProfileTabScreen extends StatefulWidget {
 class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
   late Future<DocumentSnapshot> _userDataFuture;
 
-  // Controladores para los campos del formulario
   final _nameController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _emergencyContactNameController = TextEditingController();
   final _emergencyContactPhoneController = TextEditingController();
-  final _medicalEmergencyServiceController = TextEditingController(); // <-- NUEVO
+  final _medicalEmergencyServiceController = TextEditingController();
   final _medicalInfoController = TextEditingController();
 
   bool _isLoading = false;
@@ -35,9 +37,10 @@ class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
     if (userDoc.exists) {
       final data = userDoc.data() as Map<String, dynamic>;
       _nameController.text = data['displayName'] ?? '';
+      _phoneController.text = data['phoneNumber'] ?? '';
       _emergencyContactNameController.text = data['emergencyContactName'] ?? '';
       _emergencyContactPhoneController.text = data['emergencyContactPhone'] ?? '';
-      _medicalEmergencyServiceController.text = data['medicalEmergencyService'] ?? ''; // <-- NUEVO
+      _medicalEmergencyServiceController.text = data['medicalEmergencyService'] ?? '';
       _medicalInfoController.text = data['medicalInfo'] ?? '';
     }
     return userDoc;
@@ -46,9 +49,10 @@ class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _phoneController.dispose(); // <-- 3. LIMPIAMOS EL CONTROLADOR
     _emergencyContactNameController.dispose();
     _emergencyContactPhoneController.dispose();
-    _medicalEmergencyServiceController.dispose(); // <-- NUEVO
+    _medicalEmergencyServiceController.dispose();
     _medicalInfoController.dispose();
     super.dispose();
   }
@@ -58,9 +62,10 @@ class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
     try {
       final dataToUpdate = {
         'displayName': _nameController.text.trim(),
+        'phoneNumber': _phoneController.text.trim(), // <-- 4. AÑADIMOS EL CAMPO AL GUARDADO
         'emergencyContactName': _emergencyContactNameController.text.trim(),
         'emergencyContactPhone': _emergencyContactPhoneController.text.trim(),
-        'medicalEmergencyService': _medicalEmergencyServiceController.text.trim(), // <-- NUEVO
+        'medicalEmergencyService': _medicalEmergencyServiceController.text.trim(),
         'medicalInfo': _medicalInfoController.text.trim(),
       };
 
@@ -128,6 +133,13 @@ class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
                     controller: _nameController,
                     decoration: const InputDecoration(labelText: 'Nombre y Apellido', border: OutlineInputBorder()),
                   ),
+                  const SizedBox(height: 16),
+                  // --- 5. AÑADIMOS EL CAMPO DE TEXTO A LA UI ---
+                  TextFormField(
+                    controller: _phoneController,
+                    decoration: const InputDecoration(labelText: 'Mi Teléfono', border: OutlineInputBorder()),
+                    keyboardType: TextInputType.phone,
+                  ),
                   const SizedBox(height: 32),
                   Text('Información de Emergencia', style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 8),
@@ -147,7 +159,6 @@ class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
                     keyboardType: TextInputType.phone,
                   ),
                   const SizedBox(height: 16),
-                  // --- CAMPO AÑADIDO ---
                   TextFormField(
                     controller: _medicalEmergencyServiceController,
                     decoration: const InputDecoration(
@@ -156,18 +167,38 @@ class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
                       border: OutlineInputBorder(),
                     ),
                   ),
-                  // ---------------------
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _medicalInfoController,
                     decoration: const InputDecoration(
-                      labelText: 'Información Médida Relevante',
+                      labelText: 'Información Médica Relevante',
                       hintText: 'Ej: Alergias, asma, medicación, etc.',
                       border: OutlineInputBorder(),
                     ),
                     maxLines: 4,
                   ),
                   const SizedBox(height: 32),
+
+                  const Divider(),
+                  const SizedBox(height: 16),
+                  Card(
+                    elevation: 2,
+                    child: ListTile(
+                      leading: Icon(Icons.add_business, color: Theme.of(context).primaryColor),
+                      title: const Text('Crear mi Propia Escuela'),
+                      subtitle: const Text('Conviértete en maestro e inicia tu camino.'),
+                      trailing: const Icon(Icons.arrow_forward_ios),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const WizardCreateSchoolScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
                   if (_isLoading)
                     const Center(child: CircularProgressIndicator())
                   else

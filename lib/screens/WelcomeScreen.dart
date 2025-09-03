@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:warrior_path/screens/role_selector_screen.dart';
 import 'package:warrior_path/screens/student/application_sent_screen.dart';
 import 'package:warrior_path/screens/student/student_dashboard_screen.dart';
 import 'package:warrior_path/screens/teacher_dashboard_screen.dart';
@@ -11,6 +13,8 @@ import 'package:warrior_path/widgets/CustomInputField.dart';
 import 'package:warrior_path/widgets/CustomPasswordField.dart';
 import 'package:warrior_path/widgets/PrimaryButton.dart';
 import 'package:warrior_path/widgets/SecondaryButton.dart';
+
+import '../providers/session_provider.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -47,22 +51,24 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       final memberships = userData['activeMemberships'] as Map<String, dynamic>? ?? {};
       final pendingApplication = userData['pendingApplication'] as Map<String, dynamic>?;
 
-      if (memberships.containsValue('maestro')) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const TeacherDashboardScreen()),
-        );
-      }
-      else if (memberships.containsValue('alumno') || memberships.containsValue('instructor')) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const StudentDashboardScreen()),
-        );
-      } else if (pendingApplication != null) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => ApplicationSentScreen(schoolName: pendingApplication['schoolName'] ?? '')),
-        );
+      if (memberships.isEmpty && pendingApplication != null) {
+        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => ApplicationSentScreen(schoolName: pendingApplication['schoolName'] ?? '')));
+      } else if (memberships.length == 1) {
+        // Si solo tiene 1 rol, entramos directamente
+        final schoolId = memberships.keys.first;
+        final role = memberships.values.first;
+
+        Provider.of<SessionProvider>(context, listen: false).setActiveSession(schoolId, role);
+
+        Widget destination = (role == 'maestro') ? const TeacherDashboardScreen() : const StudentDashboardScreen();
+        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => destination));
+
+      } else if (memberships.length > 1) {
+        // Si tiene más de 1 rol, vamos al selector
+        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const RoleSelectorScreen()));
       } else {
         _showErrorDialog('Acceso Denegado', 'No tienes un rol activo en ninguna escuela.');
-        setState(() { _isLoading = false; });
+        if (mounted) setState(() { _isLoading = false; });
       }
     }
   }
@@ -81,7 +87,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         password: password,
       );
 
-      // CAMBIO: Usamos la nueva función de navegación
       if (userCredential.user != null) {
         await _navigateAfterAuth(userCredential.user!);
       }

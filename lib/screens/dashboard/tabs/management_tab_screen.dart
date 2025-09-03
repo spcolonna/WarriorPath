@@ -1,13 +1,25 @@
 import 'package:flutter/material.dart';
-
-import '../../schedule/schedule_management_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:warrior_path/providers/session_provider.dart';
+import 'package:warrior_path/screens/schedule/schedule_management_screen.dart';
 
 class ManagementTabScreen extends StatelessWidget {
-  final String schoolId;
-  const ManagementTabScreen({Key? key, required this.schoolId}) : super(key: key);
+  // 1. EL CONSTRUCTOR YA NO NECESITA schoolId
+  const ManagementTabScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    // 2. OBTENEMOS EL schoolId DESDE EL PROVIDER
+    final schoolId = Provider.of<SessionProvider>(context).activeSchoolId;
+
+    // Fallback por si no hay sesión activa
+    if (schoolId == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Gestión de la Escuela')),
+        body: const Center(child: Text('Error: No hay una escuela activa en la sesión.')),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Gestión de la Escuela'),
@@ -22,6 +34,7 @@ class ManagementTabScreen extends StatelessWidget {
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
+                  // 3. USAMOS EL schoolId OBTENIDO DEL PROVIDER
                   builder: (context) => ScheduleManagementScreen(schoolId: schoolId),
                 ),
               );
@@ -72,7 +85,7 @@ class ManagementTabScreen extends StatelessWidget {
     );
   }
 
-  // Widget de ayuda para construir cada elemento de la lista
+  // Este widget de ayuda no necesita cambios
   Widget _buildManagementTile({
     required BuildContext context,
     required IconData icon,

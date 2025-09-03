@@ -1,5 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
+import '../my_attendance_history_screen.dart'; // Asegúrate de tener este import
 
 class ProgressTabScreen extends StatefulWidget {
   final String schoolId;
@@ -16,7 +19,6 @@ class ProgressTabScreen extends StatefulWidget {
 }
 
 class _ProgressTabScreenState extends State<ProgressTabScreen> {
-  // Future para cargar el nivel actual del alumno y todos los niveles de la escuela
   late Future<Map<String, dynamic>> _progressDataFuture;
 
   @override
@@ -28,7 +30,6 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
   Future<Map<String, dynamic>> _fetchProgressData() async {
     final firestore = FirebaseFirestore.instance;
 
-    // 1. Obtener el documento del miembro para saber su nivel actual
     final memberDoc = await firestore
         .collection('schools')
         .doc(widget.schoolId)
@@ -38,7 +39,6 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
 
     final currentLevelId = memberDoc.data()?['currentLevelId'];
 
-    // 2. Obtener los detalles de ese nivel actual
     DocumentSnapshot? currentLevelDoc;
     if (currentLevelId != null) {
       currentLevelDoc = await firestore
@@ -49,7 +49,6 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
           .get();
     }
 
-    // 3. Obtener TODOS los niveles de la escuela, ordenados
     final allLevelsQuery = await firestore
         .collection('schools')
         .doc(widget.schoolId)
@@ -82,13 +81,12 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
 
           return SingleChildScrollView(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // --- CABECERA DE NIVEL ACTUAL ---
                 _buildCurrentLevelHeader(currentLevelDoc),
 
-                const Divider(height: 32),
+                const Divider(height: 32, indent: 16, endIndent: 16),
 
-                // --- CAMINO DE PROGRESIÓN ---
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Text('Tu Camino', style: Theme.of(context).textTheme.headlineSmall),
@@ -96,7 +94,34 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
                 const SizedBox(height: 8),
                 _buildProgressionPath(currentLevelDoc, allLevels),
 
-                // Aquí irían otras secciones como Historial de Exámenes, etc.
+                const Divider(height: 32, indent: 16, endIndent: 16),
+
+                // --- SECCIÓN AÑADIDA: HISTORIAL DE PROMOCIONES ---
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Text('Historial de Promociones', style: Theme.of(context).textTheme.headlineSmall),
+                ),
+                const SizedBox(height: 8),
+                _buildProgressionHistory(),
+                const SizedBox(height: 24),
+                Card(
+                  margin: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: ListTile(
+                    leading: Icon(Icons.fact_check_outlined, color: Theme.of(context).primaryColor),
+                    title: const Text('Mi Historial de Asistencia', style: TextStyle(fontWeight: FontWeight.bold)),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => MyAttendanceHistoryScreen(
+                            schoolId: widget.schoolId,
+                            studentId: widget.memberId,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
               ],
             ),
           );
@@ -169,6 +194,86 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
               : const Icon(Icons.radio_button_unchecked, color: Colors.grey),
           title: Text(level['name']),
           tileColor: isCurrent ? Theme.of(context).primaryColor.withOpacity(0.1) : null,
+        );
+      },
+    );
+  }
+
+
+  Widget _buildProgressionHistory() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('schools').doc(widget.schoolId)
+          .collection('members').doc(widget.memberId)
+          .collection('progressionHistory')
+          .orderBy('date', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Center(child: Text('Aún no tienes promociones registradas.')),
+          );
+        }
+
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: snapshot.data!.docs.length,
+          itemBuilder: (context, index) {
+            final history = snapshot.data!.docs[index].data() as Map<String, dynamic>;
+            final eventType = history['type'] ?? 'level_promotion';
+
+            if (eventType == 'role_change') {
+              return _buildRoleChangeEventTile(history);
+            } else {
+              return _buildLevelPromotionEventTile(history);
+            }
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildRoleChangeEventTile(Map<String, dynamic> history) {
+    final date = (history['date'] as Timestamp).toDate();
+    final formattedDate = DateFormat('dd/MM/yyyy').format(date);
+    final newRole = history['newRole'] ?? '';
+    final roleText = 'Rol actualizado a ${newRole[0].toUpperCase()}${newRole.substring(1)}';
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: ListTile(
+        leading: const Icon(Icons.admin_panel_settings),
+        title: Text(roleText),
+        trailing: Text(formattedDate),
+      ),
+    );
+  }
+
+  Widget _buildLevelPromotionEventTile(Map<String, dynamic> history) {
+    final date = (history['date'] as Timestamp).toDate();
+    final formattedDate = DateFormat('dd/MM/yyyy').format(date);
+    final notes = history['notes'] as String?;
+
+    return FutureBuilder<DocumentSnapshot>(
+      future: FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('levels').doc(history['newLevelId']).get(),
+      builder: (context, levelSnapshot) {
+        String levelName = '...';
+        if (levelSnapshot.hasData) {
+          levelName = levelSnapshot.data?['name'] ?? 'Nivel Desconocido';
+        }
+        return Card(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          child: ListTile(
+            leading: const Icon(Icons.military_tech),
+            title: Text('Promovido a $levelName'),
+            subtitle: (notes != null && notes.isNotEmpty) ? Text('Notas: "$notes"') : null,
+            trailing: Text(formattedDate),
+          ),
         );
       },
     );

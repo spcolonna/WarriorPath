@@ -5,14 +5,13 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:warrior_path/screens/student/school_search_screen.dart';
-import 'package:warrior_path/screens/teacher_dashboard_screen.dart';
 import 'package:warrior_path/screens/wizard_create_school_screen.dart';
 
-// Definimos el Enum fuera de la clase para poder usarlo limpiamente
 enum UserRole { student, teacher, both }
 
 class WizardProfileScreen extends StatefulWidget {
-  const WizardProfileScreen({Key? key}) : super(key: key);
+  final bool isExistingUser;
+  const WizardProfileScreen({Key? key, this.isExistingUser = false}) : super(key: key);
 
   @override
   _WizardProfileScreenState createState() => _WizardProfileScreenState();
@@ -24,8 +23,29 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
   UserRole? _selectedRole;
   File? _imageFile;
   bool _isLoading = false;
+  String? _uid;
 
-  final String? _uid = FirebaseAuth.instance.currentUser?.uid;
+  @override
+  void initState() {
+    super.initState();
+    _uid = FirebaseAuth.instance.currentUser?.uid;
+    // 2. SI ES UN USUARIO EXISTENTE, CARGAMOS SUS DATOS
+    if (widget.isExistingUser && _uid != null) {
+      _loadExistingUserData();
+    }
+  }
+
+  Future<void> _loadExistingUserData() async {
+    final userDoc = await FirebaseFirestore.instance.collection('users').doc(_uid).get();
+    if (userDoc.exists && mounted) {
+      final data = userDoc.data()!;
+      setState(() {
+        _nameController.text = data['displayName'] ?? '';
+        _phoneController.text = data['phoneNumber'] ?? '';
+        // No cargamos la foto, pero el usuario puede subir una nueva si quiere
+      });
+    }
+  }
 
   void _updateRole(UserRole role) {
     setState(() {

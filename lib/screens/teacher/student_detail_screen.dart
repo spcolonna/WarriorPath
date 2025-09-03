@@ -223,10 +223,27 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
     try {
       final firestore = FirebaseFirestore.instance;
       final batch = firestore.batch();
+
       final memberRef = firestore.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId);
-      batch.update(memberRef, {'role': newRole});
       final userRef = firestore.collection('users').doc(widget.studentId);
-      batch.set(userRef, {'activeMemberships': { widget.schoolId: newRole }}, SetOptions(merge: true));
+
+      // 1. Actualizar el rol en la ficha del miembro de la escuela
+      batch.update(memberRef, {'role': newRole});
+
+      // 2. Actualizar el rol en el "llavero" del usuario
+      batch.set(userRef, {
+        'activeMemberships': { widget.schoolId: newRole }
+      }, SetOptions(merge: true));
+
+      // 3. Crear un registro en el historial de progresión
+      final historyRef = memberRef.collection('progressionHistory').doc();
+      batch.set(historyRef, {
+        'date': Timestamp.now(),
+        'type': 'role_change', // Un tipo para diferenciarlo de la promoción de nivel
+        'newRole': newRole,
+        'promotedBy': FirebaseAuth.instance.currentUser?.uid,
+      });
+
       await batch.commit();
       if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Rol actualizado con éxito.')));
     } catch (e) {

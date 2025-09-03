@@ -1,7 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:warrior_path/providers/session_provider.dart';
 import 'package:warrior_path/providers/theme_provider.dart';
 import 'package:warrior_path/screens/dashboard/tabs/home_tab_screen.dart';
 import 'package:warrior_path/screens/dashboard/tabs/management_tab_screen.dart';
@@ -17,84 +16,44 @@ class TeacherDashboardScreen extends StatefulWidget {
 
 class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   int _selectedIndex = 0;
-  int _studentSubTabIndex = 0; // Estado para recordar la sub-pestaña de alumnos
-  String? _schoolId;
-  bool _isLoading = true;
-  String? _error;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadSchoolData();
-  }
+  // --- CAMBIO CLAVE AQUÍ ---
+  // Reemplazamos 'const' por 'final' para permitir que la lista contenga
+  // widgets que no son necesariamente constantes en tiempo de compilación.
+  static final List<Widget> _widgetOptions = <Widget>[
+    const HomeTabScreen(),
+    const StudentsTabScreen(),
+    const ManagementTabScreen(),
+    const ProfileTabScreen(),
+  ];
 
-  Future<void> _loadSchoolData() async {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) throw Exception('Usuario no autenticado');
-
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-      final memberships = userDoc.data()?['activeMemberships'] as Map<String, dynamic>? ?? {};
-
-      final schoolId = memberships.keys.firstWhere((k) => memberships[k] == 'maestro', orElse: () => '');
-
-      if (schoolId.isEmpty) throw Exception('No se encontró una escuela para gestionar.');
-
-      // Cargar el tema de la escuela usando el Provider
-      // listen: false porque solo lo hacemos una vez al cargar
-      Provider.of<ThemeProvider>(context, listen: false).loadThemeFromSchool(schoolId);
-
-      if (mounted) {
-        setState(() {
-          _schoolId = schoolId;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _error = e.toString();
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  // Función actualizada que puede recibir un subTabIndex
-  void _onItemTapped(int index, {int? subTabIndex}) {
+  void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
-      _studentSubTabIndex = (index == 1 && subTabIndex != null) ? subTabIndex : 0;
     });
   }
 
   @override
-  Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+  void initState() {
+    super.initState();
+    // Cargamos el tema de la escuela activa al iniciar el dashboard
+    final session = Provider.of<SessionProvider>(context, listen: false);
+    if (session.activeSchoolId != null) {
+      Provider.of<ThemeProvider>(context, listen: false).loadThemeFromSchool(session.activeSchoolId!);
     }
-    if (_error != null) {
-      return Scaffold(body: Center(child: Text('Error: $_error')));
-    }
+  }
 
-    // La lista de pantallas se construye aquí para pasar los datos correctos
-    final List<Widget> widgetOptions = <Widget>[
-      HomeTabScreen(
-        schoolId: _schoolId!,
-        onNavigateToTab: (index, {subTabIndex}) => _onItemTapped(index, subTabIndex: subTabIndex),
-      ),
-      StudentsTabScreen(
-        schoolId: _schoolId!,
-        initialTabIndex: _studentSubTabIndex,
-      ),
-      ManagementTabScreen(schoolId: _schoolId!),
-      const ProfileTabScreen(),
-    ];
+  @override
+  Widget build(BuildContext context) {
+    final session = Provider.of<SessionProvider>(context);
+    if (session.activeSchoolId == null) {
+      return const Scaffold(body: Center(child: Text('Error: No hay una sesión activa.')));
+    }
 
     return Scaffold(
       body: IndexedStack(
         index: _selectedIndex,
-        children: widgetOptions,
+        children: _widgetOptions,
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
@@ -106,7 +65,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
         currentIndex: _selectedIndex,
         selectedItemColor: Theme.of(context).primaryColor,
         unselectedItemColor: Colors.grey,
-        onTap: (index) => _onItemTapped(index), // El tap normal no necesita subTabIndex
+        onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
       ),
     );

@@ -1,4 +1,5 @@
 import 'package:provider/provider.dart';
+import 'package:warrior_path/providers/session_provider.dart';
 import 'package:warrior_path/providers/theme_provider.dart';
 import 'package:warrior_path/services/remote_config_service.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -16,14 +17,14 @@ void main() async {
   final remoteConfigService = await RemoteConfigService.getInstance();
   await remoteConfigService.fetchAndActivate();
 
-  // --- LÍNEA AÑADIDA AQUÍ ---
-  // Carga los datos de formato para el idioma español (para meses, etc.)
   await initializeDateFormatting('es_ES', null);
-  // -------------------------
 
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => ThemeProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => ThemeProvider()),
+        Provider(create: (context) => SessionProvider()),
+      ],
       child: const MyApp(),
     ),
   );

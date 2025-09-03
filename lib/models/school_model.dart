@@ -2,10 +2,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SchoolModel {
-  final String? id; // El ID del documento, será nulo al crear
+  final String? id;
   final String name;
   final String martialArt;
   final String ownerId;
+  final String? logoUrl;
   final String address;
   final String city;
   final String phone;
@@ -13,13 +14,14 @@ class SchoolModel {
   final bool isSubSchool;
   final String? parentSchoolId;
   final String? parentSchoolName;
-  final Map<String, String> theme; // Para guardar los colores
+  final Map<String, String> theme;
 
   SchoolModel({
     this.id,
     required this.name,
     required this.martialArt,
     required this.ownerId,
+    this.logoUrl,
     required this.address,
     required this.city,
     required this.phone,
@@ -35,6 +37,7 @@ class SchoolModel {
       'name': name,
       'martialArt': martialArt,
       'ownerId': ownerId,
+      'logoUrl': logoUrl,
       'address': address,
       'city': city,
       'phone': phone,

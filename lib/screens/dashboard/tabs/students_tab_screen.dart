@@ -1,15 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-
-import '../../teacher/student_detail_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:warrior_path/providers/session_provider.dart';
+import 'package:warrior_path/screens/teacher/student_detail_screen.dart';
 
 class StudentsTabScreen extends StatefulWidget {
-  final String schoolId;
   final int initialTabIndex;
 
   const StudentsTabScreen({
     Key? key,
-    required this.schoolId,
     this.initialTabIndex = 0,
   }) : super(key: key);
 
@@ -38,6 +37,13 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
 
   @override
   Widget build(BuildContext context) {
+    // 2. OBTENEMOS EL schoolId DESDE EL PROVIDER
+    final schoolId = Provider.of<SessionProvider>(context).activeSchoolId;
+
+    if (schoolId == null) {
+      return const Center(child: Text('Error: No hay una escuela activa en la sesión.'));
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Alumnos'),
@@ -53,19 +59,20 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
       body: TabBarView(
         controller: _tabController,
         children: [
-          _buildStudentsList('active'),
-          _buildStudentsList('pending'),
-          _buildStudentsList('inactive'),
+          // 3. PASAMOS EL schoolId COMO PARÁMETRO A LOS MÉTODOS QUE LO NECESITAN
+          _buildStudentsList('active', schoolId),
+          _buildStudentsList('pending', schoolId),
+          _buildStudentsList('inactive', schoolId),
         ],
       ),
     );
   }
 
-  Widget _buildStudentsList(String status) {
+  Widget _buildStudentsList(String status, String schoolId) {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('schools')
-          .doc(widget.schoolId)
+          .doc(schoolId) // Usa el schoolId del provider
           .collection('members')
           .where('status', isEqualTo: status)
           .snapshots(),
@@ -83,7 +90,7 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
             final doc = snapshot.data!.docs[index];
 
             if (status == 'pending') {
-              return _buildPendingStudentCard(doc);
+              return _buildPendingStudentCard(doc, schoolId);
             }
 
             final data = doc.data() as Map<String, dynamic>;
@@ -97,7 +104,7 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (context) => StudentDetailScreen(
-                        schoolId: widget.schoolId,
+                        schoolId: schoolId,
                         studentId: doc.id,
                       ),
                     ),
@@ -111,7 +118,7 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
     );
   }
 
-  Widget _buildPendingStudentCard(QueryDocumentSnapshot doc) {
+  Widget _buildPendingStudentCard(QueryDocumentSnapshot doc, String schoolId) {
     final data = doc.data() as Map<String, dynamic>;
     final userId = doc.id;
 
@@ -130,12 +137,12 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
-                  onPressed: () => _handleApplication(userId, false),
+                  onPressed: () => _handleApplication(userId, false, schoolId),
                   child: const Text('Rechazar', style: TextStyle(color: Colors.red)),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
-                  onPressed: () => _handleApplication(userId, true),
+                  onPressed: () => _handleApplication(userId, true, schoolId),
                   child: const Text('Aceptar'),
                 ),
               ],
@@ -146,14 +153,14 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
     );
   }
 
-  Future<void> _handleApplication(String userId, bool accept) async {
+  Future<void> _handleApplication(String userId, bool accept, String schoolId) async {
     final firestore = FirebaseFirestore.instance;
-    final schoolMembersRef = firestore.collection('schools').doc(widget.schoolId).collection('members').doc(userId);
+    final schoolMembersRef = firestore.collection('schools').doc(schoolId).collection('members').doc(userId);
     final userRef = firestore.collection('users').doc(userId);
 
     try {
       if (accept) {
-        final levelsQuery = await firestore.collection('schools').doc(widget.schoolId).collection('levels').orderBy('order').limit(1).get();
+        final levelsQuery = await firestore.collection('schools').doc(schoolId).collection('levels').orderBy('order').limit(1).get();
         if (levelsQuery.docs.isEmpty) {
           throw Exception('Tu escuela no tiene niveles configurados. Ve a Gestión -> Niveles para añadirlos.');
         }
@@ -170,7 +177,7 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
 
         batch.set(userRef, {
           'activeMemberships': {
-            widget.schoolId: 'alumno',
+            schoolId: 'alumno',
           },
           'pendingApplication': FieldValue.delete(),
         }, SetOptions(merge: true));
