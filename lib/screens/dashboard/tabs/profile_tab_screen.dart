@@ -1,9 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:warrior_path/screens/WelcomeScreen.dart';
-import 'package:warrior_path/screens/wizard_profile_screen.dart';
+import 'package:warrior_path/screens/role_selector_screen.dart';
+import 'package:warrior_path/screens/wizard_create_school_screen.dart';
 
-import '../../wizard_create_school_screen.dart';
+import '../../teacher/edit_teacher_profile_screen.dart';
 
 class ProfileTabScreen extends StatelessWidget {
   const ProfileTabScreen({Key? key}) : super(key: key);
@@ -12,7 +13,7 @@ class ProfileTabScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mi Perfil'),
+        title: const Text('Mi Perfil y Acciones'),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -32,21 +33,30 @@ class ProfileTabScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
-          // En el futuro aquí irán los datos del maestro
-          const ListTile(
-            leading: Icon(Icons.person),
-            title: Text('Editar mi Perfil'),
-            subtitle: Text('Actualiza tu nombre, foto o contraseña.'),
+          ListTile(
+            leading: const Icon(Icons.edit),
+            title: const Text('Editar mi Perfil'),
+            subtitle: const Text('Actualiza tu nombre, foto o contraseña.'),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const EditTeacherProfileScreen()),
+              );
+            },
           ),
           const Divider(),
-          // Aquí podría ir el selector de rol/escuela en el futuro
-          const ListTile(
-            leading: Icon(Icons.swap_horiz),
-            title: Text('Cambiar de Perfil'),
-            subtitle: Text('Accede a tus otros roles o escuelas.'),
+          ListTile(
+            leading: const Icon(Icons.swap_horiz),
+            title: const Text('Cambiar de Perfil/Escuela'),
+            subtitle: const Text('Accede a tus otros roles o escuelas.'),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const RoleSelectorScreen()),
+              );
+            },
           ),
           const Divider(),
-          // El nuevo botón para crear otra escuela
           Card(
             elevation: 2,
             child: ListTile(
@@ -56,9 +66,7 @@ class ProfileTabScreen extends StatelessWidget {
               trailing: const Icon(Icons.arrow_forward_ios),
               onTap: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const WizardCreateSchoolScreen(),
-                  ),
+                  MaterialPageRoute(builder: (context) => const WizardCreateSchoolScreen()),
                 );
               },
             ),
