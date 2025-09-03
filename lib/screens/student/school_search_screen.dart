@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:warrior_path/screens/student/application_sent_screen.dart';
 
 class SchoolSearchScreen extends StatefulWidget {
   const SchoolSearchScreen({Key? key}) : super(key: key);
@@ -12,14 +11,19 @@ class SchoolSearchScreen extends StatefulWidget {
 
 class _SchoolSearchScreenState extends State<SchoolSearchScreen> {
   final _searchController = TextEditingController();
-  Stream<QuerySnapshot>? _searchResultsStream;
+
+  // Usamos un Future para cargar los datos una vez y luego filtramos en memoria
+  late Future<List<QueryDocumentSnapshot>> _schoolsFuture;
+  List<QueryDocumentSnapshot> _allSchools = [];
+  List<QueryDocumentSnapshot> _filteredSchools = [];
+
+  Set<String> _userSchoolIds = {}; // Guardaremos los IDs de las escuelas del usuario aquí
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    // Al iniciar, mostramos todas las escuelas disponibles
-    _searchResultsStream = FirebaseFirestore.instance.collection('schools').snapshots();
+    _schoolsFuture = _fetchSchoolsAndFilter();
   }
 
   @override
@@ -28,33 +32,62 @@ class _SchoolSearchScreenState extends State<SchoolSearchScreen> {
     super.dispose();
   }
 
-  void _onSearchChanged(String query) {
-    final formattedQuery = query.trim();
-    if (formattedQuery.isEmpty) {
-      setState(() {
-        _searchResultsStream = FirebaseFirestore.instance.collection('schools').snapshots();
-      });
-    } else {
-      // Búsqueda que encuentra nombres que empiezan con la consulta.
-      // Firestore es sensible a mayúsculas/minúsculas, por lo que una mejor
-      // implementación futura usaría el campo 'searchKeywords' que discutimos.
-      setState(() {
-        _searchResultsStream = FirebaseFirestore.instance
-            .collection('schools')
-            .where('name', isGreaterThanOrEqualTo: formattedQuery)
-            .where('name', isLessThanOrEqualTo: '$formattedQuery\uf8ff')
-            .snapshots();
-      });
+  // Función mejorada que carga todas las escuelas y los datos del usuario una vez
+  Future<List<QueryDocumentSnapshot>> _fetchSchoolsAndFilter() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      if (userDoc.exists) {
+        final memberships = userDoc.data()?['activeMemberships'] as Map<String, dynamic>? ?? {};
+        final pendingApplications = userDoc.data()?['pendingApplications'] as Map<String, dynamic>? ?? {};
+        // Unimos los IDs de las escuelas donde es miembro y donde tiene solicitud
+        _userSchoolIds = {...memberships.keys, ...pendingApplications.keys}.toSet();
+      }
     }
+
+    final schoolsSnapshot = await FirebaseFirestore.instance.collection('schools').get();
+    _allSchools = schoolsSnapshot.docs;
+
+    // Aplicamos el filtro inicial (sin texto de búsqueda)
+    _applyFilter();
+
+    return _filteredSchools;
   }
 
+  // Lógica de filtrado que se ejecuta en el dispositivo
+  void _applyFilter() {
+    final query = _searchController.text.toLowerCase().trim();
+    setState(() {
+      _filteredSchools = _allSchools.where((schoolDoc) {
+        // Condición 1: El ID de la escuela NO debe estar en la lista del usuario
+        final isNotMember = !_userSchoolIds.contains(schoolDoc.id);
+
+        // Condición 2: El nombre debe coincidir con la búsqueda (si hay búsqueda)
+        if (query.isEmpty) {
+          return isNotMember; // Si no hay búsqueda, solo filtramos por membresía
+        }
+        final schoolData = schoolDoc.data() as Map<String, dynamic>;
+        final nameMatches = schoolData['name']?.toString().toLowerCase().contains(query) ?? false;
+
+        return isNotMember && nameMatches;
+      }).toList();
+    });
+  }
+
+  // Lógica de postulación mejorada
   Future<void> _postulateToSchool(String schoolId, String schoolName) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
+    // Chequeo extra por si acaso, aunque la lista ya está filtrada
+    if (_userSchoolIds.contains(schoolId)) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ya eres miembro o tienes una solicitud pendiente en esta escuela.')));
+      return;
+    }
+
     showDialog(
       context: context,
-      barrierDismissible: !_isLoading, // Evita cerrar el diálogo mientras carga
+      barrierDismissible: !_isLoading,
       builder: (ctx) => AlertDialog(
         title: const Text('Confirmar Postulación'),
         content: Text('¿Quieres enviar tu solicitud para unirte a "$schoolName"?'),
@@ -62,47 +95,35 @@ class _SchoolSearchScreenState extends State<SchoolSearchScreen> {
           TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancelar')),
           TextButton(
             onPressed: () async {
-              Navigator.of(ctx).pop(); // Cierra el diálogo de confirmación
+              Navigator.of(ctx).pop();
               setState(() { _isLoading = true; });
 
               try {
                 final firestore = FirebaseFirestore.instance;
-
-                // Obtenemos el nombre del usuario para mostrarlo al maestro
                 final userDoc = await firestore.collection('users').doc(user.uid).get();
                 final displayName = userDoc.data()?['displayName'] ?? 'Usuario sin nombre';
-
-                // Preparamos la operación con un WriteBatch para que sea atómica (todo o nada)
                 final batch = firestore.batch();
+                final userRef = firestore.collection('users').doc(user.uid);
 
-                // 1. Creamos la solicitud en la sub-colección de miembros de la escuela
                 final memberRef = firestore.collection('schools').doc(schoolId).collection('members').doc(user.uid);
                 batch.set(memberRef, {
-                  'userId': user.uid,
-                  'displayName': displayName,
-                  'status': 'pending',
-                  'applicationDate': FieldValue.serverTimestamp(),
+                  'userId': user.uid, 'displayName': displayName, 'status': 'pending', 'applicationDate': FieldValue.serverTimestamp(),
                 });
 
-                // 2. Actualizamos el perfil del usuario para finalizar su wizard
-                final userRef = firestore.collection('users').doc(user.uid);
                 batch.update(userRef, {
-                  'wizardStep': 99, // Marcamos el wizard como completado
-                  'pendingApplication': { // Guardamos un registro de su postulación
-                    'schoolId': schoolId,
-                    'schoolName': schoolName,
+                  'pendingApplications.$schoolId': {
+                    'schoolName': schoolName, 'applicationDate': FieldValue.serverTimestamp(),
                   }
                 });
 
-                // Ejecutamos ambas operaciones de escritura
                 await batch.commit();
 
                 if (!mounted) return;
-                // 3. Navegamos a la pantalla de "Postulación Enviada" y borramos el historial
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (context) => ApplicationSentScreen(schoolName: schoolName)),
-                      (route) => false,
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('¡Solicitud para "$schoolName" enviada!'), backgroundColor: Colors.green),
                 );
+                Navigator.of(context).pop();
 
               } catch (e) {
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al enviar la solicitud: ${e.toString()}')));
@@ -123,7 +144,7 @@ class _SchoolSearchScreenState extends State<SchoolSearchScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Busca tu Escuela'),
+        title: const Text('Buscar Nueva Escuela'),
       ),
       body: AbsorbPointer(
         absorbing: _isLoading,
@@ -133,7 +154,7 @@ class _SchoolSearchScreenState extends State<SchoolSearchScreen> {
               padding: const EdgeInsets.all(16.0),
               child: TextField(
                 controller: _searchController,
-                onChanged: _onSearchChanged,
+                onChanged: (_) => _applyFilter(),
                 decoration: const InputDecoration(
                   labelText: 'Nombre de la escuela',
                   prefixIcon: Icon(Icons.search),
@@ -143,8 +164,8 @@ class _SchoolSearchScreenState extends State<SchoolSearchScreen> {
             ),
             if (_isLoading) const LinearProgressIndicator(),
             Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: _searchResultsStream,
+              child: FutureBuilder<List<QueryDocumentSnapshot>>(
+                future: _schoolsFuture,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
@@ -152,14 +173,14 @@ class _SchoolSearchScreenState extends State<SchoolSearchScreen> {
                   if (snapshot.hasError) {
                     return const Center(child: Text('Error al cargar las escuelas.'));
                   }
-                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return const Center(child: Text('No se encontraron escuelas.'));
+                  if (_filteredSchools.isEmpty) {
+                    return const Center(child: Text('No se encontraron nuevas escuelas.'));
                   }
 
                   return ListView.builder(
-                    itemCount: snapshot.data!.docs.length,
+                    itemCount: _filteredSchools.length,
                     itemBuilder: (context, index) {
-                      final schoolDoc = snapshot.data!.docs[index];
+                      final schoolDoc = _filteredSchools[index];
                       final schoolData = schoolDoc.data() as Map<String, dynamic>;
 
                       return Card(

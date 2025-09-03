@@ -23,7 +23,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (context) => ThemeProvider()),
-        Provider(create: (context) => SessionProvider()),
+        ChangeNotifierProvider(create: (context) => SessionProvider()),
       ],
       child: const MyApp(),
     ),

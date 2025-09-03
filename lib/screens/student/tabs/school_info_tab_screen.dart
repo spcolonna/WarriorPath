@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:warrior_path/screens/role_selector_screen.dart';
 
 class SchoolInfoTabScreen extends StatelessWidget {
   final String schoolId;
@@ -22,63 +23,59 @@ class SchoolInfoTabScreen extends StatelessWidget {
           }
 
           final schoolData = snapshot.data!.data() as Map<String, dynamic>;
+          final logoUrl = schoolData['logoUrl'] as String?;
 
           return SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Header con el nombre de la escuela
                 Container(
                   padding: const EdgeInsets.all(24.0),
                   color: Theme.of(context).primaryColor.withOpacity(0.1),
                   child: Column(
                     children: [
-                      const CircleAvatar(
+                      CircleAvatar(
                         radius: 50,
-                        // Aquí podrías mostrar el logo de la escuela si lo guardas en la DB
-                        child: Icon(Icons.school, size: 50),
+                        backgroundColor: Colors.white,
+                        backgroundImage: (logoUrl != null && logoUrl.isNotEmpty) ? NetworkImage(logoUrl) : null,
+                        child: (logoUrl == null || logoUrl.isEmpty) ? const Icon(Icons.school, size: 50) : null,
                       ),
                       const SizedBox(height: 16),
-                      Text(
-                        schoolData['name'] ?? 'Nombre de la Escuela',
-                        style: Theme.of(context).textTheme.headlineMedium,
-                        textAlign: TextAlign.center,
-                      ),
-                      Text(
-                        schoolData['martialArt'] ?? 'Arte Marcial',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.grey.shade600),
-                        textAlign: TextAlign.center,
-                      ),
+                      Text(schoolData['name'] ?? 'Nombre de la Escuela', style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
+                      Text(schoolData['martialArt'] ?? 'Arte Marcial', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.grey.shade600), textAlign: TextAlign.center),
                     ],
                   ),
                 ),
 
-                // Información de contacto
                 Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      _buildInfoTile(
-                        icon: Icons.location_on,
-                        title: 'Dirección',
-                        subtitle: '${schoolData['address'] ?? ''}, ${schoolData['city'] ?? ''}',
-                      ),
-                      const Divider(),
-                      _buildInfoTile(
-                        icon: Icons.phone,
-                        title: 'Teléfono',
-                        subtitle: schoolData['phone'] ?? 'No especificado',
-                      ),
-                    ],
+                  child: Card(
+                    elevation: 2,
+                    child: ListTile(
+                      leading: Icon(Icons.swap_horiz, color: Theme.of(context).primaryColor),
+                      title: const Text('Cambiar de Perfil/Escuela'),
+                      trailing: const Icon(Icons.arrow_forward_ios),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (context) => const RoleSelectorScreen()),
+                        );
+                      },
+                    ),
                   ),
                 ),
 
-                // Horario de Clases
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Text('Horario de Clases', style: Theme.of(context).textTheme.headlineSmall),
+                _buildInfoCard(
+                    context: context,
+                    title: 'Información de Contacto',
+                    children: [
+                      // --- CORRECCIÓN AQUÍ ---
+                      // Se cambió 'icon:' por 'leading: Icon(...)'
+                      ListTile(leading: const Icon(Icons.location_on), title: const Text('Dirección'), subtitle: Text('${schoolData['address'] ?? ''}, ${schoolData['city'] ?? ''}')),
+                      ListTile(leading: const Icon(Icons.phone), title: const Text('Teléfono'), subtitle: Text(schoolData['phone'] ?? 'No especificado')),
+                    ]
                 ),
-                _buildScheduleView(schoolId),
+
+                _buildScheduleCard(context, schoolId),
               ],
             ),
           );
@@ -87,75 +84,75 @@ class SchoolInfoTabScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoTile({required IconData icon, required String title, required String subtitle}) {
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(title),
-      subtitle: Text(subtitle),
+  Widget _buildInfoCard({required BuildContext context, required String title, required List<Widget> children}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Card(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(title, style: Theme.of(context).textTheme.titleLarge),
+            ),
+            const Divider(height: 1),
+            ...children,
+          ],
+        ),
+      ),
     );
   }
 
-  // Widget para mostrar el horario semanal
-  Widget _buildScheduleView(String schoolId) {
+  Widget _buildScheduleCard(BuildContext context, String schoolId) {
     final List<String> dayLabels = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('schools')
-          .doc(schoolId)
-          .collection('classSchedules')
-          .orderBy('dayOfWeek')
-          .orderBy('startTime')
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator()));
-        }
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Text('El horario aún no ha sido definido por la escuela.'),
-          );
-        }
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Card(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text('Horario de Clases', style: Theme.of(context).textTheme.titleLarge),
+            ),
+            const Divider(height: 1),
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance.collection('schools').doc(schoolId).collection('classSchedules').orderBy('dayOfWeek').orderBy('startTime').snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) return const Padding(padding: EdgeInsets.all(16), child: Center(child: CircularProgressIndicator()));
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return const ListTile(title: Text('El horario aún no ha sido definido.'));
 
-        final Map<int, List<QueryDocumentSnapshot>> groupedSchedules = {};
-        for (var doc in snapshot.data!.docs) {
-          final day = doc['dayOfWeek'] as int;
-          if (groupedSchedules[day] == null) {
-            groupedSchedules[day] = [];
-          }
-          groupedSchedules[day]!.add(doc);
-        }
+                final Map<int, List<QueryDocumentSnapshot>> groupedSchedules = {};
+                for (var doc in snapshot.data!.docs) {
+                  final day = doc['dayOfWeek'] as int;
+                  if (groupedSchedules[day] == null) groupedSchedules[day] = [];
+                  groupedSchedules[day]!.add(doc);
+                }
 
-        return ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: 7, // Lunes a Domingo
-          itemBuilder: (context, index) {
-            final dayIndex = index + 1;
-            final schedulesForDay = groupedSchedules[dayIndex] ?? [];
-            if (schedulesForDay.isEmpty) return const SizedBox.shrink();
+                return Column(
+                  children: List.generate(7, (index) {
+                    final dayIndex = index + 1;
+                    final schedulesForDay = groupedSchedules[dayIndex] ?? [];
+                    if (schedulesForDay.isEmpty) return const SizedBox.shrink();
 
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(dayLabels[index], style: Theme.of(context).textTheme.titleLarge),
-                  ...schedulesForDay.map((doc) {
-                    final data = doc.data() as Map<String, dynamic>;
-                    return ListTile(
-                      dense: true,
-                      title: Text(data['title']),
-                      trailing: Text('${data['startTime']} - ${data['endTime']}'),
+                    return ExpansionTile(
+                      title: Text(dayLabels[index], style: const TextStyle(fontWeight: FontWeight.bold)),
+                      children: schedulesForDay.map((doc) {
+                        final data = doc.data() as Map<String, dynamic>;
+                        return ListTile(
+                          title: Text(data['title']),
+                          trailing: Text('${data['startTime']} - ${data['endTime']}'),
+                        );
+                      }).toList(),
                     );
-                  }).toList(),
-                ],
-              ),
-            );
-          },
-        );
-      },
+                  }),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

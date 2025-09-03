@@ -2,8 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:warrior_path/screens/WelcomeScreen.dart';
-
-import '../../wizard_create_school_screen.dart';
+import 'package:warrior_path/screens/student/school_search_screen.dart';
+import 'package:warrior_path/screens/wizard_create_school_screen.dart';
 
 class StudentProfileTabScreen extends StatefulWidget {
   final String memberId;
@@ -34,7 +34,7 @@ class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
   Future<DocumentSnapshot> _fetchUserData() async {
     final userDoc = await FirebaseFirestore.instance.collection('users').doc(widget.memberId).get();
 
-    if (userDoc.exists) {
+    if (userDoc.exists && mounted) {
       final data = userDoc.data() as Map<String, dynamic>;
       _nameController.text = data['displayName'] ?? '';
       _phoneController.text = data['phoneNumber'] ?? '';
@@ -49,7 +49,7 @@ class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _phoneController.dispose(); // <-- 3. LIMPIAMOS EL CONTROLADOR
+    _phoneController.dispose();
     _emergencyContactNameController.dispose();
     _emergencyContactPhoneController.dispose();
     _medicalEmergencyServiceController.dispose();
@@ -62,15 +62,13 @@ class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
     try {
       final dataToUpdate = {
         'displayName': _nameController.text.trim(),
-        'phoneNumber': _phoneController.text.trim(), // <-- 4. AÑADIMOS EL CAMPO AL GUARDADO
+        'phoneNumber': _phoneController.text.trim(),
         'emergencyContactName': _emergencyContactNameController.text.trim(),
         'emergencyContactPhone': _emergencyContactPhoneController.text.trim(),
         'medicalEmergencyService': _medicalEmergencyServiceController.text.trim(),
         'medicalInfo': _medicalInfoController.text.trim(),
       };
-
       await FirebaseFirestore.instance.collection('users').doc(widget.memberId).update(dataToUpdate);
-
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Perfil actualizado con éxito.'), backgroundColor: Colors.green),
@@ -129,76 +127,22 @@ class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
                 children: [
                   Text('Mis Datos', style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(labelText: 'Nombre y Apellido', border: OutlineInputBorder()),
-                  ),
+                  TextFormField(controller: _nameController, decoration: const InputDecoration(labelText: 'Nombre y Apellido', border: OutlineInputBorder())),
                   const SizedBox(height: 16),
-                  // --- 5. AÑADIMOS EL CAMPO DE TEXTO A LA UI ---
-                  TextFormField(
-                    controller: _phoneController,
-                    decoration: const InputDecoration(labelText: 'Mi Teléfono', border: OutlineInputBorder()),
-                    keyboardType: TextInputType.phone,
-                  ),
+                  TextFormField(controller: _phoneController, decoration: const InputDecoration(labelText: 'Mi Teléfono', border: OutlineInputBorder()), keyboardType: TextInputType.phone),
                   const SizedBox(height: 32),
                   Text('Información de Emergencia', style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Esta información solo será visible para los maestros de tu escuela en caso de ser necesario.',
-                    style: TextStyle(color: Colors.grey),
-                  ),
+                  const Text('Esta información solo será visible para los maestros de tu escuela en caso de ser necesario.', style: TextStyle(color: Colors.grey)),
                   const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _emergencyContactNameController,
-                    decoration: const InputDecoration(labelText: 'Nombre del Contacto de Emergencia', border: OutlineInputBorder()),
-                  ),
+                  TextFormField(controller: _emergencyContactNameController, decoration: const InputDecoration(labelText: 'Nombre del Contacto de Emergencia', border: OutlineInputBorder())),
                   const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _emergencyContactPhoneController,
-                    decoration: const InputDecoration(labelText: 'Teléfono del Contacto de Emergencia', border: OutlineInputBorder()),
-                    keyboardType: TextInputType.phone,
-                  ),
+                  TextFormField(controller: _emergencyContactPhoneController, decoration: const InputDecoration(labelText: 'Teléfono del Contacto de Emergencia', border: OutlineInputBorder()), keyboardType: TextInputType.phone),
                   const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _medicalEmergencyServiceController,
-                    decoration: const InputDecoration(
-                      labelText: 'Servicio de Emergencia Médica',
-                      hintText: 'Ej: SEMM, Emergencia Uno, UCM',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
+                  TextFormField(controller: _medicalEmergencyServiceController, decoration: const InputDecoration(labelText: 'Servicio de Emergencia Médica', hintText: 'Ej: SEMM, Emergencia Uno, UCM', border: OutlineInputBorder())),
                   const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _medicalInfoController,
-                    decoration: const InputDecoration(
-                      labelText: 'Información Médica Relevante',
-                      hintText: 'Ej: Alergias, asma, medicación, etc.',
-                      border: OutlineInputBorder(),
-                    ),
-                    maxLines: 4,
-                  ),
+                  TextFormField(controller: _medicalInfoController, decoration: const InputDecoration(labelText: 'Información Médica Relevante', hintText: 'Ej: Alergias, asma, medicación, etc.', border: OutlineInputBorder()), maxLines: 4),
                   const SizedBox(height: 32),
-
-                  const Divider(),
-                  const SizedBox(height: 16),
-                  Card(
-                    elevation: 2,
-                    child: ListTile(
-                      leading: Icon(Icons.add_business, color: Theme.of(context).primaryColor),
-                      title: const Text('Crear mi Propia Escuela'),
-                      subtitle: const Text('Conviértete en maestro e inicia tu camino.'),
-                      trailing: const Icon(Icons.arrow_forward_ios),
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => const WizardCreateSchoolScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-
                   if (_isLoading)
                     const Center(child: CircularProgressIndicator())
                   else
@@ -208,6 +152,32 @@ class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
                       style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
                       onPressed: _saveProfileChanges,
                     ),
+                  const SizedBox(height: 32),
+                  const Divider(),
+                  const SizedBox(height: 16),
+                  Text('Acciones de Cuenta', style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(height: 16),
+                  Card(
+                    elevation: 2,
+                    child: ListTile(
+                      leading: Icon(Icons.search, color: Theme.of(context).primaryColor),
+                      title: const Text('Inscribirme en otra Escuela'),
+                      subtitle: const Text('Busca y postúlate a una nueva academia.'),
+                      trailing: const Icon(Icons.arrow_forward_ios),
+                      onTap: () { Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SchoolSearchScreen())); },
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Card(
+                    elevation: 2,
+                    child: ListTile(
+                      leading: Icon(Icons.add_business, color: Theme.of(context).primaryColor),
+                      title: const Text('Crear mi Propia Escuela'),
+                      subtitle: const Text('Conviértete en maestro e inicia tu camino.'),
+                      trailing: const Icon(Icons.arrow_forward_ios),
+                      onTap: () { Navigator.of(context).push(MaterialPageRoute(builder: (context) => const WizardCreateSchoolScreen())); },
+                    ),
+                  ),
                 ],
               ),
             ),
