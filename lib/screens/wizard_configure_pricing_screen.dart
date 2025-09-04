@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:warrior_path/models/payment_plan_model.dart';
 import 'package:warrior_path/screens/wizard_review_screen.dart';
 import 'package:warrior_path/theme/martial_art_themes.dart';
 
@@ -16,26 +17,55 @@ class WizardConfigurePricingScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _WizardConfigurePricingScreenState createState() => _WizardConfigurePricingScreenState();
+  State<WizardConfigurePricingScreen> createState() => _WizardConfigurePricingScreenState();
 }
 
 class _WizardConfigurePricingScreenState extends State<WizardConfigurePricingScreen> {
   final _inscriptionFeeController = TextEditingController();
-  final _monthlyFeeController = TextEditingController();
   final _examFeeController = TextEditingController();
 
-  String _selectedCurrency = 'UYU'; // Moneda por defecto
+  String _selectedCurrency = 'UYU';
+  final List<String> _currencies = ['UYU', 'USD', 'ARS', 'EUR', 'MXN'];
+
+  List<PaymentPlanModel> _plans = [];
+
   bool _isLoading = false;
 
-  final List<String> _currencies = ['UYU', 'USD', 'ARS', 'EUR'];
+  @override
+  void initState() {
+    super.initState();
+    _addPlan();
+  }
+
+  @override
+  void dispose() {
+    _inscriptionFeeController.dispose();
+    _examFeeController.dispose();
+    super.dispose();
+  }
+
+  void _addPlan() {
+    setState(() {
+      _plans.add(PaymentPlanModel(
+          title: '',
+          amount: 0.0,
+          currency: _selectedCurrency,
+          description: ''
+      ));
+    });
+  }
+
+  void _removePlan(int index) {
+    setState(() {
+      _plans.removeAt(index);
+    });
+  }
 
   Future<void> _saveAndContinue() async {
-    // Validación simple para asegurar que los campos no estén vacíos
-    if (_inscriptionFeeController.text.isEmpty ||
-        _monthlyFeeController.text.isEmpty ||
-        _examFeeController.text.isEmpty) {
+    // Validación de datos
+    if (_plans.any((p) => p.title.trim().isEmpty || p.amount <= 0)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, completa todos los campos de precios. Puedes ingresar 0 si no aplica.')),
+        const SnackBar(content: Text('Todos los planes deben tener un título y un monto mayor a cero.')),
       );
       return;
     }
@@ -46,30 +76,31 @@ class _WizardConfigurePricingScreenState extends State<WizardConfigurePricingScr
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception("Usuario no autenticado.");
 
-      // Convertir texto a números de forma segura
-      final inscriptionFee = double.tryParse(_inscriptionFeeController.text) ?? 0.0;
-      final monthlyFee = double.tryParse(_monthlyFeeController.text) ?? 0.0;
-      final examFee = double.tryParse(_examFeeController.text) ?? 0.0;
+      final firestore = FirebaseFirestore.instance;
+      final schoolRef = firestore.collection('schools').doc(widget.schoolId);
+      final batch = firestore.batch();
 
+      // 1. Guardar los costos únicos en el documento principal de la escuela
       final financialData = {
-        'inscriptionFee': inscriptionFee,
-        'monthlyFee': monthlyFee,
-        'examFee': examFee,
+        'inscriptionFee': double.tryParse(_inscriptionFeeController.text) ?? 0.0,
+        'examFee': double.tryParse(_examFeeController.text) ?? 0.0,
         'currency': _selectedCurrency,
       };
+      batch.update(schoolRef, {'financials': financialData});
 
-      final firestore = FirebaseFirestore.instance;
+      // 2. Guardar cada plan como un documento separado en la sub-colección 'paymentPlans'
+      for (final plan in _plans) {
+        plan.currency = _selectedCurrency; // Aseguramos que todos los planes tengan la moneda seleccionada
+        final planRef = schoolRef.collection('paymentPlans').doc();
+        batch.set(planRef, plan.toJson());
+      }
 
-      // 1. Actualizar el documento de la escuela con la información financiera
-      await firestore.collection('schools').doc(widget.schoolId).update({
-        'financials': financialData,
-      });
+      // 3. Actualizar el progreso del wizard
+      batch.update(firestore.collection('users').doc(user.uid), {'wizardStep': 5});
 
-      // 2. Actualizar el progreso del wizard del usuario
-      await firestore.collection('users').doc(user.uid).update({'wizardStep': 5});
+      await batch.commit();
 
       if (!mounted) return;
-
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (context) => WizardReviewScreen(
@@ -80,22 +111,10 @@ class _WizardConfigurePricingScreenState extends State<WizardConfigurePricingScr
       );
 
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al guardar los precios: ${e.toString()}')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al guardar: ${e.toString()}')));
     } finally {
-      if (mounted) {
-        setState(() { _isLoading = false; });
-      }
+      if (mounted) setState(() { _isLoading = false; });
     }
-  }
-
-  @override
-  void dispose() {
-    _inscriptionFeeController.dispose();
-    _monthlyFeeController.dispose();
-    _examFeeController.dispose();
-    super.dispose();
   }
 
   @override
@@ -112,100 +131,91 @@ class _WizardConfigurePricingScreenState extends State<WizardConfigurePricingScr
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'Define los costos principales de tu academia',
-                style: Theme.of(context).textTheme.titleLarge,
-                textAlign: TextAlign.center,
-              ),
+              Text('Costos Únicos y Moneda', style: Theme.of(context).textTheme.titleLarge, textAlign: TextAlign.center),
               const SizedBox(height: 24),
-
-              // Selector de Moneda
               DropdownButtonFormField<String>(
                 value: _selectedCurrency,
-                decoration: const InputDecoration(
-                  labelText: 'Moneda',
-                  border: OutlineInputBorder(),
-                ),
-                items: _currencies.map((String currency) {
-                  return DropdownMenuItem<String>(
-                    value: currency,
-                    child: Text(currency),
-                  );
-                }).toList(),
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _selectedCurrency = newValue!;
-                  });
-                },
+                decoration: const InputDecoration(labelText: 'Moneda', border: OutlineInputBorder()),
+                items: _currencies.map((c) => DropdownMenuItem<String>(value: c, child: Text(c))).toList(),
+                onChanged: (v) => setState(() => _selectedCurrency = v!),
               ),
               const SizedBox(height: 24),
-
-              // Campo para Precio de Inscripción
               TextFormField(
                 controller: _inscriptionFeeController,
-                decoration: InputDecoration(
-                  labelText: 'Precio de Inscripción',
-                  prefixText: '$_selectedCurrency ',
-                  border: const OutlineInputBorder(),
-                  helperText: 'Costo único para nuevos miembros.',
-                ),
+                decoration: InputDecoration(labelText: 'Precio de Inscripción', prefixText: '$_selectedCurrency ', border: const OutlineInputBorder()),
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))],
               ),
               const SizedBox(height: 24),
-
-              // Campo para Cuota Mensual
-              TextFormField(
-                controller: _monthlyFeeController,
-                decoration: InputDecoration(
-                  labelText: 'Cuota Recurrente (Ej. Mensual)',
-                  prefixText: '$_selectedCurrency ',
-                  border: const OutlineInputBorder(),
-                  helperText: 'El costo principal que pagan los alumnos periódicamente.',
-                ),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))],
-              ),
-              const SizedBox(height: 24),
-
-              // Campo para Precio de Examen
               TextFormField(
                 controller: _examFeeController,
-                decoration: InputDecoration(
-                  labelText: 'Precio por Examen',
-                  prefixText: '$_selectedCurrency ',
-                  border: const OutlineInputBorder(),
-                  helperText: 'Costo para rendir examen de pasaje de grado.',
-                ),
+                decoration: InputDecoration(labelText: 'Precio por Examen', prefixText: '$_selectedCurrency ', border: const OutlineInputBorder()),
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))],
               ),
-              const SizedBox(height: 24),
-
-              // Mensaje Informativo
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Text(
-                  'Podrás configurar planes más complejos (descuentos, becas, etc.) más tarde desde tu panel de gestión.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontStyle: FontStyle.italic),
-                ),
+              const Divider(height: 40, thickness: 1),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Planes de Cuotas Mensuales', style: Theme.of(context).textTheme.titleLarge),
+                  IconButton(
+                    icon: Icon(Icons.add_circle, color: widget.martialArtTheme.primaryColor),
+                    tooltip: 'Añadir nuevo plan',
+                    onPressed: _addPlan,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              if (_plans.isEmpty) const Center(child: Text('Añade al menos un plan de pago mensual.')),
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _plans.length,
+                itemBuilder: (context, index) {
+                  return Card(
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        children: [
+                          TextFormField(
+                            initialValue: _plans[index].title,
+                            onChanged: (value) => _plans[index].title = value,
+                            decoration: const InputDecoration(labelText: 'Título del Plan', hintText: 'Ej: Plan Familiar'),
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            initialValue: _plans[index].amount > 0 ? _plans[index].amount.toString() : '',
+                            onChanged: (value) => _plans[index].amount = double.tryParse(value) ?? 0.0,
+                            decoration: InputDecoration(labelText: 'Monto Mensual', prefixText: '$_selectedCurrency ', hintText: '0.0'),
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            initialValue: _plans[index].description,
+                            onChanged: (value) => _plans[index].description = value,
+                            decoration: const InputDecoration(labelText: 'Descripción (opcional)', hintText: 'Ej: Para 2 o más hermanos'),
+                          ),
+                          if (_plans.length > 1)
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: IconButton(
+                                icon: Icon(Icons.delete_outline, color: Colors.red.shade300),
+                                onPressed: () => _removePlan(index),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 32),
-
-              // Botón de Continuar
               if (_isLoading)
                 const Center(child: CircularProgressIndicator())
               else
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: widget.martialArtTheme.primaryColor,
-                  ),
+                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16), backgroundColor: widget.martialArtTheme.primaryColor),
                   onPressed: _saveAndContinue,
                   child: const Text('Guardar y Continuar', style: TextStyle(color: Colors.white)),
                 ),
