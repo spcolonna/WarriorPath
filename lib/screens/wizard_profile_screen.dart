@@ -103,11 +103,11 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
       // 4. Navegar al siguiente paso
       if (_selectedRole == UserRole.student) {
         await userRef.update({'wizardStep': 1});
-        Navigator.of(context).pushReplacement(
+        Navigator.of(context).push(
           MaterialPageRoute(builder: (context) => const SchoolSearchScreen(isFromWizard: true)),
         );
       } else {
-        Navigator.of(context).pushReplacement(
+        Navigator.of(context).push(
             MaterialPageRoute(builder: (context) => const WizardCreateSchoolScreen()));
       }
 

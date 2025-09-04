@@ -158,7 +158,7 @@ class _WizardCreateSchoolScreenState extends State<WizardCreateSchoolScreen> {
 
       if (!mounted) return;
 
-      Navigator.of(context).pushReplacement(
+      Navigator.of(context).push(
         MaterialPageRoute(
           builder: (context) => WizardConfigureLevelsScreen(
             schoolId: schoolDocRef.id,

@@ -35,6 +35,23 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     if (!mounted) return;
 
     if (!userProfileDoc.exists) {
+      final newUserProfile = {
+        'uid': user.uid,
+        'email': user.email,
+        'wizardStep': 0,
+        'createdAt': FieldValue.serverTimestamp(),
+        'displayName': user.displayName ?? '',
+        'photoUrl': user.photoURL ?? '',
+      };
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set(newUserProfile);
+
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const WizardProfileScreen()),
+      );
+      return;
+    }
+
+    if (!userProfileDoc.exists) {
       _showErrorDialog('Error de Perfil', 'No se pudo cargar tu perfil. Intenta de nuevo.');
       setState(() { _isLoading = false; });
       return;

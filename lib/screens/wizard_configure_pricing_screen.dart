@@ -101,7 +101,7 @@ class _WizardConfigurePricingScreenState extends State<WizardConfigurePricingScr
       await batch.commit();
 
       if (!mounted) return;
-      Navigator.of(context).pushReplacement(
+      Navigator.of(context).push(
         MaterialPageRoute(
           builder: (context) => WizardReviewScreen(
             schoolId: widget.schoolId,

@@ -110,7 +110,7 @@ class _WizardConfigureLevelsScreenState extends State<WizardConfigureLevelsScree
 
       if (!mounted) return;
 
-      Navigator.of(context).pushReplacement(
+      Navigator.of(context).push(
         MaterialPageRoute(
           builder: (context) => WizardConfigureTechniquesScreen(
             schoolId: widget.schoolId,

@@ -202,12 +202,30 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
     );
   }
 
-  Future<void> _savePayment({required String concept, required double amount, required String currency, String? planId}) async {
+  Future<void> _savePayment({
+    required String concept,
+    required double amount,
+    required String currency,
+    String? planId,
+  }) async {
     try {
-      await FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId).collection('payments').add({
-        'paymentDate': Timestamp.now(), 'concept': concept.trim(), 'amount': amount, 'currency': currency, 'recordedBy': FirebaseAuth.instance.currentUser?.uid, 'schoolId': widget.schoolId, 'paymentPlanId': planId,
+      await FirebaseFirestore.instance
+          .collection('schools').doc(widget.schoolId)
+          .collection('members').doc(widget.studentId)
+          .collection('payments').add({
+        'paymentDate': Timestamp.now(),
+        'concept': concept.trim(),
+        'amount': amount,
+        'currency': currency,
+        'recordedBy': FirebaseAuth.instance.currentUser?.uid,
+        'schoolId': widget.schoolId,
+        'paymentPlanId': planId,
+        'studentId': widget.studentId,
+        'studentName': _studentName,
       });
+
       if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Pago registrado con éxito.')));
+
     } catch (e) {
       if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al registrar el pago: ${e.toString()}')));
     }

@@ -94,7 +94,7 @@ class _WizardConfigureTechniquesScreenState extends State<WizardConfigureTechniq
 
       if (!mounted) return;
 
-      Navigator.of(context).pushReplacement(
+      Navigator.of(context).push(
         MaterialPageRoute(
           builder: (context) => WizardConfigurePricingScreen(
             schoolId: widget.schoolId,
