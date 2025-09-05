@@ -11,6 +11,7 @@ enum UserRole { student, teacher, both }
 
 class WizardProfileScreen extends StatefulWidget {
   final bool isExistingUser;
+
   const WizardProfileScreen({Key? key, this.isExistingUser = false}) : super(key: key);
 
   @override
@@ -29,7 +30,6 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
   void initState() {
     super.initState();
     _uid = FirebaseAuth.instance.currentUser?.uid;
-    // 2. SI ES UN USUARIO EXISTENTE, CARGAMOS SUS DATOS
     if (widget.isExistingUser && _uid != null) {
       _loadExistingUserData();
     }
@@ -42,7 +42,6 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
       setState(() {
         _nameController.text = data['displayName'] ?? '';
         _phoneController.text = data['phoneNumber'] ?? '';
-        // No cargamos la foto, pero el usuario puede subir una nueva si quiere
       });
     }
   }
@@ -75,37 +74,30 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
 
     try {
       String? photoUrl;
-      // 1. Subir la imagen si existe
       if (_imageFile != null) {
         final ref = FirebaseStorage.instance.ref().child('profile_pics').child('$_uid.jpg');
         await ref.putFile(_imageFile!);
         photoUrl = await ref.getDownloadURL();
       }
 
-      // 2. Preparar los datos para actualizar
       final dataToUpdate = <String, dynamic>{
         'displayName': _nameController.text.trim(),
         'phoneNumber': _phoneController.text.trim(),
         'role': _selectedRole.toString().split('.').last,
-        'wizardStep': 1, // Marcamos este paso como completado
+        'wizardStep': 1,
       };
       if (photoUrl != null) {
         dataToUpdate['photoUrl'] = photoUrl;
       }
 
       final userRef = FirebaseFirestore.instance.collection('users').doc(_uid);
-
-      // 3. Actualizar Firestore
-      await userRef.update(dataToUpdate);
+      await userRef.set(dataToUpdate, SetOptions(merge: true));
 
       if (!mounted) return;
 
-      // 4. Navegar al siguiente paso
       if (_selectedRole == UserRole.student) {
-        await userRef.update({'wizardStep': 1});
         Navigator.of(context).push(
-          MaterialPageRoute(builder: (context) => const SchoolSearchScreen(isFromWizard: true)),
-        );
+            MaterialPageRoute(builder: (context) => const SchoolSearchScreen(isFromWizard: true)));
       } else {
         Navigator.of(context).push(
             MaterialPageRoute(builder: (context) => const WizardCreateSchoolScreen()));
@@ -125,7 +117,7 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Completa tu Perfil (Paso 1)')),
+      appBar: AppBar(title: Text(widget.isExistingUser ? 'Elige tu Rol' : 'Completa tu Perfil (Paso 1)')),
       body: AbsorbPointer(
         absorbing: _isLoading,
         child: SingleChildScrollView(
@@ -154,12 +146,12 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              TextField(
+              TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(labelText: 'Nombre y Apellido *'),
               ),
               const SizedBox(height: 16),
-              TextField(
+              TextFormField(
                 controller: _phoneController,
                 decoration: const InputDecoration(labelText: 'Teléfono de Contacto'),
                 keyboardType: TextInputType.phone,
@@ -167,21 +159,38 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
               const SizedBox(height: 24),
               Text('¿Cómo quieres empezar? *', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
+
+              // --- CORRECCIÓN AQUÍ ---
               SegmentedButton<UserRole>(
                 segments: const <ButtonSegment<UserRole>>[
-                  ButtonSegment<UserRole>(value: UserRole.student, label: Text('Estudiante'), icon: Icon(Icons.school)),
-                  ButtonSegment<UserRole>(value: UserRole.teacher, label: Text('Profesor'), icon: Icon(Icons.sports_kabaddi)),
-                  ButtonSegment<UserRole>(value: UserRole.both, label: Text('Ambos'), icon: Icon(Icons.group)),
+                  ButtonSegment<UserRole>(
+                      value: UserRole.student,
+                      // Envolvemos el texto en un widget Flexible
+                      label: Flexible(child: Text('Estudiante')),
+                      icon: Icon(Icons.school)
+                  ),
+                  ButtonSegment<UserRole>(
+                      value: UserRole.teacher,
+                      label: Flexible(child: Text('Profesor')),
+                      icon: Icon(Icons.sports_kabaddi)
+                  ),
+                  ButtonSegment<UserRole>(
+                      value: UserRole.both,
+                      label: Flexible(child: Text('Ambos')),
+                      icon: Icon(Icons.group)
+                  ),
                 ],
                 selected: _selectedRole != null ? <UserRole>{_selectedRole!} : <UserRole>{},
-                emptySelectionAllowed: true,
                 onSelectionChanged: (Set<UserRole> newSelection) {
-                  setState(() {
-                    _selectedRole = newSelection.isNotEmpty ? newSelection.first : null;
-                  });
+                  if (newSelection.isNotEmpty) {
+                    _updateRole(newSelection.first);
+                  }
                 },
+                emptySelectionAllowed: true,
                 showSelectedIcon: false,
               ),
+              // --- FIN DE LA CORRECCIÓN ---
+
               const SizedBox(height: 16),
               if (_selectedRole == UserRole.teacher || _selectedRole == UserRole.both)
                 Container(

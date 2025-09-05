@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:warrior_path/screens/WelcomeScreen.dart';
 import 'package:warrior_path/screens/role_selector_screen.dart';
+import 'package:warrior_path/screens/student/school_search_screen.dart';
 import 'package:warrior_path/screens/wizard_create_school_screen.dart';
 
 import '../../teacher/edit_teacher_profile_screen.dart';
@@ -57,6 +58,24 @@ class ProfileTabScreen extends StatelessWidget {
             },
           ),
           const Divider(),
+
+          // --- 2. TARJETA AÑADIDA AQUÍ ---
+          Card(
+            elevation: 2,
+            child: ListTile(
+              leading: Icon(Icons.search, color: Theme.of(context).primaryColor),
+              title: const Text('Inscribirme en otra Escuela'),
+              subtitle: const Text('Únete a otra comunidad como alumno.'),
+              trailing: const Icon(Icons.arrow_forward_ios),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => const SchoolSearchScreen()),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 8), // Espacio entre las tarjetas
+
           Card(
             elevation: 2,
             child: ListTile(

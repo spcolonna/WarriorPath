@@ -1,4 +1,5 @@
 import java.util.Properties
+import java.io.FileInputStream
 
 plugins {
     id("com.android.application")
@@ -21,19 +22,52 @@ android {
     compileSdk = 35
     ndkVersion = "27.0.12077973"
 
+    // --- 1. AÑADIMOS ESTE BLOQUE PARA CARGAR LAS CLAVES ---
+    val keystoreProperties = Properties()
+    val keystorePropertiesFile = rootProject.file("key.properties") // Apunta al archivo en la carpeta 'android'
+    if (keystorePropertiesFile.exists()) {
+        keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+    }
+    // --------------------------------------------------------
+
     defaultConfig {
         applicationId = "com.warriorpath.app"
         minSdk = 23
-        targetSdk = 34
+        targetSdk = 35
         versionCode = flutterVersionCode.toInt()
         versionName = flutterVersionName
     }
 
-    buildTypes {
-        release {
-            signingConfig = signingConfigs.getByName("debug")
+    // --- 2. AÑADIMOS ESTE BLOQUE PARA CONFIGURAR LA FIRMA ---
+    signingConfigs {
+        create("release") {
+            val alias = keystoreProperties["keyAlias"]?.toString()
+            val keyPass = keystoreProperties["keyPassword"]?.toString()
+            val store = keystoreProperties["storeFile"]?.toString()
+            val storePass = keystoreProperties["storePassword"]?.toString()
+
+            println(">>> [Gradle] keyAlias=$alias, storeFile=$store")
+
+            if (alias == null || keyPass == null || store == null || storePass == null) {
+                throw GradleException("Alguna propiedad en key.properties falta o no se está leyendo correctamente")
+            }
+
+            keyAlias = alias
+            keyPassword = keyPass
+            storeFile = file(store)
+            storePassword = storePass
         }
     }
+    // ----------------------------------------------------------
+
+    // --- 3. MODIFICAMOS ESTE BLOQUE PARA USAR LA FIRMA ---
+    buildTypes {
+        getByName("release") {
+            // Esto le dice a la versión de lanzamiento que use la configuración de firma "release"
+            signingConfig = signingConfigs.getByName("release")
+        }
+    }
+    // ----------------------------------------------------
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
