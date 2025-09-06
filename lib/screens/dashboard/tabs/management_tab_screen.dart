@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:warrior_path/providers/session_provider.dart';
 import 'package:warrior_path/screens/schedule/schedule_management_screen.dart';
 
+import '../../teacher/events/event_management_screen.dart';
 import '../../teacher/management/edit_school_data_screen.dart';
 import '../../teacher/management/finance_management_screen.dart';
 import '../../teacher/management/level_management_screen.dart';
@@ -14,10 +15,8 @@ class ManagementTabScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 2. OBTENEMOS EL schoolId DESDE EL PROVIDER
     final schoolId = Provider.of<SessionProvider>(context).activeSchoolId;
 
-    // Fallback por si no hay sesión activa
     if (schoolId == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Gestión de la Escuela')),
@@ -31,6 +30,18 @@ class ManagementTabScreen extends StatelessWidget {
       ),
       body: ListView(
         children: [
+          _buildManagementTile(
+            context: context,
+            icon: Icons.event,
+            title: 'Gestionar Eventos',
+            subtitle: 'Crea exámenes, torneos y seminarios.',
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => EventManagementScreen(schoolId: schoolId)),
+              );
+            },
+          ),
+          const Divider(),
           _buildManagementTile(
             context: context,
             icon: Icons.calendar_today,
@@ -97,7 +108,6 @@ class ManagementTabScreen extends StatelessWidget {
     );
   }
 
-  // Este widget de ayuda no necesita cambios
   Widget _buildManagementTile({
     required BuildContext context,
     required IconData icon,

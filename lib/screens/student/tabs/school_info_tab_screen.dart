@@ -1,6 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:warrior_path/screens/role_selector_screen.dart';
+
+import '../../../models/event_model.dart';
+import '../student_event_detail_screen.dart';
 
 class SchoolInfoTabScreen extends StatelessWidget {
   final String schoolId;
@@ -64,12 +69,12 @@ class SchoolInfoTabScreen extends StatelessWidget {
                   ),
                 ),
 
+                _buildUpcomingEvents(context, schoolId),
+
                 _buildInfoCard(
                     context: context,
                     title: 'Información de Contacto',
                     children: [
-                      // --- CORRECCIÓN AQUÍ ---
-                      // Se cambió 'icon:' por 'leading: Icon(...)'
                       ListTile(leading: const Icon(Icons.location_on), title: const Text('Dirección'), subtitle: Text('${schoolData['address'] ?? ''}, ${schoolData['city'] ?? ''}')),
                       ListTile(leading: const Icon(Icons.phone), title: const Text('Teléfono'), subtitle: Text(schoolData['phone'] ?? 'No especificado')),
                     ]
@@ -100,6 +105,55 @@ class SchoolInfoTabScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildUpcomingEvents(BuildContext context, String schoolId) {
+    final studentId = FirebaseAuth.instance.currentUser?.uid;
+    if (studentId == null) return const SizedBox.shrink();
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('schools').doc(schoolId).collection('events')
+          .where('invitedStudentIds', arrayContains: studentId)
+          .where('eventDate', isGreaterThanOrEqualTo: Timestamp.now())
+          .orderBy('eventDate').limit(3).snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) print("### ERROR AL BUSCAR EVENTOS: ${snapshot.error}");
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return const SizedBox.shrink();
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Próximos Eventos', style: Theme.of(context).textTheme.titleLarge),
+              const SizedBox(height: 8),
+              ...snapshot.data!.docs.map((doc) {
+                final event = EventModel.fromFirestore(doc);
+                return Card(
+                  child: ListTile(
+                    leading: const Icon(Icons.event_available),
+                    title: Text(event.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: Text(DateFormat('dd MMMM, yyyy', 'es_ES').format(event.date)),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => StudentEventDetailScreen(
+                            schoolId: schoolId,
+                            eventId: doc.id,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              }).toList(),
+              const Divider(height: 32),
+            ],
+          ),
+        );
+      },
     );
   }
 
