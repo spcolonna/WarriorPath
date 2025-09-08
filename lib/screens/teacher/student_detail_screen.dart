@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:warrior_path/models/payment_plan_model.dart';
 import 'package:warrior_path/screens/teacher/techniques/assign_techniques_screen.dart';
 
+import '../../enums/payment_type.dart';
 import '../../models/technique_model.dart';
 
 class StudentDetailScreen extends StatefulWidget {
@@ -238,6 +239,87 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
     }
   }
 
+  Future<void> _showAssignPlanDialog(String? currentPlanId) async {
+    final firestore = FirebaseFirestore.instance;
+
+    // 1. Obtener todos los planes disponibles en la escuela
+    final plansSnapshot = await firestore
+        .collection('schools').doc(widget.schoolId)
+        .collection('paymentPlans').get();
+
+    final List<PaymentPlanModel> allPlans = plansSnapshot.docs
+        .map((doc) => PaymentPlanModel.fromFirestore(doc)).toList();
+
+    // 2. Encontrar el plan seleccionado actualmente (si existe)
+    PaymentPlanModel? selectedPlan;
+    if (currentPlanId != null && allPlans.any((p) => p.id == currentPlanId)) {
+      selectedPlan = allPlans.firstWhere((p) => p.id == currentPlanId);
+    }
+
+    // 3. Mostrar el diálogo
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder( // StatefulBuilder para actualizar el Dropdown
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text('Asignar Plan de Pago'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DropdownButtonFormField<PaymentPlanModel>(
+                  value: selectedPlan,
+                  hint: const Text('Selecciona un plan'),
+                  items: allPlans.map((plan) {
+                    return DropdownMenuItem(
+                      value: plan,
+                      child: Text('${plan.title} (${plan.amount} ${plan.currency})'),
+                    );
+                  }).toList(),
+                  onChanged: (plan) {
+                    setDialogState(() => selectedPlan = plan);
+                  },
+                ),
+                const SizedBox(height: 16),
+                // Opción para quitar el plan
+                TextButton(
+                  child: const Text('Quitar plan asignado', style: TextStyle(color: Colors.red)),
+                  onPressed: () {
+                    // Actualiza Firestore poniendo el campo en null
+                    firestore
+                        .collection('schools').doc(widget.schoolId)
+                        .collection('members').doc(widget.studentId)
+                        .update({'assignedPaymentPlanId': null}); // <-- Aquí usamos el nuevo campo
+                    Navigator.of(context).pop();
+                  },
+                )
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancelar'),
+              ),
+              ElevatedButton(
+                // Solo se activa si seleccionaron un plan
+                onPressed: selectedPlan == null
+                    ? null
+                    : () {
+                  // Aquí actualizamos el documento del MIEMBRO con el NUEVO CAMPO
+                  firestore
+                      .collection('schools').doc(widget.schoolId)
+                      .collection('members').doc(widget.studentId)
+                      .update({'assignedPaymentPlanId': selectedPlan!.id}); // <-- Aquí usamos el nuevo campo
+                  Navigator.of(context).pop();
+                },
+                child: const Text('Guardar'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -379,34 +461,136 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
   }
 
   Widget _buildGeneralInfoTab() {
-    return FutureBuilder<DocumentSnapshot>(
-      future: FirebaseFirestore.instance.collection('users').doc(widget.studentId).get(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-        final userData = snapshot.data?.data() as Map<String, dynamic>? ?? {};
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(children: [
-            _buildInfoCard(title: 'Datos de Contacto', icon: Icons.contact_page, children: [
-              _buildInfoRow('Email:', userData['email'] ?? 'No especificado'), _buildInfoRow('Teléfono:', userData['phoneNumber'] ?? 'No especificado'),
-            ]),
-            const SizedBox(height: 16),
-            _buildInfoCard(title: 'Información de Emergencia', icon: Icons.emergency, iconColor: Colors.red, children: [
-              _buildInfoRow('Contacto:', userData['emergencyContactName'] ?? 'No especificado'),
-              _buildInfoRow('Teléfono:', userData['emergencyContactPhone'] ?? 'No especificado'),
-              _buildInfoRow('Servicio Médico:', userData['medicalEmergencyService'] ?? 'No especificado'),
-              const Divider(),
-              _buildInfoRow('Info Médica:', userData['medicalInfo'] ?? 'Sin observaciones'),
-            ]),
-          ]),
+    return StreamBuilder<DocumentSnapshot>(
+      // ATENCIÓN: Ahora usamos un STREAM en lugar de un FUTUREBUILDER.
+      // Necesitamos un Stream para que el plan asignado se actualice en vivo
+      // cuando el maestro lo cambie usando el diálogo.
+      stream: FirebaseFirestore.instance
+          .collection('schools').doc(widget.schoolId)
+          .collection('members').doc(widget.studentId)
+          .snapshots(),
+      builder: (context, memberSnapshot) {
+        if (!memberSnapshot.hasData) return const Center(child: CircularProgressIndicator());
+
+        // Obtenemos los datos del miembro (alumno)
+        final memberData = memberSnapshot.data?.data() as Map<String, dynamic>? ?? {};
+        final String? assignedPlanId = memberData['assignedPaymentPlanId'] as String?; // <-- Leemos el nuevo campo
+
+        return FutureBuilder<DocumentSnapshot>(
+          // Usamos un FutureBuilder anidado solo para los datos del usuario (Email/Teléfono)
+          // ya que estos no cambian, pero los datos del Miembro (el plan) sí.
+          future: FirebaseFirestore.instance.collection('users').doc(widget.studentId).get(),
+          builder: (context, userSnapshot) {
+            if (!userSnapshot.hasData) return const Center(child: CircularProgressIndicator());
+            final userData = userSnapshot.data?.data() as Map<String, dynamic>? ?? {};
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(children: [
+                // --- INICIO DE LA NUEVA TARJETA DE FACTURACIÓN ---
+                _buildInfoCard(
+                  title: 'Facturación',
+                  icon: Icons.receipt_long,
+                  iconColor: Colors.blueAccent,
+                  // El contenido de la tarjeta es otro FutureBuilder que busca
+                  // los detalles del plan asignado.
+                  children: [
+                    FutureBuilder<DocumentSnapshot>(
+                      // Buscamos los detalles del plan solo si el ID existe
+                      future: assignedPlanId == null
+                          ? null // Si no hay ID, el future es nulo
+                          : FirebaseFirestore.instance
+                          .collection('schools').doc(widget.schoolId)
+                          .collection('paymentPlans').doc(assignedPlanId)
+                          .get(),
+                      builder: (context, planSnapshot) {
+                        String planDetailsText = 'Sin plan de pago asignado.';
+
+                        if (planSnapshot.connectionState == ConnectionState.waiting) {
+                          planDetailsText = 'Cargando plan...';
+                        } else if (planSnapshot.hasData && planSnapshot.data!.exists) {
+                          // Si encontramos el plan, creamos un modelo
+                          final plan = PaymentPlanModel.fromFirestore(planSnapshot.data!);
+                          planDetailsText = '${plan.title} (${plan.amount} ${plan.currency})';
+                        } else if (assignedPlanId != null) {
+                          planDetailsText = 'Plan asignado (ID: $assignedPlanId) no encontrado.';
+                        }
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(planDetailsText, style: const TextStyle(fontSize: 16)),
+                            const SizedBox(height: 16),
+                            Center(
+                              child: ElevatedButton(
+                                child: const Text('Cambiar Plan Asignado'),
+                                onPressed: () => _showAssignPlanDialog(assignedPlanId),
+                              ),
+                            )
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                ),
+                // --- FIN DE LA NUEVA TARJETA DE FACTURACIÓN ---
+
+                const SizedBox(height: 16),
+                _buildInfoCard(
+                  title: 'Datos de Contacto',
+                  icon: Icons.contact_page,
+                  children: [
+                    _buildInfoRow('Email:', userData['email'] ?? 'No especificado'),
+                    _buildInfoRow('Teléfono:', userData['phoneNumber'] ?? 'No especificado'),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _buildInfoCard(
+                  title: 'Información de Emergencia',
+                  icon: Icons.emergency,
+                  iconColor: Colors.red,
+                  children: [
+                    _buildInfoRow('Contacto:', userData['emergencyContactName'] ?? 'No especificado'),
+                    _buildInfoRow('Teléfono:', userData['emergencyContactPhone'] ?? 'No especificado'),
+                    _buildInfoRow('Servicio Médico:', userData['medicalEmergencyService'] ?? 'No especificado'),
+                    const Divider(),
+                    _buildInfoRow('Info Médica:', userData['medicalInfo'] ?? 'Sin observaciones'),
+                  ],
+                ),
+              ]),
+            );
+          },
         );
       },
     );
   }
 
   Widget _buildInfoCard({required String title, required IconData icon, Color? iconColor, required List<Widget> children}) {
-    return Card(child: Padding(padding: const EdgeInsets.all(16.0), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(children: [Icon(icon, color: iconColor ?? Theme.of(context).primaryColor), const SizedBox(width: 8), Text(title, style: Theme.of(context).textTheme.titleLarge)]),
+    return Card(
+        child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Esta es la fila que da el error
+                  Row(
+                    children: [
+                      Icon(icon, color: iconColor ?? Theme.of(context).primaryColor),
+                      const SizedBox(width: 8),
+
+                      // --- INICIO DE LA CORRECCIÓN ---
+                      // Faltaba envolver el Text en un widget Expanded.
+                      Expanded(
+                        child: Text(
+                            title,
+                            style: Theme.of(context).textTheme.titleLarge,
+                            overflow: TextOverflow.ellipsis, // Tus propiedades están bien, pero dentro del Expanded
+                            maxLines: 2
+                        ),
+                      ),
+                      // --- FIN DE LA CORRECCIÓN ---
+                    ],
+                  ),
       const Divider(height: 20), ...children,
     ])));
   }
@@ -502,8 +686,6 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
     );
   }
 }
-
-enum PaymentType { plan, special }
 
 class _RegisterPaymentDialog extends StatefulWidget {
   final List<PaymentPlanModel> allPlans;

@@ -121,11 +121,49 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
             children: widgetOptions,
           ),
           bottomNavigationBar: BottomNavigationBar(
-            items: const <BottomNavigationBarItem>[
+            items: <BottomNavigationBarItem>[
               BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Mi Escuela'),
               BottomNavigationBarItem(icon: Icon(Icons.leaderboard), label: 'Mi Progreso'),
               BottomNavigationBarItem(icon: Icon(Icons.groups), label: 'Comunidad'),
-              BottomNavigationBarItem(icon: Icon(Icons.payment), label: 'Mis Pagos'),
+              BottomNavigationBarItem(
+                label: 'Mis Pagos',
+                icon: StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('schools').doc(schoolId)
+                      .collection('members').doc(memberId)
+                      .collection('paymentReminders')
+                      .where('status', isEqualTo: 'pending')
+                      .limit(1)
+                      .snapshots(),
+
+                  builder: (context, snapshot) {
+                    // Si hay data y la lista de documentos NO está vacía, mostramos el badge.
+                    final bool hasPendingPayments = snapshot.hasData && snapshot.data!.docs.isNotEmpty;
+
+                    // Usamos un Stack para poner el punto rojo (Badge) encima del ícono.
+                    return Stack(
+                      clipBehavior: Clip.none, // Permite que el punto se vea fuera del ícono
+                      children: [
+                        const Icon(Icons.payment), // El ícono original
+
+                        // Si hay pagos pendientes, muestra el punto rojo
+                        if (hasPendingPayments)
+                          Positioned(
+                            top: -4,  // Ajusta la posición vertical del punto
+                            right: -6, // Ajusta la posición horizontal del punto
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                ),
+              ),
               BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Mi Perfil'),
             ],
             currentIndex: _selectedIndex,
