@@ -578,17 +578,14 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
                       Icon(icon, color: iconColor ?? Theme.of(context).primaryColor),
                       const SizedBox(width: 8),
 
-                      // --- INICIO DE LA CORRECCIÓN ---
-                      // Faltaba envolver el Text en un widget Expanded.
                       Expanded(
                         child: Text(
                             title,
                             style: Theme.of(context).textTheme.titleLarge,
-                            overflow: TextOverflow.ellipsis, // Tus propiedades están bien, pero dentro del Expanded
+                            overflow: TextOverflow.ellipsis,
                             maxLines: 2
                         ),
                       ),
-                      // --- FIN DE LA CORRECCIÓN ---
                     ],
                   ),
       const Divider(height: 20), ...children,
