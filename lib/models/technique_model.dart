@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class TechniqueModel {
   String? id;
   final int? localId;
@@ -26,11 +28,13 @@ class TechniqueModel {
     );
   }
 
-  factory TechniqueModel.fromFirestore(String id, Map<String, dynamic> data) {
+  factory TechniqueModel.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>? ?? {};
+
     return TechniqueModel(
-      id: id,
-      name: data['name'] ?? '',
-      category: data['category'] ?? '',
+      id: doc.id,
+      name: data['name'] ?? 'Sin Nombre',
+      category: data['category'] ?? 'Sin Categoría',
       description: data['description'] ?? '',
       videoUrl: data['videoUrl'],
     );

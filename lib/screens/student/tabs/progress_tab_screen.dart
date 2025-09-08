@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../models/technique_model.dart';
 import '../my_attendance_history_screen.dart'; // Asegúrate de tener este import
 
 class ProgressTabScreen extends StatefulWidget {
@@ -96,12 +97,18 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
 
                 const Divider(height: 32, indent: 16, endIndent: 16),
 
-                // --- SECCIÓN AÑADIDA: HISTORIAL DE PROMOCIONES ---
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Text('Historial de Promociones', style: Theme.of(context).textTheme.headlineSmall),
                 ),
+                const Divider(height: 32, indent: 16, endIndent: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Text('Técnicas Asignadas', style: Theme.of(context).textTheme.headlineSmall),
+                ),
                 const SizedBox(height: 8),
+                _buildAssignedTechniques(context),
+                const SizedBox(height: 24),
                 _buildProgressionHistory(),
                 const SizedBox(height: 24),
                 Card(
@@ -199,6 +206,39 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
     );
   }
 
+  Widget _buildAssignedTechniques(BuildContext context) {
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('members').doc(widget.memberId).snapshots(),
+      builder: (context, memberSnapshot) {
+        if (!memberSnapshot.hasData) return const SizedBox.shrink();
+
+        final assignedIds = List<String>.from(memberSnapshot.data?['assignedTechniqueIds'] ?? []);
+        if (assignedIds.isEmpty) {
+          return const Center(child: Padding(padding: EdgeInsets.all(16), child: Text('Tu maestro aún no te ha asignado técnicas.')));
+        }
+
+        return StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('techniques').where(FieldPath.documentId, whereIn: assignedIds).snapshots(),
+          builder: (context, techSnapshot) {
+            if (!techSnapshot.hasData) return const Center(child: CircularProgressIndicator());
+            return ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: techSnapshot.data!.docs.length,
+              itemBuilder: (context, index) {
+                final tech = TechniqueModel.fromFirestore(techSnapshot.data!.docs[index]);
+                return ListTile(
+                  leading: const Icon(Icons.menu_book),
+                  title: Text(tech.name),
+                  subtitle: Text(tech.category),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
 
   Widget _buildProgressionHistory() {
     return StreamBuilder<QuerySnapshot>(

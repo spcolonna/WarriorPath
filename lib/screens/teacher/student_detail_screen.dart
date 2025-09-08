@@ -5,6 +5,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:warrior_path/models/payment_plan_model.dart';
+import 'package:warrior_path/screens/teacher/techniques/assign_techniques_screen.dart';
+
+import '../../models/technique_model.dart';
 
 class StudentDetailScreen extends StatefulWidget {
   final String schoolId;
@@ -31,11 +34,12 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
   String? _photoUrl;
   Map<String, dynamic>? _currentLevelData;
   String _currentRole = 'alumno';
+  List<String> _assignedTechniqueIds = [];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
     _confettiController = ConfettiController(duration: const Duration(seconds: 3));
 
     _tabController.addListener(() {
@@ -51,14 +55,17 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
     final memberStream = FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId).snapshots();
     _memberSubscription = memberStream.listen((memberSnapshot) async {
       if (!memberSnapshot.exists) {
-        if (mounted) setState(() => _isHeaderLoading = false);
-        return;
+        if (!memberSnapshot.exists) {
+          if (mounted) setState(() => _isHeaderLoading = false);
+          return;
+        }
       }
       final memberData = memberSnapshot.data()!;
       final currentLevelId = memberData['currentLevelId'] ?? memberData['initialLevelId'];
       final results = await Future.wait([_fetchLevelDetails(currentLevelId), _fetchUserPhotoUrl()]);
       if (mounted) {
         setState(() {
+          _assignedTechniqueIds = List<String>.from(memberData['assignedTechniqueIds'] ?? []);
           _studentName = memberData['displayName'] ?? 'Alumno';
           _currentRole = memberData['role'] ?? 'alumno';
           _currentLevelData = results[0] as Map<String, dynamic>?;
@@ -272,7 +279,11 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
                 ]),
               ),
               TabBar(controller: _tabController, isScrollable: true, tabs: const [
-                Tab(text: 'General'), Tab(text: 'Asistencia'), Tab(text: 'Pagos'), Tab(text: 'Progreso'),
+                Tab(text: 'General'),
+                Tab(text: 'Asistencia'),
+                Tab(text: 'Pagos'),
+                Tab(text: 'Progreso'),
+                Tab(text: 'Técnicas'),
               ]),
               Expanded(
                 child: TabBarView(controller: _tabController, children: [
@@ -280,6 +291,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
                   _buildAttendanceHistoryTab(),
                   _buildPaymentsHistoryTab(),
                   _buildProgressionHistoryTab(),
+                  _buildAssignedTechniquesTab(),
                 ]),
               ),
             ],
@@ -310,8 +322,60 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
         label: const Text('Promover Nivel'),
         icon: const Icon(Icons.arrow_upward),
       );
+      case 4:
+        return FloatingActionButton.extended(
+          onPressed: () {
+            Navigator.of(context).push(MaterialPageRoute(
+              builder: (context) => AssignTechniquesScreen(
+                schoolId: widget.schoolId,
+                studentId: widget.studentId,
+                alreadyAssignedIds: _assignedTechniqueIds,
+              ),
+            ));
+          },
+          label: const Text('Asignar Técnicas'),
+          icon: const Icon(Icons.add_task),
+        );
       default: return null;
     }
+  }
+
+  Widget _buildAssignedTechniquesTab() {
+    if (_assignedTechniqueIds.isEmpty) {
+      return const Center(child: Text('Este alumno no tiene técnicas asignadas.'));
+    }
+    // Hacemos una consulta para obtener los detalles de las técnicas asignadas
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('schools').doc(widget.schoolId)
+          .collection('techniques')
+          .where(FieldPath.documentId, whereIn: _assignedTechniqueIds)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        final techniques = snapshot.data!.docs;
+
+        return ListView.builder(
+          itemCount: techniques.length,
+          itemBuilder: (context, index) {
+            final tech = TechniqueModel.fromFirestore(techniques[index]);
+            return ListTile(
+              title: Text(tech.name),
+              subtitle: Text(tech.category),
+              trailing: IconButton(
+                icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
+                onPressed: () async {
+                  // Lógica para eliminar la asignación
+                  await FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId).update({
+                    'assignedTechniqueIds': FieldValue.arrayRemove([tech.id])
+                  });
+                },
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   Widget _buildGeneralInfoTab() {

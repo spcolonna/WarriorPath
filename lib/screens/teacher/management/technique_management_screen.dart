@@ -34,7 +34,7 @@ class _TechniqueManagementScreenState extends State<TechniqueManagementScreen> {
     _initialCategories = List<String>.from(_categories);
 
     final techniquesSnapshot = await FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('techniques').get();
-    _techniques = techniquesSnapshot.docs.map((doc) => TechniqueModel.fromFirestore(doc.id, doc.data())).toList();
+    _techniques = techniquesSnapshot.docs.map((doc) => TechniqueModel.fromFirestore(doc)).toList();
     _initialTechniques = _techniques.map((tech) => TechniqueModel.fromModel(tech)).toList();
 
     setState(() => _isLoading = false);
