@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -350,19 +352,17 @@ class _FinanceManagementScreenState extends State<FinanceManagementScreen> with 
   Widget _buildBarChart(Map<int, double> monthlyTotals, String currency, BuildContext context) {
     final now = DateTime.now();
     final List<BarChartGroupData> barGroups = [];
-    final monthFormatter = DateFormat('MMM', 'es_ES'); // Formato de 3 letras (Ene, Feb, etc)
+    final monthFormatter = DateFormat('MMM', 'es_ES');
 
-    // El año seleccionado para el reporte
     final year = _selectedYear ?? now.year;
 
-    // Generamos barras para los 12 meses del año seleccionado
     for (int i = 1; i <= 12; i++) {
       final monthKey = i;
       final total = monthlyTotals[monthKey] ?? 0.0;
 
       barGroups.add(
           BarChartGroupData(
-            x: i, // Usamos el número del mes (1-12)
+            x: i,
             barRods: [
               BarChartRodData(
                   toY: total,
@@ -383,22 +383,26 @@ class _FinanceManagementScreenState extends State<FinanceManagementScreen> with 
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 22, // Damos un poco de espacio
-              getTitlesWidget: (value, meta) {
+              reservedSize: 32,
+
+              getTitlesWidget: (value, _) {
                 final month = DateTime(0, value.toInt());
-                // --- CAMBIO PRINCIPAL AQUÍ ---
-                return Padding(
-                  padding: const EdgeInsets.only(top: 6.0),
-                  child: Text(
-                    monthFormatter.format(month).toUpperCase(),
-                    // Reducimos el tamaño de la fuente para que no se superponga
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
+
+                return Transform.rotate(
+                  angle: -pi / 4, // Rotación de -45 grados
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 10.0),
+                    child: Text(
+                      monthFormatter.format(month).toUpperCase(),
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 );
               },
+
             ),
           ),
           leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 50)),
