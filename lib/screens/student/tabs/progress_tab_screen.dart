@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../models/technique_model.dart';
 import '../my_attendance_history_screen.dart'; // Asegúrate de tener este import
@@ -231,6 +232,10 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
                   leading: const Icon(Icons.menu_book),
                   title: Text(tech.name),
                   subtitle: Text(tech.category),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+                  onTap: () {
+                    _showTechniqueDetailsDialog(tech);
+                  },
                 );
               },
             );
@@ -314,6 +319,64 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
             subtitle: (notes != null && notes.isNotEmpty) ? Text('Notas: "$notes"') : null,
             trailing: Text(formattedDate),
           ),
+        );
+      },
+    );
+  }
+
+  Future<void> _launchVideoUrl(String urlString) async {
+    final Uri url = Uri.parse(urlString);
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      // Si no se puede lanzar la URL, muestra un error.
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo abrir el video: $urlString')),
+        );
+      }
+    }
+  }
+
+  void _showTechniqueDetailsDialog(TechniqueModel technique) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(technique.name),
+          content: SingleChildScrollView( // Para que la descripción no desborde
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min, // Para que la columna no ocupe todo el alto
+              children: [
+                Text(
+                  technique.description.isEmpty
+                      ? 'No hay descripción disponible.'
+                      : technique.description,
+                  style: const TextStyle(height: 1.5), // Mejora la legibilidad
+                ),
+                // Solo muestra el botón si la URL del video existe y no está vacía
+                if (technique.videoUrl != null && technique.videoUrl!.isNotEmpty) ...[
+                  const SizedBox(height: 24),
+                  const Divider(),
+                  const SizedBox(height: 16),
+                  Center(
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.play_circle_outline),
+                      label: const Text('Ver Video de la Técnica'),
+                      onPressed: () {
+                        _launchVideoUrl(technique.videoUrl!);
+                      },
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cerrar'),
+            ),
+          ],
         );
       },
     );
