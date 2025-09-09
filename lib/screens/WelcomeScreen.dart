@@ -236,7 +236,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   children: [
                     const SizedBox(height: 20),
                     const Text(
-                      'Crea y participa en rifas fácilmente',
+                      'Se un guerrero, crea tu camino',
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 18, color: AppColors.textLight),
                     ),

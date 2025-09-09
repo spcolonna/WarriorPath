@@ -392,6 +392,12 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
 
   Widget? _buildFloatingActionButton() {
     switch (_tabController.index) {
+      case 1:
+        return FloatingActionButton.extended(
+          onPressed: _showAddPastAttendanceDialog,
+          label: const Text('Registrar Asistencia Pasada'),
+          icon: const Icon(Icons.playlist_add_check),
+        );
       case 2: return FloatingActionButton.extended(onPressed: _showRegisterPaymentDialog, label: const Text('Registrar Pago'), icon: const Icon(Icons.payment));
       case 3: return FloatingActionButton.extended(
         onPressed: () {
@@ -619,15 +625,63 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
     return StreamBuilder<QuerySnapshot>(
       stream: _attendanceStream,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
         if (snapshot.hasError) return const Center(child: Text('Error al cargar el historial.'));
-        if (snapshot.data!.docs.isEmpty) return const Center(child: Text('No hay registros de asistencia para este alumno.'));
-        return ListView.builder(itemCount: snapshot.data!.docs.length, itemBuilder: (context, index) {
-          final record = snapshot.data!.docs[index].data() as Map<String, dynamic>;
-          final date = (record['date'] as Timestamp).toDate();
-          final formattedDate = '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
-          return ListTile(leading: const Icon(Icons.check_circle, color: Colors.green), title: Text(record['scheduleTitle'] ?? 'Clase'), trailing: Text(formattedDate));
-        });
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text('No hay registros de asistencia para este alumno.'));
+        }
+
+        return ListView.builder(
+          itemCount: snapshot.data!.docs.length,
+          itemBuilder: (context, index) {
+            final doc = snapshot.data!.docs[index]; // Obtenemos el documento completo
+            final record = doc.data() as Map<String, dynamic>;
+            final date = (record['date'] as Timestamp).toDate();
+            final formattedDate = DateFormat('dd/MM/yyyy', 'es_ES').format(date);
+
+            return ListTile(
+              leading: const Icon(Icons.check_circle, color: Colors.green),
+              title: Text(record['scheduleTitle'] ?? 'Clase'),
+              subtitle: Text(formattedDate),
+
+              trailing: IconButton(
+                icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                tooltip: 'Quitar esta asistencia',
+                onPressed: () async {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Confirmar'),
+                      content: const Text('¿Estás seguro de que quieres eliminar esta asistencia del registro del alumno?'),
+                      actions: [
+                        TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
+                        TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Eliminar')),
+                      ],
+                    ),
+                  );
+
+                  if (confirm ?? false) {
+                    try {
+                      await FirebaseFirestore.instance
+                          .collection('schools').doc(widget.schoolId)
+                          .collection('attendanceRecords').doc(doc.id)
+                          .update({
+                        'presentStudentIds': FieldValue.arrayRemove([widget.studentId])
+                      });
+
+                      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Asistencia eliminada.')));
+
+                    } catch (e) {
+                      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al eliminar: $e')));
+                    }
+                  }
+                },
+              ),
+            );
+          },
+        );
       },
     );
   }
@@ -681,6 +735,123 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
         return Card(margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6), child: ListTile(leading: Icon(Icons.military_tech, color: levelColor), title: Text('Promovido a $levelName'), subtitle: (notes != null && notes.isNotEmpty) ? Text('Notas: "$notes"') : null, trailing: Text(formattedDate)));
       },
     );
+  }
+
+  // --- PEGA ESTAS DOS NUEVAS FUNCIONES DENTRO DE _StudentDetailScreenState ---
+
+  /// Muestra el selector de calendario para elegir una fecha pasada.
+  Future<void> _showAddPastAttendanceDialog() async {
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2020), // Desde qué año permites registrar
+      lastDate: DateTime.now(), // No puedes registrar asistencias futuras
+      locale: const Locale('es', 'ES'), // Asegúrate de tener intl configurado para español
+    );
+
+    if (pickedDate == null) return; // El usuario canceló
+
+    // Una vez que tenemos la fecha, necesitamos saber qué clases hubo ese día.
+    // Usamos 'pickedDate.weekday' (Lunes=1, Domingo=7, igual que tu app)
+    final int dayOfWeek = pickedDate.weekday;
+
+    final schedulesSnap = await FirebaseFirestore.instance
+        .collection('schools').doc(widget.schoolId)
+        .collection('classSchedules')
+        .where('dayOfWeek', isEqualTo: dayOfWeek)
+        .get();
+
+    if (schedulesSnap.docs.isEmpty) {
+      if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No había clases programadas para el día seleccionado.')));
+      return;
+    }
+
+    // Si encontramos clases, mostramos el diálogo para seleccionar cuál.
+    // (Este es el mismo diálogo que usas en tu HomeTabScreen)
+    if (mounted) {
+      _selectScheduleForDate(schedulesSnap.docs, pickedDate);
+    }
+  }
+
+  /// Muestra la lista de clases disponibles para una fecha específica.
+  void _selectScheduleForDate(List<QueryDocumentSnapshot> schedules, DateTime selectedDate) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Clases del ${DateFormat.yMd('es_ES').format(selectedDate)}'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: schedules.length,
+              itemBuilder: (context, index) {
+                final schedule = schedules[index].data() as Map<String, dynamic>;
+                final scheduleTitle = schedule['title'];
+                final scheduleTime = '${schedule['startTime']} - ${schedule['endTime']}';
+
+                return ListTile(
+                  title: Text(scheduleTitle),
+                  subtitle: Text(scheduleTime),
+                  onTap: () {
+                    _savePastAttendance(scheduleTitle, selectedDate);
+                    Navigator.of(context).pop();
+                  },
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Guarda la asistencia (Paso final)
+  Future<void> _savePastAttendance(String scheduleTitle, DateTime date) async {
+    // Para guardar la asistencia, replicamos la lógica de tu 'AttendanceChecklistScreen'.
+    // Necesitamos encontrar (o crear) el documento 'attendanceRecord' para ESA fecha y ESE horario.
+    // Asumimos que la ID del documento es una combinación de la fecha y el título,
+    // o que se busca por esos campos.
+
+    // La forma más robusta (usada por AttendanceChecklistScreen) suele ser buscar
+    // un registro que coincida con la fecha (sin hora) Y el título.
+    final normalizedDate = Timestamp.fromDate(DateTime(date.year, date.month, date.day));
+
+    final firestore = FirebaseFirestore.instance;
+    final recordsRef = firestore.collection('schools').doc(widget.schoolId).collection('attendanceRecords');
+
+    try {
+      final query = await recordsRef
+          .where('date', isEqualTo: normalizedDate)
+          .where('scheduleTitle', isEqualTo: scheduleTitle)
+          .limit(1)
+          .get();
+
+      String attendanceDocId;
+
+      if (query.docs.isEmpty) {
+        // No existe un registro para esa clase/fecha. Lo creamos.
+        final newDocRef = await recordsRef.add({
+          'date': normalizedDate,
+          'scheduleTitle': scheduleTitle,
+          'schoolId': widget.schoolId,
+          'presentStudentIds': [widget.studentId], // Creamos la lista CON el alumno
+          'recordedBy': FirebaseAuth.instance.currentUser?.uid,
+        });
+        attendanceDocId = newDocRef.id;
+      } else {
+        // El registro ya existe. Simplemente añadimos al alumno al array.
+        attendanceDocId = query.docs.first.id;
+        await recordsRef.doc(attendanceDocId).update({
+          'presentStudentIds': FieldValue.arrayUnion([widget.studentId]) // arrayUnion evita duplicados
+        });
+      }
+
+      if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Asistencia registrada con éxito.')));
+
+    } catch (e) {
+      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al guardar: $e')));
+    }
   }
 }
 

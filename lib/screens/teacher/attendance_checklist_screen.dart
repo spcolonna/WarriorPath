@@ -17,7 +17,7 @@ class AttendanceChecklistScreen extends StatefulWidget {
 
 class _AttendanceChecklistScreenState extends State<AttendanceChecklistScreen> {
   late Future<List<QueryDocumentSnapshot>> _studentsFuture;
-  final Set<String> _presentStudentIds = {}; // Usamos un Set para eficiencia
+  final Set<String> _presentStudentIds = {};
   bool _isLoading = false;
 
   @override

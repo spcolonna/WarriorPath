@@ -1,3 +1,4 @@
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:warrior_path/providers/session_provider.dart';
 import 'package:warrior_path/providers/theme_provider.dart';
@@ -56,6 +57,17 @@ class MyApp extends StatelessWidget {
             ),
             // ... puedes configurar más colores y estilos aquí
           ),
+
+          localizationsDelegates: [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: [
+            const Locale('en', ''),
+            const Locale('es', 'ES'),
+          ],
+
           home: const WelcomeScreen(),
         );
       },

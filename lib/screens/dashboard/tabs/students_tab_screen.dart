@@ -72,7 +72,7 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('schools')
-          .doc(schoolId) // Usa el schoolId del provider
+          .doc(schoolId)
           .collection('members')
           .where('status', isEqualTo: status)
           .snapshots(),
