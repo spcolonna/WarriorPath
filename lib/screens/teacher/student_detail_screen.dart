@@ -688,17 +688,30 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
 
   Widget _buildProgressionHistoryTab() {
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId).collection('progressionHistory').orderBy('date', descending: true).snapshots(),
+      stream: FirebaseFirestore.instance
+          .collection('schools').doc(widget.schoolId)
+          .collection('members').doc(widget.studentId)
+          .collection('progressionHistory')
+          .orderBy('date', descending: true)
+          .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
         if (snapshot.hasError) { print('ERROR DEL STREAM DE PROGRESO: ${snapshot.error}'); return const Center(child: Text('Error al cargar el progreso.')); }
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return const Center(child: Text('Este alumno no tiene historial de promociones.'));
-        return ListView.builder(itemCount: snapshot.data!.docs.length, itemBuilder: (context, index) {
-          final history = snapshot.data!.docs[index].data() as Map<String, dynamic>;
-          final eventType = history['type'] ?? 'level_promotion';
-          if (eventType == 'role_change') return _buildRoleChangeEventTile(history);
-          return _buildLevelPromotionEventTile(history);
-        });
+
+        return ListView.builder(
+          itemCount: snapshot.data!.docs.length,
+          itemBuilder: (context, index) {
+            final doc = snapshot.data!.docs[index];
+            final historyData = doc.data() as Map<String, dynamic>;
+            final eventType = historyData['type'] ?? 'level_promotion';
+
+            if (eventType == 'role_change') {
+              return _buildRoleChangeEventTile(historyData);
+            }
+            return _buildLevelPromotionEventTile(historyData: historyData, historyDocId: doc.id);
+          },
+        );
       },
     );
   }
@@ -711,12 +724,19 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
     return Card(margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6), child: ListTile(leading: const Icon(Icons.admin_panel_settings), title: Text(roleText), trailing: Text(formattedDate)));
   }
 
-  Widget _buildLevelPromotionEventTile(Map<String, dynamic> history) {
-    final date = (history['date'] as Timestamp).toDate();
+  Widget _buildLevelPromotionEventTile({
+    required Map<String, dynamic> historyData,
+    required String historyDocId, // <-- El ID que recibimos
+  }) {
+    final date = (historyData['date'] as Timestamp).toDate();
     final formattedDate = DateFormat('dd/MM/yyyy').format(date);
-    final notes = history['notes'] as String?;
-    final levelId = history['newLevelId'];
-    if (levelId == null) return Card(margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6), child: ListTile(leading: const Icon(Icons.error, color: Colors.red), title: const Text('Registro de promoción inválido'), trailing: Text(formattedDate)));
+    final notes = historyData['notes'] as String?;
+    final levelId = historyData['newLevelId'];
+
+    if (levelId == null) {
+      return Card(margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6), child: ListTile(leading: const Icon(Icons.error, color: Colors.red), title: const Text('Registro de promoción inválido'), trailing: Text(formattedDate)));
+    }
+
     return FutureBuilder<DocumentSnapshot>(
       future: FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('levels').doc(levelId).get(),
       builder: (context, levelSnapshot) {
@@ -732,12 +752,32 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
             levelColor = Colors.grey.shade400;
           }
         }
-        return Card(margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6), child: ListTile(leading: Icon(Icons.military_tech, color: levelColor), title: Text('Promovido a $levelName'), subtitle: (notes != null && notes.isNotEmpty) ? Text('Notas: "$notes"') : null, trailing: Text(formattedDate)));
+
+        return Card(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          child: ListTile(
+            leading: Icon(Icons.military_tech, color: levelColor),
+            title: Text('Promovido a $levelName'),
+            subtitle: (notes != null && notes.isNotEmpty) ? Text('Notas: "$notes"') : null,
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min, // Para que el Row no ocupe todo el espacio
+              children: [
+                Text(formattedDate),
+
+                IconButton(
+                  icon: const Icon(Icons.delete_forever_outlined),
+                  color: Colors.grey[600],
+                  tooltip: 'Revertir esta promoción',
+                  onPressed: () => _showDeletePromotionDialog(historyDocId),
+                ),
+              ],
+            ),
+          ),
+        );
       },
     );
   }
 
-  // --- PEGA ESTAS DOS NUEVAS FUNCIONES DENTRO DE _StudentDetailScreenState ---
 
   /// Muestra el selector de calendario para elegir una fecha pasada.
   Future<void> _showAddPastAttendanceDialog() async {
@@ -851,6 +891,66 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
 
     } catch (e) {
       if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al guardar: $e')));
+    }
+  }
+
+  Future<void> _showDeletePromotionDialog(String historyDocId) async {
+    // 1. Mostrar diálogo de confirmación CRÍTICO
+    final bool? confirmDelete = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Revertir Promoción'),
+        content: const Text(
+          '¿Estás seguro de que quieres eliminar este registro de promoción? \n\nEsto revertirá el nivel actual del alumno a su nivel anterior.',
+          style: TextStyle(height: 1.5),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Sí, Revertir'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmDelete != true) return; // Si el usuario cancela, no hacer nada.
+
+    // 2. Si confirma, procedemos con la lógica de borrado y rollback.
+    final firestore = FirebaseFirestore.instance;
+    final memberRef = firestore.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId);
+    final historyDocRef = memberRef.collection('progressionHistory').doc(historyDocId);
+
+    try {
+      // 3. Eliminar el registro del historial
+      await historyDocRef.delete();
+
+      // 4. Buscar cuál es la NUEVA promoción más reciente que queda en el historial
+      final newLatestPromoSnap = await memberRef.collection('progressionHistory')
+          .where('type', isEqualTo: 'level_promotion') // Solo buscar promociones de nivel
+          .orderBy('date', descending: true)
+          .limit(1)
+          .get();
+
+      String? newCurrentLevelId; // El ID del nivel al que vamos a revertir
+
+      if (newLatestPromoSnap.docs.isNotEmpty) {
+        // Encontramos una promoción anterior. Ese es el nuevo nivel actual.
+        newCurrentLevelId = newLatestPromoSnap.docs.first.data()['newLevelId'];
+      } else {
+        // No quedan MÁS promociones en el historial. Debemos revertir al 'initialLevelId' del miembro.
+        final memberDoc = await memberRef.get();
+        newCurrentLevelId = memberDoc.data()?['initialLevelId'];
+      }
+
+      // 5. Actualizar el documento principal del Miembro con el nivel revertido.
+      await memberRef.update({'currentLevelId': newCurrentLevelId});
+
+      if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Promoción revertida con éxito.')));
+
+    } catch (e) {
+      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al revertir: ${e.toString()}')));
     }
   }
 }
