@@ -1,14 +1,15 @@
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/date_symbol_data_file.dart';
 import 'package:provider/provider.dart';
 import 'package:warrior_path/providers/session_provider.dart';
 import 'package:warrior_path/providers/theme_provider.dart';
 import 'package:warrior_path/services/notification_service.dart';
 import 'package:warrior_path/services/remote_config_service.dart';
-import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:warrior_path/widgets/ad_banner_widget.dart';
 import 'package:warrior_path/screens/WelcomeScreen.dart';
 
 void main() async {
@@ -16,13 +17,11 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
+  MobileAds.instance.initialize();
   await NotificationService().initialize();
-
   final remoteConfigService = await RemoteConfigService.getInstance();
   await remoteConfigService.fetchAndActivate();
-
-  await initializeDateFormatting('es_ES', null);
+  //await initializeDateFormatting('es_ES','');
 
   runApp(
     MultiProvider(
@@ -40,6 +39,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final remoteConfigService = RemoteConfigService.instance;
+    final bool showBannerAd = remoteConfigService.getBool('show_banner_ad');
+
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return MaterialApp(
@@ -59,20 +61,28 @@ class MyApp extends StatelessWidget {
             floatingActionButtonTheme: FloatingActionButtonThemeData(
               backgroundColor: themeProvider.theme.accentColor,
             ),
-            // ... puedes configurar más colores y estilos aquí
           ),
 
+          // --- CORRECCIÓN 2: Se quitó la palabra 'const' de esta lista ---
           localizationsDelegates: [
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
-          supportedLocales: [
-            const Locale('en', ''),
-            const Locale('es', 'ES'),
+          supportedLocales: const [
+            Locale('en', ''),
+            Locale('es', 'ES'),
           ],
-
           home: const WelcomeScreen(),
+          builder: (context, navigator) {
+            return Column(
+              children: [
+                Expanded(child: navigator!),
+                if (showBannerAd)
+                  const AdBannerWidget(),
+              ],
+            );
+          },
         );
       },
     );
