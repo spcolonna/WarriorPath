@@ -101,62 +101,113 @@ exports.generateMonthlyPaymentReminders = onSchedule(
 // ===============================================================================================
 // FUNCIÓN 2: NOTIFICAR SOBRE POSTULACIONES Y ACEPTACIONES (Sintaxis v2)
 // ===============================================================================================
+// --- REEMPLAZA TU onMemberStatusChange EXISTENTE POR ESTA VERSIÓN AMPLIADA ---
+
+/**
+ * Se activa cuando se crea o actualiza un documento en cualquier subcolección 'members'.
+ * - Notifica al dueño cuando un alumno se postula.
+ * - Notifica al alumno cuando es aceptado.
+ * - Notifica al alumno cuando es promovido de nivel.
+ * - Notifica al alumno cuando se le asignan nuevas técnicas.
+ */
 exports.onMemberStatusChange = onDocumentWritten("/schools/{schoolId}/members/{memberId}", async (event) => {
-  if (!event.data) {
-    logger.warn("No data found in the event trigger. Exiting function.");
-    return;
-  }
+    if (!event.data) {
+        logger.warn("No data found in the event trigger. Exiting function.");
+        return;
+    }
 
-  const schoolId = event.params.schoolId;
-  const memberId = event.params.memberId;
+    const schoolId = event.params.schoolId;
+    const memberId = event.params.memberId;
 
-  const beforeData = event.data.before.data();
-  const afterData = event.data.after.data();
+    const beforeData = event.data.before.data();
+    const afterData = event.data.after.data();
 
-  // Escenario 1: Nuevo Miembro se Postula
-  if (!event.data.before.exists && event.data.after.exists && afterData) {
-    if (afterData.status === "pending") {
-      logger.info(`Nuevo miembro [${memberId}] pendiente en [${schoolId}].`);
-      try {
-        const schoolDoc = await db.collection("schools").doc(schoolId).get();
-        const ownerId = schoolDoc.data()?.ownerId;
-
-        if (ownerId) {
-          const payload = {
-            notification: {
-              title: "Nueva Solicitud de Ingreso",
-              body: `${afterData.displayName} quiere unirse a tu escuela.`,
-            },
-          };
-          await sendNotificationsToUser(ownerId, payload);
+    // Escenario 1: Creación de Miembro (Postulación)
+    if (!event.data.before.exists && event.data.after.exists && afterData) {
+        if (afterData.status === "pending") {
+            logger.info(`Nuevo miembro [${memberId}] pendiente en [${schoolId}].`);
+            try {
+                const schoolDoc = await db.collection("schools").doc(schoolId).get();
+                const ownerId = schoolDoc.data()?.ownerId;
+                if (ownerId) {
+                    const payload = {
+                        notification: {
+                            title: "Nueva Solicitud de Ingreso",
+                            body: `${afterData.displayName} quiere unirse a tu escuela.`,
+                        },
+                    };
+                    await sendNotificationsToUser(ownerId, payload);
+                }
+            } catch (error) {
+                logger.error("Error al notificar al dueño:", error);
+            }
         }
-      } catch (error) {
-        logger.error("Error al notificar al dueño:", error);
-      }
+        return;
     }
-    return;
-  }
 
-  // Escenario 2: Estado del Miembro Cambia
-  if (event.data.before.exists && event.data.after.exists && beforeData && afterData) {
-    if (beforeData.status === "pending" && afterData.status === "active") {
-      logger.info(`Miembro [${memberId}] aceptado en [${schoolId}].`);
-      try {
-        const schoolDoc = await db.collection("schools").doc(schoolId).get();
-        const schoolName = schoolDoc.data()?.name ?? "tu escuela";
-        const payload = {
-          notification: {
-            title: "¡Has sido Aceptado!",
-            body: `Felicitaciones, tu solicitud para unirte a ${schoolName} ha sido aprobada.`,
-          },
-        };
-        await sendNotificationsToUser(memberId, payload);
-      } catch (error) {
-        logger.error("Error al notificar al alumno:", error);
-      }
+    // Escenario 2: Actualización de Miembro (Aceptación, Promoción, Técnicas)
+    if (event.data.before.exists && event.data.after.exists && beforeData && afterData) {
+        // 2a: Notificación de Aceptación
+        if (beforeData.status === "pending" && afterData.status === "active") {
+            logger.info(`Miembro [${memberId}] aceptado en [${schoolId}].`);
+            try {
+                const schoolDoc = await db.collection("schools").doc(schoolId).get();
+                const schoolName = schoolDoc.data()?.name ?? "tu escuela";
+                const payload = {
+                    notification: {
+                        title: "¡Has sido Aceptado!",
+                        body: `Felicitaciones, tu solicitud para unirte a ${schoolName} ha sido aprobada.`,
+                    },
+                };
+                await sendNotificationsToUser(memberId, payload);
+            } catch (error) {
+                logger.error("Error al notificar al alumno aceptado:", error);
+            }
+        }
+
+        // 2b: Notificación de Promoción de Nivel
+        // Usamos el flag 'hasUnseenPromotion' que tu app ya establece.
+        if (beforeData.hasUnseenPromotion === false && afterData.hasUnseenPromotion === true) {
+            logger.info(`Miembro [${memberId}] ha sido promovido en [${schoolId}].`);
+            try {
+                const newLevelId = afterData.currentLevelId;
+                let newLevelName = "un nuevo nivel";
+                if (newLevelId) {
+                    const levelDoc = await db.collection("schools").doc(schoolId).collection("levels").doc(newLevelId).get();
+                    newLevelName = levelDoc.data()?.name ?? newLevelName;
+                }
+                const payload = {
+                    notification: {
+                        title: "¡Felicitaciones, has sido promovido!",
+                        body: `Has alcanzado el nivel de ${newLevelName}. ¡Sigue así!`,
+                    },
+                };
+                await sendNotificationsToUser(memberId, payload);
+            } catch (error) {
+                logger.error("Error al notificar sobre promoción:", error);
+            }
+        }
+
+        // 2c: Notificación de Nuevas Técnicas Asignadas
+        const beforeTechs = new Set(beforeData.assignedTechniqueIds ?? []);
+        const afterTechs = afterData.assignedTechniqueIds ?? [];
+        const newTechIds = afterTechs.filter((id: string) => !beforeTechs.has(id));
+
+        if (newTechIds.length > 0) {
+            logger.info(`Nuevas técnicas asignadas a [${memberId}].`);
+            try {
+                const payload = {
+                    notification: {
+                        title: "Nuevas Técnicas Asignadas",
+                        body: `Tu maestro te ha asignado ${newTechIds.length} nueva(s) técnica(s) para practicar. ¡Revísalas en tu progreso!`,
+                    },
+                };
+                await sendNotificationsToUser(memberId, payload);
+            } catch (error) {
+                logger.error("Error al notificar sobre nuevas técnicas:", error);
+            }
+        }
     }
-    return;
-  }
 });
 
 // ===============================================================================================
@@ -209,3 +260,99 @@ async function sendNotificationsToUser(userId: string, payload: {notification: {
     logger.error(`Error enviando notificaciones a ${userId}:`, error);
   }
 }
+
+// ===============================================================================================
+// FUNCIÓN 4: NOTIFICAR SOBRE NUEVO PAGO REGISTRADO
+// ===============================================================================================
+/**
+ * Se activa cuando se crea un nuevo documento de pago para un miembro.
+ * Notifica al alumno correspondiente.
+ */
+exports.onPaymentCreated = onDocumentWritten("/schools/{schoolId}/members/{studentId}/payments/{paymentId}", async (event) => {
+    if (!event.data?.after.exists || event.data.before.exists) {
+        return;
+    }
+
+    const paymentData = event.data.after.data();
+    const studentId = event.params.studentId;
+
+    if (!paymentData) {
+        logger.error("No hay datos en el nuevo documento de pago.");
+        return;
+    }
+
+    logger.info(`Nuevo pago registrado para [${studentId}]. Notificando...`);
+
+    const amount = paymentData.amount ?? 0;
+    const currency = paymentData.currency ?? "";
+    const concept = paymentData.concept ?? "un pago";
+
+    const payload = {
+        notification: {
+            title: "Nuevo Pago Registrado",
+            body: `Tu maestro ha registrado un pago de ${amount} ${currency} por concepto de "${concept}".`,
+        },
+    };
+
+    try {
+        await sendNotificationsToUser(studentId, payload);
+    } catch (error) {
+        logger.error(`Error al notificar sobre nuevo pago a ${studentId}:`, error);
+    }
+});
+
+
+// ===============================================================================================
+// FUNCIÓN 5: NOTIFICAR SOBRE NUEVA ASISTENCIA REGISTRADA
+// ===============================================================================================
+/**
+ * Se activa cuando se actualiza un registro de asistencia.
+ * Compara la lista de alumnos presentes antes y después del cambio,
+ * y notifica a los alumnos que fueron recién añadidos.
+ */
+exports.onAttendanceUpdated = onDocumentWritten("/schools/{schoolId}/attendanceRecords/{recordId}", async (event) => {
+    if (!event.data?.before.exists || !event.data?.after.exists) {
+        // Solo nos interesan las actualizaciones, no creaciones o borrados
+        return;
+    }
+
+    const beforeData = event.data.before.data();
+    const afterData = event.data.after.data();
+
+    if (!beforeData || !afterData) {
+        logger.warn("Faltan datos en el evento de actualización de asistencia.");
+        return;
+    }
+
+    const beforeStudentIds = new Set(beforeData.presentStudentIds ?? []);
+    const afterStudentIds = afterData.presentStudentIds ?? [];
+
+    // Encontramos los alumnos que fueron recién añadidos
+    const newStudentIds: string[] = afterStudentIds.filter((id: string) => !beforeStudentIds.has(id));
+
+    if (newStudentIds.length === 0) {
+        // No se añadieron nuevos alumnos, no hay a quién notificar.
+        return;
+    }
+
+    logger.info(`Nuevas asistencias registradas para los alumnos: [${newStudentIds.join(", ")}]. Notificando...`);
+
+    const scheduleTitle = afterData.scheduleTitle ?? "una clase";
+    const payload = {
+        notification: {
+            title: "Asistencia Registrada",
+            body: `¡Presente! Se ha registrado tu asistencia para la clase de "${scheduleTitle}".`,
+        },
+    };
+
+    // Enviamos una notificación a cada uno de los nuevos alumnos
+    const notificationPromises = newStudentIds.map((studentId) =>
+        sendNotificationsToUser(studentId, payload)
+    );
+
+    try {
+        await Promise.all(notificationPromises);
+    } catch(error) {
+        logger.error("Error enviando notificaciones de asistencia:", error);
+    }
+});
