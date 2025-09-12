@@ -7,7 +7,9 @@ class UserModel {
   String? phoneNumber;
   String? photoUrl;
   String? role;
-  int wizardStep; // El campo clave para nuestro wizard
+  String? gender;
+  DateTime? dateOfBirth;
+  int wizardStep;
 
   UserModel({
     required this.uid,
@@ -16,10 +18,11 @@ class UserModel {
     this.phoneNumber,
     this.photoUrl,
     this.role,
+    this.gender,
+    this.dateOfBirth,
     required this.wizardStep,
   });
 
-  // Convertir un objeto UserModel a un Map para Firestore
   Map<String, dynamic> toJson() {
     return {
       'uid': uid,
@@ -28,6 +31,8 @@ class UserModel {
       'phoneNumber': phoneNumber,
       'photoUrl': photoUrl,
       'role': role,
+      'gender': gender,
+      'dateOfBirth': dateOfBirth != null ? Timestamp.fromDate(dateOfBirth!) : null,
       'wizardStep': wizardStep,
       'createdAt': FieldValue.serverTimestamp(),
     };
@@ -43,6 +48,8 @@ class UserModel {
       phoneNumber: data['phoneNumber'],
       photoUrl: data['photoUrl'],
       role: data['role'],
+      gender: data['gender'],
+      dateOfBirth: (data['dateOfBirth'] as Timestamp?)?.toDate(),
       wizardStep: data['wizardStep'] ?? 0,
     );
   }

@@ -112,7 +112,6 @@ exports.generateMonthlyPaymentReminders = onSchedule(
 );
 
 
-// FIX 4 y 5: Agregamos el bloque de comentarios JSDoc que exigen las reglas del linter.
 /**
  * Función Auxiliar para enviar Notificaciones Push (FCM)
  * @param {string} userId El ID del usuario (miembro) a notificar.

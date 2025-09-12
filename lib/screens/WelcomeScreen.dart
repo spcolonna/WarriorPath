@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:warrior_path/screens/role_selector_screen.dart';
 import 'package:warrior_path/screens/student/application_sent_screen.dart';
+import 'package:warrior_path/screens/student/school_search_screen.dart';
 import 'package:warrior_path/screens/student/student_dashboard_screen.dart';
 import 'package:warrior_path/screens/teacher_dashboard_screen.dart';
 import 'package:warrior_path/screens/wizard_profile_screen.dart';
@@ -68,8 +69,17 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       final memberships = userData['activeMemberships'] as Map<String, dynamic>? ?? {};
       final pendingApplication = userData['pendingApplication'] as Map<String, dynamic>?;
 
+      print("memberships.isEmpty: ${memberships.isEmpty}");
+      print("pendingApplication: ${pendingApplication}");
       if (memberships.isEmpty && pendingApplication != null) {
-        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => ApplicationSentScreen(schoolName: pendingApplication['schoolName'] ?? '')));
+        Navigator.of(context).pushReplacement(MaterialPageRoute(
+            builder: (context) =>
+                ApplicationSentScreen(
+                    schoolName: pendingApplication['schoolName'] ?? '')));
+      } else if (memberships.isEmpty){
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (context) => const SchoolSearchScreen()),
+        );
       } else if (memberships.length == 1) {
         // Si solo tiene 1 rol, entramos directamente
         final schoolId = memberships.keys.first;

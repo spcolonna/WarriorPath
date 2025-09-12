@@ -468,9 +468,6 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
 
   Widget _buildGeneralInfoTab() {
     return StreamBuilder<DocumentSnapshot>(
-      // ATENCIÓN: Ahora usamos un STREAM en lugar de un FUTUREBUILDER.
-      // Necesitamos un Stream para que el plan asignado se actualice en vivo
-      // cuando el maestro lo cambie usando el diálogo.
       stream: FirebaseFirestore.instance
           .collection('schools').doc(widget.schoolId)
           .collection('members').doc(widget.studentId)
@@ -478,50 +475,46 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
       builder: (context, memberSnapshot) {
         if (!memberSnapshot.hasData) return const Center(child: CircularProgressIndicator());
 
-        // Obtenemos los datos del miembro (alumno)
         final memberData = memberSnapshot.data?.data() as Map<String, dynamic>? ?? {};
-        final String? assignedPlanId = memberData['assignedPaymentPlanId'] as String?; // <-- Leemos el nuevo campo
+        final String? assignedPlanId = memberData['assignedPaymentPlanId'] as String?;
 
-        return FutureBuilder<DocumentSnapshot>(
-          // Usamos un FutureBuilder anidado solo para los datos del usuario (Email/Teléfono)
-          // ya que estos no cambian, pero los datos del Miembro (el plan) sí.
-          future: FirebaseFirestore.instance.collection('users').doc(widget.studentId).get(),
+        return StreamBuilder<DocumentSnapshot>(
+          stream: FirebaseFirestore.instance.collection('users').doc(widget.studentId).snapshots(),
           builder: (context, userSnapshot) {
             if (!userSnapshot.hasData) return const Center(child: CircularProgressIndicator());
             final userData = userSnapshot.data?.data() as Map<String, dynamic>? ?? {};
 
+            final String? gender = userData['gender'];
+            final DateTime? dateOfBirth = (userData['dateOfBirth'] as Timestamp?)?.toDate();
+            final String formattedDob = dateOfBirth != null
+                ? DateFormat('dd/MM/yyyy', 'es_ES').format(dateOfBirth)
+                : 'No especificada';
+
             return SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Column(children: [
-                // --- INICIO DE LA NUEVA TARJETA DE FACTURACIÓN ---
                 _buildInfoCard(
                   title: 'Facturación',
                   icon: Icons.receipt_long,
                   iconColor: Colors.blueAccent,
-                  // El contenido de la tarjeta es otro FutureBuilder que busca
-                  // los detalles del plan asignado.
                   children: [
                     FutureBuilder<DocumentSnapshot>(
-                      // Buscamos los detalles del plan solo si el ID existe
                       future: assignedPlanId == null
-                          ? null // Si no hay ID, el future es nulo
+                          ? null
                           : FirebaseFirestore.instance
                           .collection('schools').doc(widget.schoolId)
                           .collection('paymentPlans').doc(assignedPlanId)
                           .get(),
                       builder: (context, planSnapshot) {
                         String planDetailsText = 'Sin plan de pago asignado.';
-
                         if (planSnapshot.connectionState == ConnectionState.waiting) {
                           planDetailsText = 'Cargando plan...';
                         } else if (planSnapshot.hasData && planSnapshot.data!.exists) {
-                          // Si encontramos el plan, creamos un modelo
                           final plan = PaymentPlanModel.fromFirestore(planSnapshot.data!);
                           planDetailsText = '${plan.title} (${plan.amount} ${plan.currency})';
                         } else if (assignedPlanId != null) {
                           planDetailsText = 'Plan asignado (ID: $assignedPlanId) no encontrado.';
                         }
-
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -539,9 +532,21 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
                     ),
                   ],
                 ),
-                // --- FIN DE LA NUEVA TARJETA DE FACTURACIÓN ---
 
                 const SizedBox(height: 16),
+
+                _buildInfoCard(
+                  title: 'Datos Personales',
+                  icon: Icons.badge_outlined,
+                  iconColor: Colors.teal,
+                  children: [
+                    _buildInfoRow('Fecha de Nacimiento:', '$formattedDob${_calculateAge(dateOfBirth)}'),
+                    _buildInfoRow('Sexo:', _formatGender(gender)),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
                 _buildInfoCard(
                   title: 'Datos de Contacto',
                   icon: Icons.contact_page,
@@ -550,7 +555,9 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
                     _buildInfoRow('Teléfono:', userData['phoneNumber'] ?? 'No especificado'),
                   ],
                 ),
+
                 const SizedBox(height: 16),
+
                 _buildInfoCard(
                   title: 'Información de Emergencia',
                   icon: Icons.emergency,
@@ -578,7 +585,6 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
             child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Esta es la fila que da el error
                   Row(
                     children: [
                       Icon(icon, color: iconColor ?? Theme.of(context).primaryColor),
@@ -636,7 +642,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
         return ListView.builder(
           itemCount: snapshot.data!.docs.length,
           itemBuilder: (context, index) {
-            final doc = snapshot.data!.docs[index]; // Obtenemos el documento completo
+            final doc = snapshot.data!.docs[index];
             final record = doc.data() as Map<String, dynamic>;
             final date = (record['date'] as Timestamp).toDate();
             final formattedDate = DateFormat('dd/MM/yyyy', 'es_ES').format(date);
@@ -778,6 +784,33 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
     );
   }
 
+  String _formatGender(String? genderValue) {
+    if (genderValue == null || genderValue.isEmpty) return 'No especificado';
+    switch (genderValue) {
+      case 'masculino':
+        return 'Masculino';
+      case 'femenino':
+        return 'Femenino';
+      case 'otro':
+        return 'Otro';
+      case 'prefiero_no_decirlo':
+        return 'Prefiere no decirlo';
+      default:
+        return genderValue;
+    }
+  }
+
+  /// Calcula la edad a partir de la fecha de nacimiento.
+  String _calculateAge(DateTime? birthDate) {
+    if (birthDate == null) return '';
+    final today = DateTime.now();
+    int age = today.year - birthDate.year;
+    if (today.month < birthDate.month ||
+        (today.month == birthDate.month && today.day < birthDate.day)) {
+      age--;
+    }
+    return ' ($age años)';
+  }
 
   /// Muestra el selector de calendario para elegir una fecha pasada.
   Future<void> _showAddPastAttendanceDialog() async {

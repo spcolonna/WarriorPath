@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:warrior_path/screens/student/school_search_screen.dart';
 import 'package:warrior_path/screens/wizard_create_school_screen.dart';
 
@@ -21,10 +22,16 @@ class WizardProfileScreen extends StatefulWidget {
 class _WizardProfileScreenState extends State<WizardProfileScreen> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _dobController = TextEditingController();
+
   UserRole? _selectedRole;
   File? _imageFile;
   bool _isLoading = false;
   String? _uid;
+
+  // --- CAMBIO: Variables de estado para los nuevos campos ---
+  String? _selectedSex;
+  DateTime? _selectedDateOfBirth;
 
   @override
   void initState() {
@@ -35,6 +42,15 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
     }
   }
 
+  @override
+  void dispose() {
+    // --- CAMBIO: Hacemos dispose del nuevo controller ---
+    _nameController.dispose();
+    _phoneController.dispose();
+    _dobController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadExistingUserData() async {
     final userDoc = await FirebaseFirestore.instance.collection('users').doc(_uid).get();
     if (userDoc.exists && mounted) {
@@ -42,6 +58,13 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
       setState(() {
         _nameController.text = data['displayName'] ?? '';
         _phoneController.text = data['phoneNumber'] ?? '';
+
+        // --- CAMBIO: Cargamos los datos nuevos si existen ---
+        _selectedSex = data['gender'];
+        _selectedDateOfBirth = (data['dateOfBirth'] as Timestamp?)?.toDate();
+        if (_selectedDateOfBirth != null) {
+          _dobController.text = DateFormat('dd/MM/yyyy', 'es_ES').format(_selectedDateOfBirth!);
+        }
       });
     }
   }
@@ -57,6 +80,23 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
     if (pickedFile != null) {
       setState(() {
         _imageFile = File(pickedFile.path);
+      });
+    }
+  }
+
+  // --- CAMBIO: Nueva función para mostrar el selector de fecha ---
+  Future<void> _selectDateOfBirth(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDateOfBirth ?? DateTime(2000), // Fecha inicial por defecto
+      firstDate: DateTime(1920), // Año mínimo
+      lastDate: DateTime.now(),   // No se puede nacer en el futuro
+      locale: const Locale('es', 'ES'),
+    );
+    if (picked != null && picked != _selectedDateOfBirth) {
+      setState(() {
+        _selectedDateOfBirth = picked;
+        _dobController.text = DateFormat('dd/MM/yyyy', 'es_ES').format(picked);
       });
     }
   }
@@ -80,11 +120,14 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
         photoUrl = await ref.getDownloadURL();
       }
 
+      // --- CAMBIO: Añadimos los nuevos campos al mapa que se guarda ---
       final dataToUpdate = <String, dynamic>{
         'displayName': _nameController.text.trim(),
         'phoneNumber': _phoneController.text.trim(),
         'role': _selectedRole.toString().split('.').last,
         'wizardStep': 1,
+        'gender': _selectedSex,
+        'dateOfBirth': _selectedDateOfBirth, // El modelo se encargará de convertirlo a Timestamp
       };
       if (photoUrl != null) {
         dataToUpdate['photoUrl'] = photoUrl;
@@ -156,16 +199,47 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
                 decoration: const InputDecoration(labelText: 'Teléfono de Contacto'),
                 keyboardType: TextInputType.phone,
               ),
+
+              // --- CAMBIO: Widgets para los nuevos campos ---
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _selectedSex,
+                decoration: const InputDecoration(labelText: 'Género'),
+                items: ['Masculino', 'Femenino', 'Otro', 'Prefiero no decirlo']
+                    .map((label) => DropdownMenuItem(
+                  child: Text(label),
+                  value: label.toLowerCase().replaceAll(' ', '_'),
+                ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedSex = value;
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _dobController,
+                decoration: const InputDecoration(
+                  labelText: 'Fecha de Nacimiento',
+                  suffixIcon: Icon(Icons.calendar_today),
+                ),
+                readOnly: true, // Para que no se pueda escribir, solo seleccionar
+                onTap: () {
+                  // Llamamos a nuestra nueva función al tocar el campo
+                  _selectDateOfBirth(context);
+                },
+              ),
+              // --- FIN DEL CAMBIO ---
+
               const SizedBox(height: 24),
               Text('¿Cómo quieres empezar? *', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
 
-              // --- CORRECCIÓN AQUÍ ---
               SegmentedButton<UserRole>(
                 segments: const <ButtonSegment<UserRole>>[
                   ButtonSegment<UserRole>(
                       value: UserRole.student,
-                      // Envolvemos el texto en un widget Flexible
                       label: Flexible(child: Text('Estudiante')),
                       icon: Icon(Icons.school)
                   ),
@@ -189,7 +263,6 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
                 emptySelectionAllowed: true,
                 showSelectedIcon: false,
               ),
-              // --- FIN DE LA CORRECCIÓN ---
 
               const SizedBox(height: 16),
               if (_selectedRole == UserRole.teacher || _selectedRole == UserRole.both)

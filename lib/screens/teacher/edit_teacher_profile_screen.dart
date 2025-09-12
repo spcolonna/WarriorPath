@@ -1,10 +1,10 @@
 import 'dart:io';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart'; // --- CAMBIO: Importamos intl
 
 class EditTeacherProfileScreen extends StatefulWidget {
   const EditTeacherProfileScreen({Key? key}) : super(key: key);
@@ -15,9 +15,14 @@ class EditTeacherProfileScreen extends StatefulWidget {
 
 class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
   late Future<DocumentSnapshot> _userDataFuture;
+
+  // --- CAMBIO: Añadimos controllers y variables de estado ---
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _dobController = TextEditingController();
 
+  String? _selectedSex;
+  DateTime? _selectedDateOfBirth;
   File? _newImageFile;
   String? _currentPhotoUrl;
   bool _isSaving = false;
@@ -39,6 +44,13 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
       _nameController.text = data['displayName'] ?? '';
       _phoneController.text = data['phoneNumber'] ?? '';
       _currentPhotoUrl = data['photoUrl'];
+
+      // --- CAMBIO: Cargamos los nuevos datos del perfil ---
+      _selectedSex = data['gender'];
+      _selectedDateOfBirth = (data['dateOfBirth'] as Timestamp?)?.toDate();
+      if (_selectedDateOfBirth != null) {
+        _dobController.text = DateFormat('dd/MM/yyyy', 'es_ES').format(_selectedDateOfBirth!);
+      }
     }
     return userDoc;
   }
@@ -47,7 +59,25 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
+    _dobController.dispose(); // --- CAMBIO: Hacemos dispose del nuevo controller
     super.dispose();
+  }
+
+  // --- CAMBIO: Añadimos la función para seleccionar fecha ---
+  Future<void> _selectDateOfBirth(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDateOfBirth ?? DateTime(2000),
+      firstDate: DateTime(1920),
+      lastDate: DateTime.now(),
+      locale: const Locale('es', 'ES'),
+    );
+    if (picked != null && picked != _selectedDateOfBirth) {
+      setState(() {
+        _selectedDateOfBirth = picked;
+        _dobController.text = DateFormat('dd/MM/yyyy', 'es_ES').format(picked);
+      });
+    }
   }
 
   Future<void> _pickImage() async {
@@ -71,10 +101,13 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
         newPhotoUrl = await ref.getDownloadURL();
       }
 
+      // --- CAMBIO: Añadimos los nuevos campos a los datos a guardar ---
       final dataToUpdate = {
         'displayName': _nameController.text.trim(),
         'phoneNumber': _phoneController.text.trim(),
         if (newPhotoUrl != null) 'photoUrl': newPhotoUrl,
+        'gender': _selectedSex,
+        'dateOfBirth': _selectedDateOfBirth,
       };
 
       await FirebaseFirestore.instance.collection('users').doc(user.uid).update(dataToUpdate);
@@ -136,6 +169,37 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
                   TextFormField(controller: _nameController, decoration: const InputDecoration(labelText: 'Nombre y Apellido', border: OutlineInputBorder())),
                   const SizedBox(height: 16),
                   TextFormField(controller: _phoneController, decoration: const InputDecoration(labelText: 'Teléfono', border: OutlineInputBorder()), keyboardType: TextInputType.phone),
+
+                  // --- CAMBIO: Añadimos los nuevos widgets de formulario ---
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: _selectedSex,
+                    decoration: const InputDecoration(labelText: 'Género', border: OutlineInputBorder()),
+                    items: ['Masculino', 'Femenino', 'Otro', 'Prefiero no decirlo']
+                        .map((label) => DropdownMenuItem(
+                      child: Text(label),
+                      value: label.toLowerCase().replaceAll(' ', '_'),
+                    ))
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedSex = value;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _dobController,
+                    decoration: const InputDecoration(
+                      labelText: 'Fecha de Nacimiento',
+                      border: OutlineInputBorder(),
+                      suffixIcon: Icon(Icons.calendar_today),
+                    ),
+                    readOnly: true,
+                    onTap: () => _selectDateOfBirth(context),
+                  ),
+                  // --- FIN DEL CAMBIO ---
+
                   const SizedBox(height: 32),
                   if (_isSaving)
                     const Center(child: CircularProgressIndicator())

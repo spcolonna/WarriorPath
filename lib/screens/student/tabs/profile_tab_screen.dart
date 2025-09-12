@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart'; // --- CAMBIO: Importamos intl para la fecha
 import 'package:warrior_path/screens/WelcomeScreen.dart';
 import 'package:warrior_path/screens/student/school_search_screen.dart';
 import 'package:warrior_path/screens/wizard_create_school_screen.dart';
@@ -16,13 +17,17 @@ class StudentProfileTabScreen extends StatefulWidget {
 class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
   late Future<DocumentSnapshot> _userDataFuture;
 
+  // --- CAMBIO: Añadimos controllers y variables para los nuevos datos ---
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _dobController = TextEditingController();
   final _emergencyContactNameController = TextEditingController();
   final _emergencyContactPhoneController = TextEditingController();
   final _medicalEmergencyServiceController = TextEditingController();
   final _medicalInfoController = TextEditingController();
 
+  String? _selectedSex;
+  DateTime? _selectedDateOfBirth;
   bool _isLoading = false;
 
   @override
@@ -42,6 +47,13 @@ class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
       _emergencyContactPhoneController.text = data['emergencyContactPhone'] ?? '';
       _medicalEmergencyServiceController.text = data['medicalEmergencyService'] ?? '';
       _medicalInfoController.text = data['medicalInfo'] ?? '';
+
+      // --- CAMBIO: Cargamos los nuevos datos del perfil ---
+      _selectedSex = data['gender'];
+      _selectedDateOfBirth = (data['dateOfBirth'] as Timestamp?)?.toDate();
+      if (_selectedDateOfBirth != null) {
+        _dobController.text = DateFormat('dd/MM/yyyy', 'es_ES').format(_selectedDateOfBirth!);
+      }
     }
     return userDoc;
   }
@@ -54,15 +66,36 @@ class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
     _emergencyContactPhoneController.dispose();
     _medicalEmergencyServiceController.dispose();
     _medicalInfoController.dispose();
+    _dobController.dispose(); // --- CAMBIO: Hacemos dispose del nuevo controller
     super.dispose();
+  }
+
+  // --- CAMBIO: Añadimos la función para seleccionar fecha (igual que en el wizard) ---
+  Future<void> _selectDateOfBirth(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDateOfBirth ?? DateTime(2000),
+      firstDate: DateTime(1920),
+      lastDate: DateTime.now(),
+      locale: const Locale('es', 'ES'),
+    );
+    if (picked != null && picked != _selectedDateOfBirth) {
+      setState(() {
+        _selectedDateOfBirth = picked;
+        _dobController.text = DateFormat('dd/MM/yyyy', 'es_ES').format(picked);
+      });
+    }
   }
 
   Future<void> _saveProfileChanges() async {
     setState(() { _isLoading = true; });
     try {
+      // --- CAMBIO: Añadimos los nuevos campos a los datos a guardar ---
       final dataToUpdate = {
         'displayName': _nameController.text.trim(),
         'phoneNumber': _phoneController.text.trim(),
+        'gender': _selectedSex,
+        'dateOfBirth': _selectedDateOfBirth,
         'emergencyContactName': _emergencyContactNameController.text.trim(),
         'emergencyContactPhone': _emergencyContactPhoneController.text.trim(),
         'medicalEmergencyService': _medicalEmergencyServiceController.text.trim(),
@@ -130,6 +163,37 @@ class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
                   TextFormField(controller: _nameController, decoration: const InputDecoration(labelText: 'Nombre y Apellido', border: OutlineInputBorder())),
                   const SizedBox(height: 16),
                   TextFormField(controller: _phoneController, decoration: const InputDecoration(labelText: 'Mi Teléfono', border: OutlineInputBorder()), keyboardType: TextInputType.phone),
+
+                  // --- CAMBIO: Añadimos los nuevos widgets de formulario ---
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: _selectedSex,
+                    decoration: const InputDecoration(labelText: 'Género', border: OutlineInputBorder()),
+                    items: ['Masculino', 'Femenino', 'Otro', 'Prefiero no decirlo']
+                        .map((label) => DropdownMenuItem(
+                      child: Text(label),
+                      value: label.toLowerCase().replaceAll(' ', '_'),
+                    ))
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedSex = value;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _dobController,
+                    decoration: const InputDecoration(
+                      labelText: 'Fecha de Nacimiento',
+                      border: OutlineInputBorder(),
+                      suffixIcon: Icon(Icons.calendar_today),
+                    ),
+                    readOnly: true,
+                    onTap: () => _selectDateOfBirth(context),
+                  ),
+                  // --- FIN DEL CAMBIO ---
+
                   const SizedBox(height: 32),
                   Text('Información de Emergencia', style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 8),
