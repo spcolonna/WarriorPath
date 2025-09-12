@@ -2,6 +2,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:warrior_path/providers/session_provider.dart';
 import 'package:warrior_path/providers/theme_provider.dart';
+import 'package:warrior_path/services/notification_service.dart';
 import 'package:warrior_path/services/remote_config_service.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +16,9 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  await NotificationService().initialize();
+
   final remoteConfigService = await RemoteConfigService.getInstance();
   await remoteConfigService.fetchAndActivate();
 

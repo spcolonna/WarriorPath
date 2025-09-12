@@ -1,26 +1,21 @@
-// Importa todo lo necesario (ya deberías tenerlos si ejecutaste npm install)
 import {onSchedule} from "firebase-functions/v2/scheduler";
+import {onDocumentWritten} from "firebase-functions/v2/firestore";
 import * as admin from "firebase-admin";
 import * as logger from "firebase-functions/logger";
 
-// Inicializa Firebase Admin (si no lo tienes ya en tu index.ts/js)
+// Inicializa Firebase Admin
 admin.initializeApp();
 const db = admin.firestore();
 
-/**
- * Función programada para ejecutarse el día 1 de cada mes a las 9:00 AM
- * Zona Horaria: America/Montevideo (AJUSTA ESTO A TU ZONA HORARIA DESEADA)
- *
- * Esta función genera las facturas/recordatorios pendientes para todos los alumnos activos
- * que tengan un plan de pago asignado y que NO tengan ya un recordatorio pendiente.
- */
+// ===============================================================================================
+// FUNCIÓN 1: GENERAR RECORDATORIOS DE PAGO MENSUALES (Sintaxis v2)
+// ===============================================================================================
 exports.generateMonthlyPaymentReminders = onSchedule(
   {
-    schedule: "0 9 1 * *", // 9:00 AM del día 1 de cada mes.
-    timeZone: "America/Montevideo", // ¡IMPORTANTE! Ajusta esto a tu zona horaria.
+    schedule: "0 9 1 * *",
+    timeZone: "America/Montevideo",
   },
-  // FIX 1: 'event' renombrado a '_event' porque no se usa.
-  async (_event) => {
+  async (event) => {
     logger.info("Iniciando la generación de recordatorios de pago mensuales...");
 
     const membersQuery = db.collectionGroup("members")
@@ -29,26 +24,22 @@ exports.generateMonthlyPaymentReminders = onSchedule(
 
     const activeMembersSnap = await membersQuery.get();
 
-    // Corrección de .isEmpty a .empty (que ya hiciste)
     if (activeMembersSnap.empty) {
       logger.info("No se encontraron miembros activos con planes asignados.");
       return;
     }
 
     logger.info(`Encontrados ${activeMembersSnap.size} miembros para procesar.`);
-
-    // FIX 2: Cambiamos Promise<any> por Promise<void>
     const promises: Promise<void>[] = [];
 
-    for (const memberDoc of activeMembersSnap.docs) {
+    activeMembersSnap.docs.forEach((memberDoc) => {
       const memberData = memberDoc.data();
       const memberId = memberDoc.id;
-
       const schoolId = memberDoc.ref.parent.parent?.id;
 
       if (!schoolId) {
         logger.warn(`No se pudo obtener SchoolID para el miembro ${memberId}`);
-        continue;
+        return;
       }
 
       const planId = memberData.assignedPaymentPlanId;
@@ -62,28 +53,20 @@ exports.generateMonthlyPaymentReminders = onSchedule(
           .limit(1)
           .get();
 
-        // Corrección de .isEmpty a .empty (que ya hiciste)
         if (pendingRemindersSnap.empty) {
-          logger.info(`Generando nuevo recordatorio para miembro ${memberId} (Plan: ${planId}).`);
+          logger.info(`Generando nuevo recordatorio para miembro ${memberId}.`);
 
           const planDoc = await db.collection("schools").doc(schoolId)
             .collection("paymentPlans").doc(planId).get();
 
-          if (!planDoc.exists) {
-            logger.error(`Error: El Plan ${planId} asignado al miembro ${memberId} NO EXISTE.`);
-            return;
-          }
-
-          // FIX 3: Eliminamos el '!' (non-null assertion) y añadimos un type guard (chequeo)
           const planData = planDoc.data();
-
-          if (!planData) {
-            logger.error(`Error: El Plan ${planId} existe pero no tiene data.`);
+          if (!planDoc.exists || !planData) {
+            logger.error(`Plan ${planId} no existe o no tiene datos.`);
             return;
           }
 
           const reminderData = {
-            concept: planData.title, // Ahora es seguro acceder
+            concept: planData.title,
             amount: planData.amount,
             currency: planData.currency,
             status: "pending",
@@ -97,51 +80,132 @@ exports.generateMonthlyPaymentReminders = onSchedule(
             .collection("members").doc(memberId)
             .collection("paymentReminders").add(reminderData);
 
-          await sendNotificationToUser(memberId, planData.title);
+          const payload = {
+            notification: {
+              title: "Recordatorio de Pago",
+              body: `Tu pago de ${planData.title} está listo.`,
+            },
+          };
+          await sendNotificationsToUser(memberId, payload);
         } else {
           logger.info(`Miembro ${memberId} ya tiene un pago pendiente. Omitiendo.`);
         }
       };
-
       promises.push(processingPromise());
-    }
+    });
 
     await Promise.all(promises);
-    logger.info("Proceso de generación de recordatorios completado.");
+    logger.info("Proceso de recordatorios completado.");
+  });
+
+// ===============================================================================================
+// FUNCIÓN 2: NOTIFICAR SOBRE POSTULACIONES Y ACEPTACIONES (Sintaxis v2)
+// ===============================================================================================
+exports.onMemberStatusChange = onDocumentWritten("/schools/{schoolId}/members/{memberId}", async (event) => {
+  if (!event.data) {
+    logger.warn("No data found in the event trigger. Exiting function.");
+    return;
   }
-);
 
+  const schoolId = event.params.schoolId;
+  const memberId = event.params.memberId;
 
+  const beforeData = event.data.before.data();
+  const afterData = event.data.after.data();
+
+  // Escenario 1: Nuevo Miembro se Postula
+  if (!event.data.before.exists && event.data.after.exists && afterData) {
+    if (afterData.status === "pending") {
+      logger.info(`Nuevo miembro [${memberId}] pendiente en [${schoolId}].`);
+      try {
+        const schoolDoc = await db.collection("schools").doc(schoolId).get();
+        const ownerId = schoolDoc.data()?.ownerId;
+
+        if (ownerId) {
+          const payload = {
+            notification: {
+              title: "Nueva Solicitud de Ingreso",
+              body: `${afterData.displayName} quiere unirse a tu escuela.`,
+            },
+          };
+          await sendNotificationsToUser(ownerId, payload);
+        }
+      } catch (error) {
+        logger.error("Error al notificar al dueño:", error);
+      }
+    }
+    return;
+  }
+
+  // Escenario 2: Estado del Miembro Cambia
+  if (event.data.before.exists && event.data.after.exists && beforeData && afterData) {
+    if (beforeData.status === "pending" && afterData.status === "active") {
+      logger.info(`Miembro [${memberId}] aceptado en [${schoolId}].`);
+      try {
+        const schoolDoc = await db.collection("schools").doc(schoolId).get();
+        const schoolName = schoolDoc.data()?.name ?? "tu escuela";
+        const payload = {
+          notification: {
+            title: "¡Has sido Aceptado!",
+            body: `Felicitaciones, tu solicitud para unirte a ${schoolName} ha sido aprobada.`,
+          },
+        };
+        await sendNotificationsToUser(memberId, payload);
+      } catch (error) {
+        logger.error("Error al notificar al alumno:", error);
+      }
+    }
+    return;
+  }
+});
+
+// ===============================================================================================
+// FUNCIÓN 3: FUNCIÓN AUXILIAR PARA ENVIAR NOTIFICACIONES (VERSIÓN COMPATIBLE)
+// ===============================================================================================
 /**
- * Función Auxiliar para enviar Notificaciones Push (FCM)
- * @param {string} userId El ID del usuario (miembro) a notificar.
- * @param {string} concept El concepto del pago (nombre del plan) para el body.
+ * Envía notificaciones a los tokens de un usuario.
+ * @param {string} userId El ID del usuario.
+ * @param {object} payload El contenido de la notificación.
  */
-async function sendNotificationToUser(userId: string, concept: string) {
+async function sendNotificationsToUser(userId: string, payload: {notification: {title: string, body: string}}) {
   try {
     const userDoc = await db.collection("users").doc(userId).get();
     if (!userDoc.exists) {
-      logger.warn(`Usuario ${userId} no encontrado en /users. No se puede notificar.`);
+      logger.warn(`Usuario ${userId} no encontrado, no se puede notificar.`);
       return;
     }
 
-    const fcmToken = userDoc.data()?.fcmToken;
+    const tokens = userDoc.data()?.fcmTokens as string[] | undefined;
 
-    if (fcmToken) {
-      const payload = {
-        notification: {
-          title: "Recordatorio de Pago",
-          body: `Tu pago de ${concept} está listo. Revisa la app para más detalles.`,
-        },
-        token: fcmToken,
+    if (tokens && tokens.length > 0) {
+      const message = {
+        tokens: tokens,
+        notification: payload.notification,
       };
 
-      logger.info(`Enviando notificación a ${userId}`);
-      await admin.messaging().send(payload);
+      const response = await admin.messaging().sendEachForMulticast(message);
+
+      const tokensToRemove: Promise<FirebaseFirestore.WriteResult>[] = [];
+      response.responses.forEach((result: admin.messaging.SendResponse, index: number) => {
+        if (!result.success) {
+          const error = result.error;
+          logger.error(`Fallo al enviar a token ${tokens[index]}`, error);
+          if (error) {
+            logger.error(`Fallo al enviar notificación a ${tokens[index]}`, error);
+            if (error.code === "messaging/invalid-registration-token" ||
+                            error.code === "messaging/registration-token-not-registered") {
+              tokensToRemove.push(db.collection("users").doc(userId).update({
+                fcmTokens: admin.firestore.FieldValue.arrayRemove(tokens[index]),
+              }));
+            }
+          }
+        }
+      });
+      await Promise.all(tokensToRemove);
     } else {
-      logger.warn(`Usuario ${userId} no tiene un fcmToken. No se puede notificar.`);
+      logger.warn(`Usuario ${userId} no tiene fcmTokens.`);
     }
   } catch (error) {
-    logger.error(`Error enviando notificación a ${userId}:`, error);
+    logger.error(`Error enviando notificaciones a ${userId}:`, error);
   }
 }
