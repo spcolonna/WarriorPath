@@ -16,6 +16,7 @@ import 'package:warrior_path/widgets/PrimaryButton.dart';
 import 'package:warrior_path/widgets/SecondaryButton.dart';
 
 import '../providers/session_provider.dart';
+import 'forgot_password_screen.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -278,6 +279,16 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                             text: 'Crear Cuenta',
                             onPressed: _performRegistration,
                           ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => const ForgotPasswordScreen(),
+                                ),
+                              );
+                            },
+                            child: const Text('¿Olvidaste tu contraseña?'),
+                          )
                         ],
                       ),
                   ],
