@@ -200,7 +200,6 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
                 keyboardType: TextInputType.phone,
               ),
 
-              // --- CAMBIO: Widgets para los nuevos campos ---
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 value: _selectedSex,
@@ -224,34 +223,55 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
                   labelText: 'Fecha de Nacimiento',
                   suffixIcon: Icon(Icons.calendar_today),
                 ),
-                readOnly: true, // Para que no se pueda escribir, solo seleccionar
+                readOnly: true,
                 onTap: () {
-                  // Llamamos a nuestra nueva función al tocar el campo
                   _selectDateOfBirth(context);
                 },
               ),
-              // --- FIN DEL CAMBIO ---
 
               const SizedBox(height: 24),
               Text('¿Cómo quieres empezar? *', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
 
               SegmentedButton<UserRole>(
-                segments: const <ButtonSegment<UserRole>>[
+                style: ButtonStyle(
+                  padding: WidgetStateProperty.all<EdgeInsets>(
+                    const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+                  ),
+                ),
+                segments: <ButtonSegment<UserRole>>[
                   ButtonSegment<UserRole>(
-                      value: UserRole.student,
-                      label: Flexible(child: Text('Estudiante')),
-                      icon: Icon(Icons.school)
+                    value: UserRole.student,
+                    label: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.school, size: 20),
+                        SizedBox(height: 4),
+                        Text('Estudiante', style: TextStyle(fontSize: 12)),
+                      ],
+                    ),
                   ),
                   ButtonSegment<UserRole>(
-                      value: UserRole.teacher,
-                      label: Flexible(child: Text('Profesor')),
-                      icon: Icon(Icons.sports_kabaddi)
+                    value: UserRole.teacher,
+                    label: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.sports_kabaddi, size: 20),
+                        SizedBox(height: 4),
+                        Text('Profesor', style: TextStyle(fontSize: 12)),
+                      ],
+                    ),
                   ),
                   ButtonSegment<UserRole>(
-                      value: UserRole.both,
-                      label: Flexible(child: Text('Ambos')),
-                      icon: Icon(Icons.group)
+                    value: UserRole.both,
+                    label: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.group, size: 20),
+                        SizedBox(height: 4),
+                        Text('Ambos', style: TextStyle(fontSize: 12)),
+                      ],
+                    ),
                   ),
                 ],
                 selected: _selectedRole != null ? <UserRole>{_selectedRole!} : <UserRole>{},
