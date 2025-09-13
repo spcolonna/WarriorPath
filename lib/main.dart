@@ -1,6 +1,6 @@
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:intl/date_symbol_data_file.dart';
 import 'package:provider/provider.dart';
+import 'package:warrior_path/providers/locale_provider.dart';
 import 'package:warrior_path/providers/session_provider.dart';
 import 'package:warrior_path/providers/theme_provider.dart';
 import 'package:warrior_path/services/notification_service.dart';
@@ -12,6 +12,8 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:warrior_path/widgets/ad_banner_widget.dart';
 import 'package:warrior_path/screens/WelcomeScreen.dart';
 
+import 'l10n/app_localizations.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
@@ -21,13 +23,13 @@ void main() async {
   await NotificationService().initialize();
   final remoteConfigService = await RemoteConfigService.getInstance();
   await remoteConfigService.fetchAndActivate();
-  //await initializeDateFormatting('es_ES','');
 
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (context) => ThemeProvider()),
         ChangeNotifierProvider(create: (context) => SessionProvider()),
+        ChangeNotifierProvider(create: (context) => LocaleProvider()),
       ],
       child: const MyApp(),
     ),
@@ -44,43 +46,43 @@ class MyApp extends StatelessWidget {
 
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
-        return MaterialApp(
-          title: 'Warrior Path',
-          theme: ThemeData(
-            primarySwatch: Colors.blue,
-            primaryColor: themeProvider.theme.primaryColor,
-            appBarTheme: AppBarTheme(
-              backgroundColor: themeProvider.theme.primaryColor,
-              foregroundColor: Colors.white,
-              titleTextStyle: const TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+        // --- CAMBIO: Envolvemos todo en un Consumer para el LocaleProvider ---
+        return Consumer<LocaleProvider>(
+          builder: (context, localeProvider, child) {
+            return MaterialApp(
+              title: 'Warrior Path',
+              theme: ThemeData(
+                primarySwatch: Colors.blue,
+                primaryColor: themeProvider.theme.primaryColor,
+                appBarTheme: AppBarTheme(
+                  backgroundColor: themeProvider.theme.primaryColor,
+                  foregroundColor: Colors.white,
+                  titleTextStyle: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                floatingActionButtonTheme: FloatingActionButtonThemeData(
+                  backgroundColor: themeProvider.theme.accentColor,
+                ),
               ),
-            ),
-            floatingActionButtonTheme: FloatingActionButtonThemeData(
-              backgroundColor: themeProvider.theme.accentColor,
-            ),
-          ),
 
-          // --- CORRECCIÓN 2: Se quitó la palabra 'const' de esta lista ---
-          localizationsDelegates: [
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: const [
-            Locale('en', ''),
-            Locale('es', 'ES'),
-          ],
-          home: const WelcomeScreen(),
-          builder: (context, navigator) {
-            return Column(
-              children: [
-                Expanded(child: navigator!),
-                if (showBannerAd)
-                  const AdBannerWidget(),
-              ],
+              // --- CAMBIO: Conectamos MaterialApp con el sistema de i18n ---
+              locale: localeProvider.locale, // 1. Usa el locale del provider
+              localizationsDelegates: AppLocalizations.localizationsDelegates, // 2. Usa los delegados generados
+              supportedLocales: AppLocalizations.supportedLocales, // 3. Usa los locales generados
+
+              home: const WelcomeScreen(),
+              builder: (context, navigator) {
+                return Column(
+                  children: [
+                    Expanded(child: navigator!),
+                    if (showBannerAd)
+                      const AdBannerWidget(),
+                  ],
+                );
+              },
             );
           },
         );

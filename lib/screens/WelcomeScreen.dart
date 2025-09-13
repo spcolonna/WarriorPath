@@ -15,7 +15,9 @@ import 'package:warrior_path/widgets/CustomPasswordField.dart';
 import 'package:warrior_path/widgets/PrimaryButton.dart';
 import 'package:warrior_path/widgets/SecondaryButton.dart';
 
+import '../l10n/app_localizations.dart';
 import '../providers/session_provider.dart';
+import '../widgets/language_switcher.dart';
 import 'forgot_password_screen.dart';
 
 class WelcomeScreen extends StatefulWidget {
@@ -32,162 +34,105 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   final AuthService _authService = AuthService();
 
   Future<void> _navigateAfterAuth(User user) async {
+    final l10n = AppLocalizations.of(context)!;
     final userProfileDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-
     if (!mounted) return;
-
     if (!userProfileDoc.exists) {
       final newUserProfile = {
-        'uid': user.uid,
-        'email': user.email,
-        'wizardStep': 0,
-        'createdAt': FieldValue.serverTimestamp(),
-        'displayName': user.displayName ?? '',
-        'photoUrl': user.photoURL ?? '',
+        'uid': user.uid, 'email': user.email, 'wizardStep': 0, 'createdAt': FieldValue.serverTimestamp(), 'displayName': user.displayName ?? '', 'photoUrl': user.photoURL ?? '',
       };
       await FirebaseFirestore.instance.collection('users').doc(user.uid).set(newUserProfile);
-
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const WizardProfileScreen()),
-      );
+      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const WizardProfileScreen()));
       return;
     }
-
-    if (!userProfileDoc.exists) {
-      _showErrorDialog('Error de Perfil', 'No se pudo cargar tu perfil. Intenta de nuevo.');
-      setState(() { _isLoading = false; });
-      return;
-    }
-
     final userData = userProfileDoc.data()!;
     final int wizardStep = userData['wizardStep'] ?? 0;
-
     if (wizardStep < 99) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const WizardProfileScreen()),
-      );
+      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const WizardProfileScreen()));
     } else {
       final memberships = userData['activeMemberships'] as Map<String, dynamic>? ?? {};
       final pendingApplication = userData['pendingApplication'] as Map<String, dynamic>?;
-
-      print("memberships.isEmpty: ${memberships.isEmpty}");
-      print("pendingApplication: ${pendingApplication}");
       if (memberships.isEmpty && pendingApplication != null) {
-        Navigator.of(context).pushReplacement(MaterialPageRoute(
-            builder: (context) =>
-                ApplicationSentScreen(
-                    schoolName: pendingApplication['schoolName'] ?? '')));
+        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => ApplicationSentScreen(schoolName: pendingApplication['schoolName'] ?? '')));
       } else if (memberships.isEmpty){
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (context) => const SchoolSearchScreen()),
-        );
+        Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SchoolSearchScreen()));
       } else if (memberships.length == 1) {
-        // Si solo tiene 1 rol, entramos directamente
         final schoolId = memberships.keys.first;
         final role = memberships.values.first;
-
         Provider.of<SessionProvider>(context, listen: false).setActiveSession(schoolId, role);
-
         Widget destination = (role == 'maestro') ? const TeacherDashboardScreen() : const StudentDashboardScreen();
         Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => destination));
-
       } else if (memberships.length > 1) {
-        // Si tiene más de 1 rol, vamos al selector
         Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const RoleSelectorScreen()));
       } else {
-        _showErrorDialog('Acceso Denegado', 'No tienes un rol activo en ninguna escuela.');
+        _showErrorDialog(l10n.accessDeniedTitle, l10n.accessDeniedContent);
         if (mounted) setState(() { _isLoading = false; });
       }
     }
   }
 
-
   Future<void> _performLogin() async {
+    final l10n = AppLocalizations.of(context)!;
     if (_isLoading) return;
     setState(() { _isLoading = true; });
 
     try {
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
-
-      final userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-
+      final userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(email: email, password: password);
       if (userCredential.user != null) {
         await _navigateAfterAuth(userCredential.user!);
       }
-
     } on FirebaseAuthException catch (e) {
       String errorMessage;
       switch (e.code) {
-        case 'user-not-found':
-          errorMessage = 'No se encontró un usuario con ese correo electrónico.';
-          break;
-        case 'wrong-password':
-          errorMessage = 'La contraseña es incorrecta.';
-          break;
-        case 'invalid-credential':
-          errorMessage = 'Las credenciales son incorrectas.';
-          break;
-        default:
-          errorMessage = 'Ocurrió un error inesperado.';
+        case 'user-not-found': errorMessage = l10n.loginErrorUserNotFound; break;
+        case 'wrong-password': errorMessage = l10n.loginErrorWrongPassword; break;
+        case 'invalid-credential': errorMessage = l10n.loginErrorInvalidCredential; break;
+        default: errorMessage = l10n.unexpectedError;
       }
-      _showErrorDialog('Error de Login', errorMessage);
+      _showErrorDialog(l10n.loginErrorTitle, errorMessage);
     } catch (e) {
-      _showErrorDialog('Error', 'Ocurrió un error: ${e.toString()}');
+      _showErrorDialog(l10n.errorTitle, l10n.genericErrorContent(e.toString()));
     } finally {
-      if (mounted && _isLoading) { // Solo si aún está cargando
-        setState(() { _isLoading = false; });
-      }
+      if (mounted && _isLoading) { setState(() { _isLoading = false; }); }
     }
   }
 
   Future<void> _performRegistration() async {
+    final l10n = AppLocalizations.of(context)!;
     if (_isLoading) return;
     setState(() { _isLoading = true; });
 
     try {
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
-
       final userModel = await _authService.signUpWithEmailPassword(email, password);
-
-      // CAMBIO: Usamos la nueva función de navegación
       if (userModel != null) {
         final user = FirebaseAuth.instance.currentUser;
         if (user != null) {
           await _navigateAfterAuth(user);
         }
       } else {
-        _showErrorDialog('Error de Registro', 'No se pudo completar el registro. El correo puede ya estar en uso o la contraseña es muy débil.');
+        _showErrorDialog(l10n.registrationErrorTitle, l10n.registrationErrorContent);
       }
     } catch (e) {
-      _showErrorDialog('Error', 'Ocurrió un error inesperado: ${e.toString()}');
+      _showErrorDialog(l10n.errorTitle, l10n.genericErrorContent(e.toString()));
     } finally {
-      if (mounted && _isLoading) {
-        setState(() { _isLoading = false; });
-      }
+      if (mounted && _isLoading) { setState(() { _isLoading = false; }); }
     }
   }
 
   void _showErrorDialog(String title, String content) {
     if (!mounted) return;
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(title),
-        content: Text(content),
-        actions: <Widget>[
-          TextButton(
-            child: const Text('Ok'),
-            onPressed: () {
-              Navigator.of(ctx).pop();
-            },
-          )
-        ],
-      ),
+    final l10n = AppLocalizations.of(context)!;
+    showDialog(context: context, builder: (ctx) => AlertDialog(
+      title: Text(title),
+      content: Text(content),
+      actions: <Widget>[
+        TextButton(child: Text(l10n.ok), onPressed: () { Navigator.of(ctx).pop(); })
+      ],
+    ),
     );
   }
 
@@ -200,7 +145,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // El resto de tu widget de UI no cambia
+    // Obtenemos la instancia de l10n para usar en el build
+    final l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       backgroundColor: AppColors.backgroundGray,
       body: Column(
@@ -211,30 +158,30 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             decoration: const BoxDecoration(
               color: AppColors.primaryColor,
-              borderRadius: BorderRadius.vertical(
-                bottom: Radius.circular(50),
-              ),
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(50)),
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+            child: Stack( // Usamos un Stack para posicionar el switcher
               children: [
-                ClipOval(
-                  child: Image.asset(
-                    'assets/logo/Logo.png',
-                    height: 90, // Define la altura
-                    width: 90,  // Define el ancho, igual a la altura para un círculo perfecto
-                    fit: BoxFit.cover, // Asegura que la imagen cubra el círculo
-                  ),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Center(
+                      child: ClipOval(
+                        child: Image.asset('assets/logo/Logo.png', height: 90, width: 90, fit: BoxFit.cover),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      l10n.appName, // Texto localizado
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 42.0, fontWeight: FontWeight.bold, color: AppColors.textWhite),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Warrior Path',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 42.0,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textWhite,
-                  ),
+                const Positioned(
+                  top: 12,
+                  right: 6,
+                  child: LanguageSwitcher(),
                 ),
               ],
             ),
@@ -246,15 +193,15 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 child: Column(
                   children: [
                     const SizedBox(height: 20),
-                    const Text(
-                      'Se un guerrero, crea tu camino',
+                    Text(
+                      l10n.appSlogan, // Texto localizado
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 18, color: AppColors.textLight),
+                      style: const TextStyle(fontSize: 18, color: AppColors.textLight),
                     ),
                     const SizedBox(height: 32.0),
                     CustomInputField(
                       controller: _emailController,
-                      labelText: 'Correo Electrónico',
+                      labelText: l10n.emailLabel, // Texto localizado
                       icon: Icons.email_outlined,
                     ),
                     const SizedBox(height: 16.0),
@@ -263,31 +210,19 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     ),
                     const SizedBox(height: 32.0),
                     if (_isLoading)
-                      const CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(AppColors.secondaryColor),
-                      )
+                      const CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(AppColors.secondaryColor))
                     else
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          SecondaryButton(
-                            text: 'Iniciar Sesión',
-                            onPressed: _performLogin,
-                          ),
+                          SecondaryButton(text: l10n.loginButton, onPressed: _performLogin),
                           const SizedBox(height: 16.0),
-                          PrimaryButton(
-                            text: 'Crear Cuenta',
-                            onPressed: _performRegistration,
-                          ),
+                          PrimaryButton(text: l10n.createAccountButton, onPressed: _performRegistration),
                           TextButton(
                             onPressed: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => const ForgotPasswordScreen(),
-                                ),
-                              );
+                              Navigator.of(context).push(MaterialPageRoute(builder: (context) => const ForgotPasswordScreen()));
                             },
-                            child: const Text('¿Olvidaste tu contraseña?'),
+                            child: Text(l10n.forgotPasswordLink), // Texto localizado
                           )
                         ],
                       ),

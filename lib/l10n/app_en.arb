@@ -1,0 +1,31 @@
+{
+    "@@locale": "en",
+    "appName": "Warrior Path",
+    "appSlogan": "Be a warrior, create your path",
+    "emailLabel": "Email",
+    "loginButton": "Log In",
+    "createAccountButton": "Create Account",
+    "forgotPasswordLink": "Forgot your password?",
+    "profileErrorTitle": "Profile Error",
+    "profileErrorContent": "Could not load your profile. Please try again.",
+    "accessDeniedTitle": "Access Denied",
+    "accessDeniedContent": "You do not have an active role in any school.",
+    "loginErrorTitle": "Login Error",
+    "loginErrorUserNotFound": "No user found for that email.",
+    "loginErrorWrongPassword": "Wrong password provided for that user.",
+    "loginErrorInvalidCredential": "The credentials provided are incorrect.",
+    "unexpectedError": "An unexpected error occurred.",
+    "registrationErrorTitle": "Registration Error",
+    "registrationErrorContent": "Could not complete registration. The email may already be in use or the password is too weak.",
+    "errorTitle": "Error",
+    "genericErrorContent": "An error occurred: {errorDetails}",
+    "@genericErrorContent": {
+        "placeholders": {
+            "errorDetails": {
+                "type": "String"
+            }
+        }
+    },
+    "language": "Language",
+    "ok": "Ok"
+}
