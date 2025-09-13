@@ -77,4 +77,36 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get ok => 'Ok';
+
+  @override
+  String welcomeTitle(String userName) {
+    return 'Welcome, $userName!';
+  }
+
+  @override
+  String get teacher => 'Teacher';
+
+  @override
+  String get sessionError => 'Error: Invalid session.';
+
+  @override
+  String get noSchedulerClass => 'There are no classes scheduled for today.';
+
+  @override
+  String get choseClass => 'Select Class';
+
+  @override
+  String get todayClass => 'Today\'s Classes';
+
+  @override
+  String get takeAssistance => 'Take Attendance';
+
+  @override
+  String get loading => 'Loading...';
+
+  @override
+  String get activeStudents => 'Active Students';
+
+  @override
+  String get pendingApplication => 'Pending Applications';
 }

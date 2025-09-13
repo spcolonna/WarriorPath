@@ -172,7 +172,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      l10n.appName, // Texto localizado
+                      l10n.appName, 
                       textAlign: TextAlign.center,
                       style: const TextStyle(fontSize: 42.0, fontWeight: FontWeight.bold, color: AppColors.textWhite),
                     ),
@@ -194,14 +194,14 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   children: [
                     const SizedBox(height: 20),
                     Text(
-                      l10n.appSlogan, // Texto localizado
+                      l10n.appSlogan, 
                       textAlign: TextAlign.center,
                       style: const TextStyle(fontSize: 18, color: AppColors.textLight),
                     ),
                     const SizedBox(height: 32.0),
                     CustomInputField(
                       controller: _emailController,
-                      labelText: l10n.emailLabel, // Texto localizado
+                      labelText: l10n.emailLabel, 
                       icon: Icons.email_outlined,
                     ),
                     const SizedBox(height: 16.0),
@@ -222,7 +222,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                             onPressed: () {
                               Navigator.of(context).push(MaterialPageRoute(builder: (context) => const ForgotPasswordScreen()));
                             },
-                            child: Text(l10n.forgotPasswordLink), // Texto localizado
+                            child: Text(l10n.forgotPasswordLink), 
                           )
                         ],
                       ),

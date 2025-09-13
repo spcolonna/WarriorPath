@@ -6,20 +6,27 @@ import 'package:warrior_path/providers/session_provider.dart';
 import 'package:warrior_path/screens/role_selector_screen.dart';
 import 'package:warrior_path/screens/teacher/attendance_checklist_screen.dart';
 
+import '../../../l10n/app_localizations.dart';
+
 class HomeTabScreen extends StatefulWidget {
-  const HomeTabScreen({Key? key}) : super(key: key);
+  const HomeTabScreen({super.key});
 
   @override
   State<HomeTabScreen> createState() => _HomeTabScreenState();
 }
 
 class _HomeTabScreenState extends State<HomeTabScreen> {
-  // Ya no necesitamos la función _getDashboardStreams
+  late AppLocalizations l10n;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    l10n = AppLocalizations.of(context);
+  }
 
   void _showSelectClassDialog(List<QueryDocumentSnapshot> schedules, String schoolId) {
     if (schedules.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No hay clases programadas para hoy.')),
+        SnackBar(content: Text(l10n.noSchedulerClass)),
       );
       return;
     }
@@ -28,7 +35,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Seleccionar Clase'),
+          title: Text(l10n.choseClass),
           content: SizedBox(
             width: double.maxFinite,
             child: ListView.builder(
@@ -69,7 +76,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
     final user = FirebaseAuth.instance.currentUser;
 
     if (schoolId == null || user == null) {
-      return const Scaffold(body: Center(child: Text('Error: Sesión no válida.')));
+      return Scaffold(body: Center(child: Text(l10n.sessionError)));
     }
 
     return Scaffold(
@@ -79,24 +86,24 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
-          // StreamBuilder para el saludo de bienvenida
           StreamBuilder<DocumentSnapshot>(
             stream: FirebaseFirestore.instance.collection('users').doc(user.uid).snapshots(),
             builder: (context, snapshot) {
-              final userName = snapshot.data?['displayName'] ?? 'Maestro';
-              return Text('¡Bienvenido, $userName!', style: Theme.of(context).textTheme.headlineSmall);
+              final userName = snapshot.data?['displayName'] ?? l10n.teacher;
+              return Text(
+                l10n.welcomeTitle(userName),
+                style: Theme.of(context).textTheme.headlineSmall,
+              );
             },
           ),
           const SizedBox(height: 24),
 
-          // StreamBuilder para las estadísticas
           _buildStatsGrid(schoolId),
 
           const SizedBox(height: 24),
-          Text('Clases de Hoy', style: Theme.of(context).textTheme.headlineSmall),
+          Text(l10n.todayClass, style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 8),
 
-          // StreamBuilder para los horarios del día
           _buildTodaySchedules(schoolId),
         ],
       ),
@@ -108,13 +115,11 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
               .collection('classSchedules').where('dayOfWeek', isEqualTo: today).get();
           _showSelectClassDialog(snapshot.docs, schoolId);
         },
-        label: const Text('Tomar Asistencia'),
+        label: Text(l10n.takeAssistance),
         icon: const Icon(Icons.check_circle_outline),
       ),
     );
   }
-
-  // --- WIDGETS DE AYUDA REFACTORIZADOS ---
 
   Widget _buildSchoolSelector(String schoolId) {
     return InkWell(
@@ -127,7 +132,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
           StreamBuilder<DocumentSnapshot>(
             stream: FirebaseFirestore.instance.collection('schools').doc(schoolId).snapshots(),
             builder: (context, snapshot) {
-              final schoolName = snapshot.data?['name'] ?? 'Cargando...';
+              final schoolName = snapshot.data?['name'] ?? l10n.loading;
               return Flexible(child: Text(schoolName, overflow: TextOverflow.ellipsis));
             },
           ),
@@ -153,9 +158,9 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           children: [
-            _buildStatCard(title: 'Alumnos Activos', value: activeStudents.toString(), icon: Icons.groups, color: Colors.blue),
+            _buildStatCard(title: l10n.activeStudents, value: activeStudents.toString(), icon: Icons.groups, color: Colors.blue),
             _buildStatCard(
-              title: 'Solicitudes Pendientes', value: pendingRequests.toString(),
+              title: l10n.pendingApplication, value: pendingRequests.toString(),
               icon: Icons.person_add,
               color: pendingRequests > 0 ? Colors.orange : Colors.green,
               onTap: () {
@@ -175,7 +180,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
       builder: (context, snapshot) {
         if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
         if (snapshot.data!.docs.isEmpty) {
-          return const Card(child: ListTile(leading: Icon(Icons.info_outline), title: Text('No hay clases programadas para hoy')));
+          return Card(child: ListTile(leading: const Icon(Icons.info_outline), title: Text(l10n.noSchedulerClass)));
         }
         return ListView.builder(
           shrinkWrap: true,

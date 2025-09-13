@@ -27,5 +27,23 @@
         }
     },
     "language": "Language",
-    "ok": "Ok"
+    "ok": "Ok",
+    "welcomeTitle": "Welcome, {userName}!",
+    "@welcomeTitle": {
+        "description": "A welcome message with the user's name",
+        "placeholders": {
+            "userName": {
+                "type": "String"
+            }
+        }
+    },
+    "teacher": "Teacher",
+    "sessionError": "Error: Invalid session.",
+    "noSchedulerClass": "There are no classes scheduled for today.",
+    "choseClass": "Select Class",
+    "todayClass": "Today's Classes",
+    "takeAssistance": "Take Attendance",
+    "loading": "Loading...",
+    "activeStudents": "Active Students",
+    "pendingApplication": "Pending Applications"
 }

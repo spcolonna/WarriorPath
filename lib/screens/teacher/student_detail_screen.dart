@@ -766,7 +766,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
             title: Text('Promovido a $levelName'),
             subtitle: (notes != null && notes.isNotEmpty) ? Text('Notas: "$notes"') : null,
             trailing: Row(
-              mainAxisSize: MainAxisSize.min, // Para que el Row no ocupe todo el espacio
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(formattedDate),
 
@@ -824,8 +824,6 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
 
     if (pickedDate == null) return; // El usuario canceló
 
-    // Una vez que tenemos la fecha, necesitamos saber qué clases hubo ese día.
-    // Usamos 'pickedDate.weekday' (Lunes=1, Domingo=7, igual que tu app)
     final int dayOfWeek = pickedDate.weekday;
 
     final schedulesSnap = await FirebaseFirestore.instance
@@ -839,8 +837,6 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
       return;
     }
 
-    // Si encontramos clases, mostramos el diálogo para seleccionar cuál.
-    // (Este es el mismo diálogo que usas en tu HomeTabScreen)
     if (mounted) {
       _selectScheduleForDate(schedulesSnap.docs, pickedDate);
     }
@@ -881,13 +877,6 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
 
   /// Guarda la asistencia (Paso final)
   Future<void> _savePastAttendance(String scheduleTitle, DateTime date) async {
-    // Para guardar la asistencia, replicamos la lógica de tu 'AttendanceChecklistScreen'.
-    // Necesitamos encontrar (o crear) el documento 'attendanceRecord' para ESA fecha y ESE horario.
-    // Asumimos que la ID del documento es una combinación de la fecha y el título,
-    // o que se busca por esos campos.
-
-    // La forma más robusta (usada por AttendanceChecklistScreen) suele ser buscar
-    // un registro que coincida con la fecha (sin hora) Y el título.
     final normalizedDate = Timestamp.fromDate(DateTime(date.year, date.month, date.day));
 
     final firestore = FirebaseFirestore.instance;
@@ -903,20 +892,18 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
       String attendanceDocId;
 
       if (query.docs.isEmpty) {
-        // No existe un registro para esa clase/fecha. Lo creamos.
         final newDocRef = await recordsRef.add({
           'date': normalizedDate,
           'scheduleTitle': scheduleTitle,
           'schoolId': widget.schoolId,
-          'presentStudentIds': [widget.studentId], // Creamos la lista CON el alumno
+          'presentStudentIds': [widget.studentId],
           'recordedBy': FirebaseAuth.instance.currentUser?.uid,
         });
         attendanceDocId = newDocRef.id;
       } else {
-        // El registro ya existe. Simplemente añadimos al alumno al array.
         attendanceDocId = query.docs.first.id;
         await recordsRef.doc(attendanceDocId).update({
-          'presentStudentIds': FieldValue.arrayUnion([widget.studentId]) // arrayUnion evita duplicados
+          'presentStudentIds': FieldValue.arrayUnion([widget.studentId])
         });
       }
 
@@ -948,36 +935,30 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
       ),
     );
 
-    if (confirmDelete != true) return; // Si el usuario cancela, no hacer nada.
+    if (confirmDelete != true) return;
 
-    // 2. Si confirma, procedemos con la lógica de borrado y rollback.
     final firestore = FirebaseFirestore.instance;
     final memberRef = firestore.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId);
     final historyDocRef = memberRef.collection('progressionHistory').doc(historyDocId);
 
     try {
-      // 3. Eliminar el registro del historial
       await historyDocRef.delete();
 
-      // 4. Buscar cuál es la NUEVA promoción más reciente que queda en el historial
       final newLatestPromoSnap = await memberRef.collection('progressionHistory')
-          .where('type', isEqualTo: 'level_promotion') // Solo buscar promociones de nivel
+          .where('type', isEqualTo: 'level_promotion')
           .orderBy('date', descending: true)
           .limit(1)
           .get();
 
-      String? newCurrentLevelId; // El ID del nivel al que vamos a revertir
+      String? newCurrentLevelId;
 
       if (newLatestPromoSnap.docs.isNotEmpty) {
-        // Encontramos una promoción anterior. Ese es el nuevo nivel actual.
         newCurrentLevelId = newLatestPromoSnap.docs.first.data()['newLevelId'];
       } else {
-        // No quedan MÁS promociones en el historial. Debemos revertir al 'initialLevelId' del miembro.
         final memberDoc = await memberRef.get();
         newCurrentLevelId = memberDoc.data()?['initialLevelId'];
       }
 
-      // 5. Actualizar el documento principal del Miembro con el nivel revertido.
       await memberRef.update({'currentLevelId': newCurrentLevelId});
 
       if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Promoción revertida con éxito.')));

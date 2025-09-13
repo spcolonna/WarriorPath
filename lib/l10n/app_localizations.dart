@@ -7,6 +7,7 @@ import 'package:intl/intl.dart' as intl;
 
 import 'app_localizations_en.dart';
 import 'app_localizations_es.dart';
+import 'app_localizations_pt.dart';
 
 // ignore_for_file: type=lint
 
@@ -96,6 +97,7 @@ abstract class AppLocalizations {
   static const List<Locale> supportedLocales = <Locale>[
     Locale('en'),
     Locale('es'),
+    Locale('pt'),
   ];
 
   /// No description provided for @appName.
@@ -223,6 +225,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Ok'**
   String get ok;
+
+  /// A welcome message with the user's name
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome, {userName}!'**
+  String welcomeTitle(String userName);
+
+  /// No description provided for @teacher.
+  ///
+  /// In en, this message translates to:
+  /// **'Teacher'**
+  String get teacher;
+
+  /// No description provided for @sessionError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error: Invalid session.'**
+  String get sessionError;
+
+  /// No description provided for @noSchedulerClass.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no classes scheduled for today.'**
+  String get noSchedulerClass;
+
+  /// No description provided for @choseClass.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Class'**
+  String get choseClass;
+
+  /// No description provided for @todayClass.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s Classes'**
+  String get todayClass;
+
+  /// No description provided for @takeAssistance.
+  ///
+  /// In en, this message translates to:
+  /// **'Take Attendance'**
+  String get takeAssistance;
+
+  /// No description provided for @loading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading...'**
+  String get loading;
+
+  /// No description provided for @activeStudents.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Students'**
+  String get activeStudents;
+
+  /// No description provided for @pendingApplication.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending Applications'**
+  String get pendingApplication;
 }
 
 class _AppLocalizationsDelegate
@@ -236,7 +298,7 @@ class _AppLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) =>
-      <String>['en', 'es'].contains(locale.languageCode);
+      <String>['en', 'es', 'pt'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -249,6 +311,8 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
       return AppLocalizationsEn();
     case 'es':
       return AppLocalizationsEs();
+    case 'pt':
+      return AppLocalizationsPt();
   }
 
   throw FlutterError(

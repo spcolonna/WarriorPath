@@ -76,4 +76,36 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get ok => 'Ok';
+
+  @override
+  String welcomeTitle(String userName) {
+    return '¡Bienvenido, $userName!';
+  }
+
+  @override
+  String get teacher => 'Maestro';
+
+  @override
+  String get sessionError => 'Error: Sesión no válida.';
+
+  @override
+  String get noSchedulerClass => 'No hay clases programadas para hoy.';
+
+  @override
+  String get choseClass => 'Seleccionar Clase';
+
+  @override
+  String get todayClass => 'Clases de Hoy';
+
+  @override
+  String get takeAssistance => 'Tomar Asistencia';
+
+  @override
+  String get loading => 'Cargando...';
+
+  @override
+  String get activeStudents => 'Alumnos Activos';
+
+  @override
+  String get pendingApplication => 'Solicitudes Pendientes';
 }
