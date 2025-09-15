@@ -122,5 +122,6 @@
     "studentNotAssignedTechnics": "Este aluno não possui técnicas designadas.",
     "notassignedPaymentPlan": "Nenhum plano de pagamento designado.",
     "paymentPlanNotFoud": "Plano designado (ID: {assignedPlanId}) não encontrado.",
-    "contactData": "Dados de Contato"
+    "contactData": "Dados de Contato",
+    "saveAndContinue": "Salvar e Continuar"
 }

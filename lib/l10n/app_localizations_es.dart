@@ -417,4 +417,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get contactData => 'Datos de Contacto';
+
+  @override
+  String get saveAndContinue => 'Guardar y Continuar';
 }

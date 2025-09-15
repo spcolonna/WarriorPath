@@ -9,6 +9,8 @@ import 'package:warrior_path/screens/wizard_configure_levels_screen.dart';
 import 'package:warrior_path/theme/AppColors.dart';
 import 'package:warrior_path/theme/martial_art_themes.dart';
 
+import '../l10n/app_localizations.dart';
+
 class WizardCreateSchoolScreen extends StatefulWidget {
   const WizardCreateSchoolScreen({Key? key}) : super(key: key);
 
@@ -17,6 +19,12 @@ class WizardCreateSchoolScreen extends StatefulWidget {
 }
 
 class _WizardCreateSchoolScreenState extends State<WizardCreateSchoolScreen> {
+  late AppLocalizations l10n;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    l10n = AppLocalizations.of(context);
+  }
   final _schoolNameController = TextEditingController();
   final _addressController = TextEditingController();
   final _cityController = TextEditingController();
@@ -149,8 +157,17 @@ class _WizardCreateSchoolScreenState extends State<WizardCreateSchoolScreen> {
       final schoolData = newSchool.toJson();
       schoolData['name_lowercase'] = schoolName.toLowerCase();
 
+      // --- INICIO DE LA MODIFICACIÓN (Tarea 1: Prueba Gratis) ---
+      // Calculamos la fecha de vencimiento para 30 días a partir de ahora.
+      final trialExpiryDate = DateTime.now().add(const Duration(days: 30));
+
+      // Añadimos el mapa de suscripción al documento de la escuela.
+      schoolData['subscription'] = {
+        'status': 'trial', // Un estado para saber que está en período de prueba
+        'expiryDate': Timestamp.fromDate(trialExpiryDate),
+      };
+
       final schoolDocRef = await firestore.collection('schools').add(schoolData);
-      // ------------------------
 
       final userRef = firestore.collection('users').doc(user.uid);
       await userRef.set({'activeMemberships': { schoolDocRef.id: 'maestro' }}, SetOptions(merge: true));
@@ -288,7 +305,7 @@ class _WizardCreateSchoolScreenState extends State<WizardCreateSchoolScreen> {
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16), backgroundColor: _selectedMartialArtTheme?.primaryColor ?? AppColors.primaryColor),
                   onPressed: _continueToNextStep,
-                  child: const Text('Guardar y Continuar', style: TextStyle(color: Colors.white)),
+                  child: Text(l10n.saveAndContinue, style: TextStyle(color: Colors.white)),
                 ),
             ],
           ),

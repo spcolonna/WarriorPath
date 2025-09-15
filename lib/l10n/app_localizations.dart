@@ -843,6 +843,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Contact Data'**
   String get contactData;
+
+  /// No description provided for @saveAndContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Save and Continue'**
+  String get saveAndContinue;
 }
 
 class _AppLocalizationsDelegate

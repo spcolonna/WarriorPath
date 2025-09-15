@@ -419,4 +419,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get contactData => 'Dados de Contato';
+
+  @override
+  String get saveAndContinue => 'Salvar e Continuar';
 }

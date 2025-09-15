@@ -123,5 +123,13 @@
     "studentNotAssignedTechnics": "Este alumno no tiene técnicas asignadas.",
     "notassignedPaymentPlan": "Sin plan de pago asignado.",
     "paymentPlanNotFoud" : "Plan asignado (ID: {assignedPlanId}) no encontrado.",
-    "contactData": "Datos de Contacto"
+    "contactData": "Datos de Contacto",
+    "saveAndContinue": "Guardar y Continuar",
+
+
+    "nameAndMartialArtRequired": "Nombre y Arte Marcial son requeridos.",
+    "neddSelectSubSchool": "Si es una sub-escuela, debes seleccionar la escuela principal.",
+    "notAuthenticatedUser": "Usuario no autenticado.",
+    "createSchoolError": "Error al crear la escuela: {e}",
+    "crateScholStep2": "Crear tu Escuela (Paso 2)",
 }
