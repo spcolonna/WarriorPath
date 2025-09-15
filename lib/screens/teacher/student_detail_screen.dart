@@ -6,9 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:warrior_path/models/payment_plan_model.dart';
 import 'package:warrior_path/screens/teacher/techniques/assign_techniques_screen.dart';
-
-import '../../enums/payment_type.dart';
+import '../../l10n/app_localizations.dart';
 import '../../models/technique_model.dart';
+import '../../widgets/register_payment_dialog.dart';
 
 class StudentDetailScreen extends StatefulWidget {
   final String schoolId;
@@ -25,6 +25,13 @@ class StudentDetailScreen extends StatefulWidget {
 }
 
 class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTickerProviderStateMixin {
+  late AppLocalizations l10n;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    l10n = AppLocalizations.of(context);
+  }
+
   late TabController _tabController;
   late Stream<QuerySnapshot> _attendanceStream;
   late ConfettiController _confettiController;
@@ -67,7 +74,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
       if (mounted) {
         setState(() {
           _assignedTechniqueIds = List<String>.from(memberData['assignedTechniqueIds'] ?? []);
-          _studentName = memberData['displayName'] ?? 'Alumno';
+          _studentName = memberData['displayName'] ?? '';
           _currentRole = memberData['role'] ?? 'alumno';
           _currentLevelData = results[0] as Map<String, dynamic>?;
           _photoUrl = results[1] as String?;
@@ -94,7 +101,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
   Future<Map<String, dynamic>?> _fetchLevelDetails(String? levelId) async {
     if (levelId == null) return null;
     final levelDoc = await FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('levels').doc(levelId).get();
-    if (!levelDoc.exists) return {'name': 'Nivel Borrado', 'colorValue': Colors.grey.value, 'order': -1, 'id': levelId};
+    if (!levelDoc.exists) return {'name': l10n.deleteLevel, 'colorValue': Colors.grey.value, 'order': -1, 'id': levelId};
     return {...levelDoc.data()!, 'id': levelDoc.id};
   }
 
@@ -106,24 +113,24 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
 
     showDialog(context: context, builder: (context) => StatefulBuilder(builder: (context, setDialogState) {
       return AlertDialog(
-        title: const Text('Promover o Corregir Nivel'),
+        title: Text(l10n.promotionOrChangeLevel),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
           DropdownButtonFormField<DocumentSnapshot>(
-            hint: const Text('Selecciona el nuevo nivel'), value: selectedNextLevel,
+            hint: Text(l10n.choseNewLevel), value: selectedNextLevel,
             items: availableLevels.map((levelDoc) => DropdownMenuItem<DocumentSnapshot>(value: levelDoc, child: Text(levelDoc['name']))).toList(),
             onChanged: (value) => setDialogState(() => selectedNextLevel = value),
           ),
           const SizedBox(height: 16),
-          TextField(controller: notesController, decoration: const InputDecoration(labelText: 'Notas (opcional)'), maxLines: 3),
+          TextField(controller: notesController, decoration: InputDecoration(labelText: ('${l10n.notes} (${l10n.optional})')), maxLines: 3),
         ]),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.cancel)),
           ElevatedButton(
             onPressed: selectedNextLevel == null ? null : () {
               _promoteStudent(currentLevelId: currentLevelId, newLevelSnapshot: selectedNextLevel!, notes: notesController.text);
               Navigator.of(context).pop();
             },
-            child: const Text('Confirmar'),
+            child: Text(l10n.confirm),
           ),
         ],
       );
@@ -141,9 +148,9 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
       batch.set(historyRef, {'date': Timestamp.now(), 'previousLevelId': currentLevelId, 'newLevelId': newLevelId, 'type': 'level_promotion', 'notes': notes.trim(), 'promotedBy': FirebaseAuth.instance.currentUser?.uid});
       await batch.commit();
       _confettiController.play();
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('¡Alumno promovido con éxito!')));
+      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.studentSuccessPromotion)));
     } catch (e) {
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al promover: ${e.toString()}')));
+      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.promotionError(e.toString()))));
     }
   }
 
@@ -151,18 +158,18 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
     String? newRole = currentRole;
     showDialog(context: context, builder: (context) => StatefulBuilder(builder: (context, setDialogState) {
       return AlertDialog(
-        title: const Text('Cambiar Rol del Miembro'),
-        content: Column(mainAxisSize: MainAxisSize.min, children: ['alumno', 'instructor', 'maestro'].map((role) {
+        title: Text(l10n.changeRolMember),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [l10n.studentLower, l10n.instructor, l10n.teacherLower].map((role) {
           return RadioListTile<String>(title: Text(role[0].toUpperCase() + role.substring(1)), value: role, groupValue: newRole, onChanged: (value) => setDialogState(() => newRole = value));
         }).toList()),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.cancel)),
           ElevatedButton(
             onPressed: newRole == null || newRole == currentRole ? null : () {
               _changeStudentRole(newRole!);
               Navigator.of(context).pop();
             },
-            child: const Text('Guardar'),
+            child: Text(l10n.save),
           ),
         ],
       );
@@ -180,9 +187,9 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
       final historyRef = memberRef.collection('progressionHistory').doc();
       batch.set(historyRef, {'date': Timestamp.now(), 'type': 'role_change', 'newRole': newRole, 'promotedBy': FirebaseAuth.instance.currentUser?.uid});
       await batch.commit();
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Rol actualizado con éxito.')));
+      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.updateRolSuccess)));
     } catch (e) {
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al cambiar el rol: ${e.toString()}')));
+      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.updateRolError(e.toString()))));
     }
   }
 
@@ -198,7 +205,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
     showDialog(
       context: context,
       builder: (context) {
-        return _RegisterPaymentDialog(
+        return RegisterPaymentDialog(
           allPlans: allPlans,
           assignedPlanId: assignedPlanId,
           currency: currency,
@@ -259,7 +266,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
     // 3. Mostrar el diálogo
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder( // StatefulBuilder para actualizar el Dropdown
+      builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) {
           return AlertDialog(
             title: const Text('Asignar Plan de Pago'),
@@ -268,7 +275,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
               children: [
                 DropdownButtonFormField<PaymentPlanModel>(
                   value: selectedPlan,
-                  hint: const Text('Selecciona un plan'),
+                  hint: Text(l10n.selectPlan),
                   items: allPlans.map((plan) {
                     return DropdownMenuItem(
                       value: plan,
@@ -288,7 +295,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
                     firestore
                         .collection('schools').doc(widget.schoolId)
                         .collection('members').doc(widget.studentId)
-                        .update({'assignedPaymentPlanId': null}); // <-- Aquí usamos el nuevo campo
+                        .update({'assignedPaymentPlanId': null});
                     Navigator.of(context).pop();
                   },
                 )
@@ -297,21 +304,19 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancelar'),
+                child: Text(l10n.cancel),
               ),
               ElevatedButton(
-                // Solo se activa si seleccionaron un plan
                 onPressed: selectedPlan == null
                     ? null
                     : () {
-                  // Aquí actualizamos el documento del MIEMBRO con el NUEVO CAMPO
                   firestore
                       .collection('schools').doc(widget.schoolId)
                       .collection('members').doc(widget.studentId)
-                      .update({'assignedPaymentPlanId': selectedPlan!.id}); // <-- Aquí usamos el nuevo campo
+                      .update({'assignedPaymentPlanId': selectedPlan!.id});
                   Navigator.of(context).pop();
                 },
-                child: const Text('Guardar'),
+                child: Text(l10n.save),
               ),
             ],
           );
@@ -327,12 +332,12 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
       children: [
         Scaffold(
           appBar: AppBar(
-            title: Text(_studentName.isEmpty ? 'Cargando...' : _studentName),
+            title: Text(_studentName.isEmpty ? l10n.loading : _studentName),
             actions: [
               PopupMenuButton<String>(
-                onSelected: (value) { if (value == 'change_role') _showChangeRoleDialog(_currentRole); },
+                onSelected: (value) { if (value == 'change_role') _showChangeRoleDialog(_currentRole.isEmpty ? l10n.studentLower : _currentRole); },
                 itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                  const PopupMenuItem<String>(value: 'change_role', child: Text('Cambiar Rol')),
+                  PopupMenuItem<String>(value: 'change_role', child: Text(l10n.changeRol)),
                 ],
               ),
             ],
@@ -349,9 +354,9 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
                   ),
                   const SizedBox(width: 16),
                   Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(_studentName, style: Theme.of(context).textTheme.headlineSmall),
+                    Text(_studentName.isEmpty ? l10n.student : _studentName, style: Theme.of(context).textTheme.headlineSmall),
                     const SizedBox(height: 4),
-                    Text(_currentRole.toUpperCase(), style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600)),
+                    Text((_currentRole.isEmpty ? l10n.studentLower : _currentRole).toUpperCase(), style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600)),
                     const SizedBox(height: 8),
                     Chip(
                       label: Text(_currentLevelData?['name'] ?? 'Sin Nivel', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
@@ -360,12 +365,12 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
                   ]),
                 ]),
               ),
-              TabBar(controller: _tabController, isScrollable: true, tabs: const [
-                Tab(text: 'General'),
-                Tab(text: 'Asistencia'),
-                Tab(text: 'Pagos'),
-                Tab(text: 'Progreso'),
-                Tab(text: 'Técnicas'),
+              TabBar(controller: _tabController, isScrollable: true, tabs: [
+                Tab(text: l10n.general),
+                Tab(text: l10n.assistance),
+                Tab(text: l10n.payments),
+                Tab(text: l10n.progress),
+                Tab(text: l10n.technics),
               ]),
               Expanded(
                 child: TabBarView(controller: _tabController, children: [
@@ -395,10 +400,10 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
       case 1:
         return FloatingActionButton.extended(
           onPressed: _showAddPastAttendanceDialog,
-          label: const Text('Registrar Asistencia Pasada'),
+          label: Text('Registrar Asistencia Pasada'),
           icon: const Icon(Icons.playlist_add_check),
         );
-      case 2: return FloatingActionButton.extended(onPressed: _showRegisterPaymentDialog, label: const Text('Registrar Pago'), icon: const Icon(Icons.payment));
+      case 2: return FloatingActionButton.extended(onPressed: _showRegisterPaymentDialog, label: Text(l10n.registerPayment), icon: const Icon(Icons.payment));
       case 3: return FloatingActionButton.extended(
         onPressed: () {
           if (_currentLevelData != null) {
@@ -407,7 +412,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No se pudo cargar el nivel actual del alumno.')));
           }
         },
-        label: const Text('Promover Nivel'),
+        label: Text('Promover Nivel'),
         icon: const Icon(Icons.arrow_upward),
       );
       case 4:
@@ -421,7 +426,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
               ),
             ));
           },
-          label: const Text('Asignar Técnicas'),
+          label: Text('Asignar Técnicas'),
           icon: const Icon(Icons.add_task),
         );
       default: return null;
@@ -430,7 +435,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
 
   Widget _buildAssignedTechniquesTab() {
     if (_assignedTechniqueIds.isEmpty) {
-      return const Center(child: Text('Este alumno no tiene técnicas asignadas.'));
+      return Center(child: Text(l10n.studentNotAssignedTechnics));
     }
     // Hacemos una consulta para obtener los detalles de las técnicas asignadas
     return StreamBuilder<QuerySnapshot>(
@@ -488,13 +493,13 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
             final DateTime? dateOfBirth = (userData['dateOfBirth'] as Timestamp?)?.toDate();
             final String formattedDob = dateOfBirth != null
                 ? DateFormat('dd/MM/yyyy', 'es_ES').format(dateOfBirth)
-                : 'No especificada';
+                : l10n.noSpecify;
 
             return SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Column(children: [
                 _buildInfoCard(
-                  title: 'Facturación',
+                  title: l10n.facturation,
                   icon: Icons.receipt_long,
                   iconColor: Colors.blueAccent,
                   children: [
@@ -508,7 +513,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
                       builder: (context, planSnapshot) {
                         String planDetailsText = 'Sin plan de pago asignado.';
                         if (planSnapshot.connectionState == ConnectionState.waiting) {
-                          planDetailsText = 'Cargando plan...';
+                          planDetailsText = l10n.loading;
                         } else if (planSnapshot.hasData && planSnapshot.data!.exists) {
                           final plan = PaymentPlanModel.fromFirestore(planSnapshot.data!);
                           planDetailsText = '${plan.title} (${plan.amount} ${plan.currency})';
@@ -522,7 +527,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
                             const SizedBox(height: 16),
                             Center(
                               child: ElevatedButton(
-                                child: const Text('Cambiar Plan Asignado'),
+                                child: Text(l10n.changeAssignedPlan),
                                 onPressed: () => _showAssignPlanDialog(assignedPlanId),
                               ),
                             )
@@ -536,12 +541,12 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
                 const SizedBox(height: 16),
 
                 _buildInfoCard(
-                  title: 'Datos Personales',
+                  title: l10n.personalData,
                   icon: Icons.badge_outlined,
                   iconColor: Colors.teal,
                   children: [
-                    _buildInfoRow('Fecha de Nacimiento:', '$formattedDob${_calculateAge(dateOfBirth)}'),
-                    _buildInfoRow('Sexo:', _formatGender(gender)),
+                    _buildInfoRow("${l10n.birdthDate}:", '$formattedDob${_calculateAge(dateOfBirth)}'),
+                    _buildInfoRow("${l10n.gender}:", _formatGender(gender)),
                   ],
                 ),
 
@@ -551,23 +556,23 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
                   title: 'Datos de Contacto',
                   icon: Icons.contact_page,
                   children: [
-                    _buildInfoRow('Email:', userData['email'] ?? 'No especificado'),
-                    _buildInfoRow('Teléfono:', userData['phoneNumber'] ?? 'No especificado'),
+                    _buildInfoRow('Email:', userData['email'] ?? l10n.noSpecify),
+                    _buildInfoRow('${l10n.phone}:', userData['phoneNumber'] ?? l10n.noSpecify),
                   ],
                 ),
 
                 const SizedBox(height: 16),
 
                 _buildInfoCard(
-                  title: 'Información de Emergencia',
+                  title: l10n.emergencyInfo,
                   icon: Icons.emergency,
                   iconColor: Colors.red,
                   children: [
-                    _buildInfoRow('Contacto:', userData['emergencyContactName'] ?? 'No especificado'),
-                    _buildInfoRow('Teléfono:', userData['emergencyContactPhone'] ?? 'No especificado'),
-                    _buildInfoRow('Servicio Médico:', userData['medicalEmergencyService'] ?? 'No especificado'),
+                    _buildInfoRow('${l10n.contact}:', userData['emergencyContactName'] ?? l10n.noSpecify),
+                    _buildInfoRow('${l10n.phone}:', userData['emergencyContactPhone'] ?? l10n.noSpecify),
+                    _buildInfoRow('${l10n.medService}:', userData['medicalEmergencyService'] ?? l10n.noSpecify),
                     const Divider(),
-                    _buildInfoRow('Info Médica:', userData['medicalInfo'] ?? 'Sin observaciones'),
+                    _buildInfoRow('${l10n.medInfo}:', userData['medicalInfo'] ?? l10n.noSpecify),
                   ],
                 ),
               ]),
@@ -607,7 +612,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
   Widget _buildInfoRow(String label, String value) {
     return Padding(padding: const EdgeInsets.symmetric(vertical: 4.0), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(label, style: const TextStyle(fontWeight: FontWeight.bold)), const SizedBox(width: 8),
-      Expanded(child: Text(value.isEmpty ? 'No especificado' : value)),
+      Expanded(child: Text(value.isEmpty ? l10n.noSpecify : value)),
     ]));
   }
 
@@ -616,12 +621,12 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
       stream: FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId).collection('payments').orderBy('paymentDate', descending: true).snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return const Center(child: Text('No hay pagos registrados para este alumno.'));
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return Center(child: Text(l10n.noPayment));
         return ListView.builder(itemCount: snapshot.data!.docs.length, itemBuilder: (context, index) {
           final payment = snapshot.data!.docs[index].data() as Map<String, dynamic>;
           final date = (payment['paymentDate'] as Timestamp).toDate();
           final formattedDate = DateFormat('dd/MM/yyyy').format(date);
-          return ListTile(leading: const Icon(Icons.receipt_long, color: Colors.green), title: Text(payment['concept'] ?? 'Pago'), subtitle: Text(formattedDate), trailing: Text('${payment['amount']} ${payment['currency']}', style: const TextStyle(fontWeight: FontWeight.bold)));
+          return ListTile(leading: const Icon(Icons.receipt_long, color: Colors.green), title: Text(payment['concept'] ?? l10n.payment), subtitle: Text(formattedDate), trailing: Text('${payment['amount']} ${payment['currency']}', style: const TextStyle(fontWeight: FontWeight.bold)));
         });
       },
     );
@@ -634,9 +639,9 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        if (snapshot.hasError) return const Center(child: Text('Error al cargar el historial.'));
+        if (snapshot.hasError) return Center(child: Text(l10n.errorLoadHistory));
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const Center(child: Text('No hay registros de asistencia para este alumno.'));
+          return Center(child: Text(l10n.noRegisterAssitance));
         }
 
         return ListView.builder(
@@ -649,21 +654,21 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
 
             return ListTile(
               leading: const Icon(Icons.check_circle, color: Colors.green),
-              title: Text(record['scheduleTitle'] ?? 'Clase'),
+              title: Text(record['scheduleTitle'] ?? l10n.classRoom),
               subtitle: Text(formattedDate),
 
               trailing: IconButton(
                 icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                tooltip: 'Quitar esta asistencia',
+                tooltip: l10n.removeAssistance,
                 onPressed: () async {
                   final confirm = await showDialog<bool>(
                     context: context,
                     builder: (ctx) => AlertDialog(
-                      title: const Text('Confirmar'),
-                      content: const Text('¿Estás seguro de que quieres eliminar esta asistencia del registro del alumno?'),
+                      title: Text(l10n.confirm),
+                      content: Text(l10n.removeAssistanceCOnfirmation),
                       actions: [
-                        TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
-                        TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Eliminar')),
+                        TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.cancel)),
+                        TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.eliminate)),
                       ],
                     ),
                   );
@@ -677,10 +682,10 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
                         'presentStudentIds': FieldValue.arrayRemove([widget.studentId])
                       });
 
-                      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Asistencia eliminada.')));
+                      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.assistanceDelete)));
 
                     } catch (e) {
-                      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al eliminar: $e')));
+                      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.deleteError(e.toString()))));
                     }
                   }
                 },
@@ -702,8 +707,8 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-        if (snapshot.hasError) { print('ERROR DEL STREAM DE PROGRESO: ${snapshot.error}'); return const Center(child: Text('Error al cargar el progreso.')); }
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return const Center(child: Text('Este alumno no tiene historial de promociones.'));
+        if (snapshot.hasError) { print('ERROR DEL STREAM DE PROGRESO: ${snapshot.error}'); return Center(child: Text(l10n.loadProgressError)); }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return Center(child: Text(l10n.noHistPromotion));
 
         return ListView.builder(
           itemCount: snapshot.data!.docs.length,
@@ -726,13 +731,13 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
     final date = (history['date'] as Timestamp).toDate();
     final formattedDate = DateFormat('dd/MM/yyyy').format(date);
     final newRole = history['newRole'] ?? '';
-    final roleText = 'Rol actualizado a ${newRole[0].toUpperCase()}${newRole.substring(1)}';
+    final roleText = l10n.rolUpdatedTo(newRole[0].toUpperCase() + newRole.substring(1));
     return Card(margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6), child: ListTile(leading: const Icon(Icons.admin_panel_settings), title: Text(roleText), trailing: Text(formattedDate)));
   }
 
   Widget _buildLevelPromotionEventTile({
     required Map<String, dynamic> historyData,
-    required String historyDocId, // <-- El ID que recibimos
+    required String historyDocId,
   }) {
     final date = (historyData['date'] as Timestamp).toDate();
     final formattedDate = DateFormat('dd/MM/yyyy').format(date);
@@ -740,21 +745,21 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
     final levelId = historyData['newLevelId'];
 
     if (levelId == null) {
-      return Card(margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6), child: ListTile(leading: const Icon(Icons.error, color: Colors.red), title: const Text('Registro de promoción inválido'), trailing: Text(formattedDate)));
+      return Card(margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6), child: ListTile(leading: const Icon(Icons.error, color: Colors.red), title: Text(l10n.invalidRegisterPromotion), trailing: Text(formattedDate)));
     }
 
     return FutureBuilder<DocumentSnapshot>(
       future: FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('levels').doc(levelId).get(),
       builder: (context, levelSnapshot) {
-        String levelName = 'Cargando...';
+        String levelName = l10n.loading;
         Color levelColor = Colors.grey;
         if (levelSnapshot.connectionState == ConnectionState.done) {
           if (levelSnapshot.hasData && levelSnapshot.data!.exists) {
             final levelData = levelSnapshot.data!.data() as Map<String, dynamic>;
-            levelName = levelData['name'] ?? 'Nivel Borrado';
+            levelName = levelData['name'] ?? l10n.deleteLevel;
             levelColor = Color(levelData['colorValue']);
           } else {
-            levelName = 'Nivel Borrado';
+            levelName = l10n.deleteLevel;
             levelColor = Colors.grey.shade400;
           }
         }
@@ -763,8 +768,8 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           child: ListTile(
             leading: Icon(Icons.military_tech, color: levelColor),
-            title: Text('Promovido a $levelName'),
-            subtitle: (notes != null && notes.isNotEmpty) ? Text('Notas: "$notes"') : null,
+            title: Text(l10n.promotionTo(levelName)),
+            subtitle: (notes != null && notes.isNotEmpty) ? Text(l10n.notesWith(notes)) : null,
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -773,7 +778,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
                 IconButton(
                   icon: const Icon(Icons.delete_forever_outlined),
                   color: Colors.grey[600],
-                  tooltip: 'Revertir esta promoción',
+                  tooltip: l10n.revertThisPromotion,
                   onPressed: () => _showDeletePromotionDialog(historyDocId),
                 ),
               ],
@@ -785,16 +790,16 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
   }
 
   String _formatGender(String? genderValue) {
-    if (genderValue == null || genderValue.isEmpty) return 'No especificado';
+    if (genderValue == null || genderValue.isEmpty) return l10n.noSpecify;
     switch (genderValue) {
       case 'masculino':
-        return 'Masculino';
+        return l10n.maleGender;
       case 'femenino':
-        return 'Femenino';
+        return l10n.femaleGender;
       case 'otro':
-        return 'Otro';
+        return l10n.otherGender;
       case 'prefiero_no_decirlo':
-        return 'Prefiere no decirlo';
+        return l10n.noSpecifyGender;
       default:
         return genderValue;
     }
@@ -809,7 +814,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
         (today.month == birthDate.month && today.day < birthDate.day)) {
       age--;
     }
-    return ' ($age años)';
+    return ' ($age ${l10n.years})';
   }
 
   /// Muestra el selector de calendario para elegir una fecha pasada.
@@ -833,7 +838,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
         .get();
 
     if (schedulesSnap.docs.isEmpty) {
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No había clases programadas para el día seleccionado.')));
+      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.noClassForTHisDay)));
       return;
     }
 
@@ -842,13 +847,12 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
     }
   }
 
-  /// Muestra la lista de clases disponibles para una fecha específica.
   void _selectScheduleForDate(List<QueryDocumentSnapshot> schedules, DateTime selectedDate) {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Clases del ${DateFormat.yMd('es_ES').format(selectedDate)}'),
+          title: Text(l10n.classFor(DateFormat.yMd('es_ES').format(selectedDate))),
           content: SizedBox(
             width: double.maxFinite,
             child: ListView.builder(
@@ -907,10 +911,10 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
         });
       }
 
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Asistencia registrada con éxito.')));
+      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.successAssistance)));
 
     } catch (e) {
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al guardar: $e')));
+      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.saveError(e.toString()))));
     }
   }
 
@@ -919,17 +923,17 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
     final bool? confirmDelete = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Revertir Promoción'),
-        content: const Text(
-          '¿Estás seguro de que quieres eliminar este registro de promoción? \n\nEsto revertirá el nivel actual del alumno a su nivel anterior.',
+        title: Text(l10n.revertPromotion),
+        content: Text(
+          l10n.confirmReverPromotion,
           style: TextStyle(height: 1.5),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.cancel)),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Sí, Revertir'),
+            child: Text(l10n.yesRevert),
           ),
         ],
       ),
@@ -961,106 +965,10 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
 
       await memberRef.update({'currentLevelId': newCurrentLevelId});
 
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Promoción revertida con éxito.')));
+      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.successRevertPromotion)));
 
     } catch (e) {
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al revertir: ${e.toString()}')));
+      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.errorToRevert(e.toString()))));
     }
-  }
-}
-
-class _RegisterPaymentDialog extends StatefulWidget {
-  final List<PaymentPlanModel> allPlans;
-  final String? assignedPlanId;
-  final String currency;
-  final Function(String, double, String?) onSave;
-
-  const _RegisterPaymentDialog({
-    required this.allPlans, this.assignedPlanId, required this.currency, required this.onSave,
-  });
-
-  @override
-  State<_RegisterPaymentDialog> createState() => _RegisterPaymentDialogState();
-}
-
-class _RegisterPaymentDialogState extends State<_RegisterPaymentDialog> {
-  PaymentType _paymentType = PaymentType.plan;
-  PaymentPlanModel? _selectedPlan;
-  final _conceptController = TextEditingController();
-  final _amountController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    _paymentType = PaymentType.plan;
-    if (widget.assignedPlanId != null && widget.allPlans.any((p) => p.id == widget.assignedPlanId)) {
-      _selectedPlan = widget.allPlans.firstWhere((p) => p.id == widget.assignedPlanId);
-    }
-    _updateFieldsFromPlan();
-  }
-
-  @override
-  void dispose() {
-    _conceptController.dispose();
-    _amountController.dispose();
-    super.dispose();
-  }
-
-  void _updateFieldsFromPlan() {
-    if (_selectedPlan != null) {
-      _conceptController.text = _selectedPlan!.title;
-      _amountController.text = _selectedPlan!.amount.toString();
-    } else {
-      _conceptController.text = '';
-      _amountController.text = '';
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Registrar Pago'),
-      content: SingleChildScrollView(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          ToggleButtons(
-            isSelected: [_paymentType == PaymentType.plan, _paymentType == PaymentType.special],
-            onPressed: (index) {
-              setState(() {
-                _paymentType = index == 0 ? PaymentType.plan : PaymentType.special;
-                if (_paymentType == PaymentType.plan) {
-                  _updateFieldsFromPlan();
-                } else {
-                  _conceptController.text = ''; _amountController.text = '';
-                }
-              });
-            },
-            borderRadius: BorderRadius.circular(8),
-            children: const [Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text('Pago de Plan')), Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text('Pago Especial'))],
-          ),
-          const SizedBox(height: 24),
-          if (_paymentType == PaymentType.plan)
-            DropdownButtonFormField<PaymentPlanModel>(
-              value: _selectedPlan,
-              hint: const Text('Selecciona un plan'),
-              items: widget.allPlans.map((plan) => DropdownMenuItem(value: plan, child: Text(plan.title))).toList(),
-              onChanged: (plan) { setState(() { _selectedPlan = plan; _updateFieldsFromPlan(); }); },
-            ),
-          const SizedBox(height: 16),
-          TextField(controller: _conceptController, decoration: const InputDecoration(labelText: 'Concepto'), enabled: _paymentType == PaymentType.special),
-          const SizedBox(height: 16),
-          TextField(controller: _amountController, decoration: InputDecoration(labelText: 'Monto', prefixText: '${widget.currency} '), keyboardType: const TextInputType.numberWithOptions(decimal: true), enabled: _paymentType == PaymentType.special),
-        ]),
-      ),
-      actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancelar')),
-        ElevatedButton(
-          onPressed: () {
-            widget.onSave(_conceptController.text, double.tryParse(_amountController.text) ?? 0.0, _paymentType == PaymentType.plan ? _selectedPlan?.id : null);
-            Navigator.of(context).pop();
-          },
-          child: const Text('Guardar Pago'),
-        ),
-      ],
-    );
   }
 }

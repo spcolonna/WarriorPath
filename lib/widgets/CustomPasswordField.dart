@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
+
 class CustomPasswordField extends StatefulWidget {
   final TextEditingController controller;
 
@@ -13,6 +15,12 @@ class CustomPasswordField extends StatefulWidget {
 }
 
 class _CustomPasswordFieldState extends State<CustomPasswordField> {
+  late AppLocalizations l10n;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    l10n = AppLocalizations.of(context);
+  }
   bool _isObscured = true;
 
   @override
@@ -21,7 +29,7 @@ class _CustomPasswordFieldState extends State<CustomPasswordField> {
       controller: widget.controller,
       obscureText: _isObscured,
       decoration: InputDecoration(
-        labelText: 'Contraseña',
+        labelText: l10n.password,
         prefixIcon: const Icon(Icons.lock_outline),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),

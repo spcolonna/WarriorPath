@@ -238,6 +238,12 @@ abstract class AppLocalizations {
   /// **'Teacher'**
   String get teacher;
 
+  /// No description provided for @teacherLower.
+  ///
+  /// In en, this message translates to:
+  /// **'teacher'**
+  String get teacherLower;
+
   /// No description provided for @sessionError.
   ///
   /// In en, this message translates to:
@@ -285,6 +291,558 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pending Applications'**
   String get pendingApplication;
+
+  /// No description provided for @password.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get password;
+
+  /// No description provided for @home.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get home;
+
+  /// No description provided for @student.
+  ///
+  /// In en, this message translates to:
+  /// **'Student'**
+  String get student;
+
+  /// No description provided for @studentLower.
+  ///
+  /// In en, this message translates to:
+  /// **'student'**
+  String get studentLower;
+
+  /// No description provided for @managment.
+  ///
+  /// In en, this message translates to:
+  /// **'Management'**
+  String get managment;
+
+  /// No description provided for @profile.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get profile;
+
+  /// No description provided for @actives.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get actives;
+
+  /// No description provided for @pending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get pending;
+
+  /// No description provided for @inactives.
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive'**
+  String get inactives;
+
+  /// No description provided for @general.
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get general;
+
+  /// No description provided for @assistance.
+  ///
+  /// In en, this message translates to:
+  /// **'Attendance'**
+  String get assistance;
+
+  /// No description provided for @payments.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments'**
+  String get payments;
+
+  /// No description provided for @payment.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment'**
+  String get payment;
+
+  /// No description provided for @progress.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress'**
+  String get progress;
+
+  /// No description provided for @technics.
+  ///
+  /// In en, this message translates to:
+  /// **'Techniques'**
+  String get technics;
+
+  /// No description provided for @facturation.
+  ///
+  /// In en, this message translates to:
+  /// **'Billing'**
+  String get facturation;
+
+  /// No description provided for @changeAssignedPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Assigned Plan'**
+  String get changeAssignedPlan;
+
+  /// No description provided for @personalData.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal Data'**
+  String get personalData;
+
+  /// No description provided for @birdthDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Date of Birth'**
+  String get birdthDate;
+
+  /// No description provided for @gender.
+  ///
+  /// In en, this message translates to:
+  /// **'Gender'**
+  String get gender;
+
+  /// No description provided for @years.
+  ///
+  /// In en, this message translates to:
+  /// **'years'**
+  String get years;
+
+  /// No description provided for @phone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get phone;
+
+  /// No description provided for @emergencyInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency Information'**
+  String get emergencyInfo;
+
+  /// No description provided for @contact.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact'**
+  String get contact;
+
+  /// No description provided for @medService.
+  ///
+  /// In en, this message translates to:
+  /// **'Medical Service'**
+  String get medService;
+
+  /// No description provided for @medInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Medical Information'**
+  String get medInfo;
+
+  /// No description provided for @noSpecify.
+  ///
+  /// In en, this message translates to:
+  /// **'Not specified'**
+  String get noSpecify;
+
+  /// No description provided for @changeRol.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Role'**
+  String get changeRol;
+
+  /// No description provided for @noPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no payments registered for this student.'**
+  String get noPayment;
+
+  /// No description provided for @errorLoadHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading history.'**
+  String get errorLoadHistory;
+
+  /// No description provided for @noRegisterAssitance.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no attendance records for this student.'**
+  String get noRegisterAssitance;
+
+  /// No description provided for @classRoom.
+  ///
+  /// In en, this message translates to:
+  /// **'Class'**
+  String get classRoom;
+
+  /// No description provided for @removeAssistance.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove this attendance'**
+  String get removeAssistance;
+
+  /// No description provided for @confirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get confirm;
+
+  /// No description provided for @removeAssistanceCOnfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to remove this attendance from the student\'s record?'**
+  String get removeAssistanceCOnfirmation;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// No description provided for @eliminate.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get eliminate;
+
+  /// No description provided for @assistanceDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Attendance deleted.'**
+  String get assistanceDelete;
+
+  /// No description provided for @deleteError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error deleting: {e}'**
+  String deleteError(String e);
+
+  /// No description provided for @loadProgressError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading progress.'**
+  String get loadProgressError;
+
+  /// No description provided for @noHistPromotion.
+  ///
+  /// In en, this message translates to:
+  /// **'This student has no promotion history.'**
+  String get noHistPromotion;
+
+  /// No description provided for @rolUpdatedTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Role updated to {rol}'**
+  String rolUpdatedTo(String rol);
+
+  /// No description provided for @invalidRegisterPromotion.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid promotion record'**
+  String get invalidRegisterPromotion;
+
+  /// No description provided for @deleteLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted Level'**
+  String get deleteLevel;
+
+  /// No description provided for @promotionTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Promoted to {level}'**
+  String promotionTo(String level);
+
+  /// No description provided for @notes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get notes;
+
+  /// No description provided for @notesWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes: {notesWith}'**
+  String notesWith(Object notesWith);
+
+  /// No description provided for @notesValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes: {notes}'**
+  String notesValue(String notes);
+
+  /// No description provided for @revertPromotion.
+  ///
+  /// In en, this message translates to:
+  /// **'Revert Promotion'**
+  String get revertPromotion;
+
+  /// No description provided for @revertThisPromotion.
+  ///
+  /// In en, this message translates to:
+  /// **'Revert this promotion'**
+  String get revertThisPromotion;
+
+  /// No description provided for @confirmReverPromotion.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this promotion record? \n\nThis will revert the student\'s current level to their previous one.'**
+  String get confirmReverPromotion;
+
+  /// No description provided for @yesRevert.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes, Revert'**
+  String get yesRevert;
+
+  /// No description provided for @maleGender.
+  ///
+  /// In en, this message translates to:
+  /// **'Male'**
+  String get maleGender;
+
+  /// No description provided for @femaleGender.
+  ///
+  /// In en, this message translates to:
+  /// **'Female'**
+  String get femaleGender;
+
+  /// No description provided for @otherGender.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get otherGender;
+
+  /// No description provided for @noSpecifyGender.
+  ///
+  /// In en, this message translates to:
+  /// **'Prefers not to say'**
+  String get noSpecifyGender;
+
+  /// No description provided for @noClassForTHisDay.
+  ///
+  /// In en, this message translates to:
+  /// **'There were no classes scheduled for the selected day.'**
+  String get noClassForTHisDay;
+
+  /// No description provided for @classFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Classes for {day}'**
+  String classFor(String day);
+
+  /// No description provided for @successAssistance.
+  ///
+  /// In en, this message translates to:
+  /// **'Attendance registered successfully.'**
+  String get successAssistance;
+
+  /// No description provided for @saveError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error saving: {e}'**
+  String saveError(String e);
+
+  /// No description provided for @successRevertPromotion.
+  ///
+  /// In en, this message translates to:
+  /// **'Promotion reverted successfully.'**
+  String get successRevertPromotion;
+
+  /// No description provided for @errorToRevert.
+  ///
+  /// In en, this message translates to:
+  /// **'Error reverting: {e}'**
+  String errorToRevert(String e);
+
+  /// No description provided for @registerPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Register Payment'**
+  String get registerPayment;
+
+  /// No description provided for @payPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan Payment'**
+  String get payPlan;
+
+  /// No description provided for @paySpecial.
+  ///
+  /// In en, this message translates to:
+  /// **'Special Payment'**
+  String get paySpecial;
+
+  /// No description provided for @selectPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a plan'**
+  String get selectPlan;
+
+  /// No description provided for @concept.
+  ///
+  /// In en, this message translates to:
+  /// **'Concept'**
+  String get concept;
+
+  /// No description provided for @amount.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount'**
+  String get amount;
+
+  /// No description provided for @savePayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Payment'**
+  String get savePayment;
+
+  /// No description provided for @promotionOrChangeLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Promote or Correct Level'**
+  String get promotionOrChangeLevel;
+
+  /// No description provided for @choseNewLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Select the new level'**
+  String get choseNewLevel;
+
+  /// No description provided for @optional.
+  ///
+  /// In en, this message translates to:
+  /// **'optional'**
+  String get optional;
+
+  /// No description provided for @studentSuccessPromotion.
+  ///
+  /// In en, this message translates to:
+  /// **'Student successfully promoted!'**
+  String get studentSuccessPromotion;
+
+  /// No description provided for @promotionError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error promoting: {e}'**
+  String promotionError(String e);
+
+  /// No description provided for @changeRolMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Member Role'**
+  String get changeRolMember;
+
+  /// No description provided for @instructor.
+  ///
+  /// In en, this message translates to:
+  /// **'instructor'**
+  String get instructor;
+
+  /// No description provided for @save.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get save;
+
+  /// No description provided for @updateRolSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Role updated successfully.'**
+  String get updateRolSuccess;
+
+  /// No description provided for @updateRolError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error changing role: {e}'**
+  String updateRolError(String e);
+
+  /// No description provided for @successPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment registered successfully.'**
+  String get successPayment;
+
+  /// No description provided for @paymentError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error registering payment: {e}'**
+  String paymentError(String e);
+
+  /// No description provided for @assignPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign Payment Plan'**
+  String get assignPlan;
+
+  /// No description provided for @removeAssignedPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove assigned plan'**
+  String get removeAssignedPlan;
+
+  /// No description provided for @withPutLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'No Level'**
+  String get withPutLevel;
+
+  /// No description provided for @registerPausedAssistance.
+  ///
+  /// In en, this message translates to:
+  /// **'Register Past Attendance'**
+  String get registerPausedAssistance;
+
+  /// No description provided for @errorLevelLoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load the student\'s current level.'**
+  String get errorLevelLoad;
+
+  /// No description provided for @levelPromotion.
+  ///
+  /// In en, this message translates to:
+  /// **'Promote Level'**
+  String get levelPromotion;
+
+  /// No description provided for @assignTechnic.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign Techniques'**
+  String get assignTechnic;
+
+  /// No description provided for @studentNotAssignedTechnics.
+  ///
+  /// In en, this message translates to:
+  /// **'This student has no assigned techniques.'**
+  String get studentNotAssignedTechnics;
+
+  /// No description provided for @notassignedPaymentPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'No payment plan assigned.'**
+  String get notassignedPaymentPlan;
+
+  /// No description provided for @paymentPlanNotFoud.
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned plan (ID: {assignedPlanId}) not found.'**
+  String paymentPlanNotFoud(String assignedPlanId);
+
+  /// No description provided for @contactData.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Data'**
+  String get contactData;
 }
 
 class _AppLocalizationsDelegate

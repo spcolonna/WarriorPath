@@ -38,6 +38,7 @@
         }
     },
     "teacher": "Teacher",
+    "teacherLower": "teacher",
     "sessionError": "Error: Invalid session.",
     "noSchedulerClass": "There are no classes scheduled for today.",
     "choseClass": "Select Class",
@@ -45,5 +46,138 @@
     "takeAssistance": "Take Attendance",
     "loading": "Loading...",
     "activeStudents": "Active Students",
-    "pendingApplication": "Pending Applications"
+    "pendingApplication": "Pending Applications",
+    "password": "Password",
+    "home": "Home",
+    "student": "Student",
+    "studentLower": "student",
+    "managment": "Management",
+    "profile": "Profile",
+    "actives": "Active",
+    "pending": "Pending",
+    "inactives": "Inactive",
+    "general": "General",
+    "assistance": "Attendance",
+    "payments": "Payments",
+    "payment": "Payment",
+    "progress": "Progress",
+    "technics": "Techniques",
+    "facturation": "Billing",
+    "changeAssignedPlan": "Change Assigned Plan",
+    "personalData": "Personal Data",
+    "birdthDate": "Date of Birth",
+    "gender": "Gender",
+    "years": "years",
+    "phone": "Phone",
+    "emergencyInfo": "Emergency Information",
+    "contact": "Contact",
+    "medService": "Medical Service",
+    "medInfo": "Medical Information",
+    "noSpecify": "Not specified",
+    "changeRol": "Change Role",
+    "noPayment": "There are no payments registered for this student.",
+    "errorLoadHistory": "Error loading history.",
+    "noRegisterAssitance": "There are no attendance records for this student.",
+    "classRoom": "Class",
+    "removeAssistance": "Remove this attendance",
+    "confirm": "Confirm",
+    "removeAssistanceCOnfirmation": "Are you sure you want to remove this attendance from the student's record?",
+    "cancel": "Cancel",
+    "eliminate": "Delete",
+    "assistanceDelete": "Attendance deleted.",
+    "deleteError": "Error deleting: {e}",
+    "@deleteError": {
+        "placeholders": { "e": { "type": "String" } }
+    },
+    "loadProgressError": "Error loading progress.",
+    "noHistPromotion": "This student has no promotion history.",
+    "rolUpdatedTo": "Role updated to {rol}",
+    "@rolUpdatedTo": {
+        "placeholders": { "rol": { "type": "String" } }
+    },
+    "invalidRegisterPromotion": "Invalid promotion record",
+    "deleteLevel": "Deleted Level",
+    "promotionTo": "Promoted to {level}",
+    "@promotionTo": {
+        "placeholders": { "level": { "type": "String" } }
+    },
+    "notes": "Notes",
+    "notesWith": "Notes: {notesWith}",
+   "notesValue": "Notes: {notes}",
+   "@notesValue": {
+        "placeholders": { "notes": { "type": "String" } }
+    },
+    "revertPromotion": "Revert Promotion",
+    "revertThisPromotion": "Revert this promotion",
+    "confirmReverPromotion": "Are you sure you want to delete this promotion record? \n\nThis will revert the student's current level to their previous one.",
+    "yesRevert": "Yes, Revert",
+    "maleGender": "Male",
+    "femaleGender": "Female",
+    "otherGender": "Other",
+    "noSpecifyGender": "Prefers not to say",
+    "noClassForTHisDay": "There were no classes scheduled for the selected day.",
+    "classFor": "Classes for {day}",
+    "@classFor": {
+        "placeholders": { "day": { "type": "String" } }
+    },
+    "successAssistance": "Attendance registered successfully.",
+    "saveError": "Error saving: {e}",
+    "@saveError": {
+        "placeholders": { "e": { "type": "String" } }
+    },
+    "successRevertPromotion": "Promotion reverted successfully.",
+    "errorToRevert": "Error reverting: {e}",
+    "@errorToRevert": {
+        "placeholders": { "e": { "type": "String" } }
+    },
+    "registerPayment": "Register Payment",
+    "payPlan": "Plan Payment",
+    "paySpecial": "Special Payment",
+    "selectPlan": "Select a plan",
+    "concept": "Concept",
+    "amount": "Amount",
+    "savePayment": "Save Payment",
+    "promotionOrChangeLevel": "Promote or Correct Level",
+    "choseNewLevel": "Select the new level",
+    "optional": "optional",
+    "studentSuccessPromotion": "Student successfully promoted!",
+    "promotionError": "Error promoting: {e}",
+    "@promotionError": {
+        "placeholders": {
+            "e": {
+                "type": "String"
+            }
+        }
+    },
+    "changeRolMember": "Change Member Role",
+    "instructor": "instructor",
+    "save": "Save",
+    "updateRolSuccess": "Role updated successfully.",
+    "updateRolError": "Error changing role: {e}",
+    "@updateRolError": {
+        "placeholders": {
+            "e": {
+                "type": "String"
+            }
+        }
+    },
+    "successPayment": "Payment registered successfully.",
+    "paymentError": "Error registering payment: {e}",
+    "@paymentError": {
+        "placeholders": { "e": { "type": "String" } }
+    },
+    "assignPlan": "Assign Payment Plan",
+    "removeAssignedPlan": "Remove assigned plan",
+    "withPutLevel": "No Level",
+    "registerPausedAssistance": "Register Past Attendance",
+    "errorLevelLoad": "Could not load the student's current level.",
+    "levelPromotion": "Promote Level",
+    "assignTechnic": "Assign Techniques",
+    "studentNotAssignedTechnics": "This student has no assigned techniques.",
+    "notassignedPaymentPlan": "No payment plan assigned.",
+    "paymentPlanNotFoud": "Assigned plan (ID: {assignedPlanId}) not found.",
+    "@paymentPlanNotFoud": {
+        "placeholders": { "assignedPlanId": { "type": "String" } }
+    },
+    "contactData": "Contact Data"
 }
