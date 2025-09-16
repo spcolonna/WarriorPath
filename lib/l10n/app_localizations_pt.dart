@@ -422,4 +422,25 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get saveAndContinue => 'Salvar e Continuar';
+
+  @override
+  String get subscriptionExpired => 'Assinatura Expirada';
+
+  @override
+  String get subscriptionExpiredMessage =>
+      'Seu acesso às ferramentas de professor foi pausado. Para renovar sua assinatura e reativar sua conta, por favor, entre em contato com o administrador.';
+
+  @override
+  String get contactAdmin => 'Contatar Administrador';
+
+  @override
+  String get renewalSubject => 'Renovação de Assinatura - Warrior Path';
+
+  @override
+  String get mailError => 'Não foi possível abrir o aplicativo de e-mail.';
+
+  @override
+  String mailLaunchError(String e) {
+    return 'Erro ao tentar abrir o e-mail: $e';
+  }
 }

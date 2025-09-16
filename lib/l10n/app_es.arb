@@ -125,11 +125,17 @@
     "paymentPlanNotFoud" : "Plan asignado (ID: {assignedPlanId}) no encontrado.",
     "contactData": "Datos de Contacto",
     "saveAndContinue": "Guardar y Continuar",
+    "subscriptionExpired": "Suscripción Vencida",
+    "subscriptionExpiredMessage": "Tu acceso a las herramientas de maestro ha sido pausado. Para renovar tu suscripción y reactivar tu cuenta, por favor, contacta al administrador.",
+    "contactAdmin": "Contactar al Administrador",
+    "renewalSubject": "Renovación de Suscripción - Warrior Path",
+    "mailError": "No se pudo abrir la aplicación de correo.",
+    "mailLaunchError": "Error al intentar abrir el correo: {e}",
 
 
     "nameAndMartialArtRequired": "Nombre y Arte Marcial son requeridos.",
     "neddSelectSubSchool": "Si es una sub-escuela, debes seleccionar la escuela principal.",
     "notAuthenticatedUser": "Usuario no autenticado.",
     "createSchoolError": "Error al crear la escuela: {e}",
-    "crateScholStep2": "Crear tu Escuela (Paso 2)",
+    "crateScholStep2": "Crear tu Escuela (Paso 2)"
 }

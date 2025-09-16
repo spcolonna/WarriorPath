@@ -849,6 +849,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save and Continue'**
   String get saveAndContinue;
+
+  /// No description provided for @subscriptionExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscription Expired'**
+  String get subscriptionExpired;
+
+  /// No description provided for @subscriptionExpiredMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your access to teacher tools has been paused. To renew your subscription and reactivate your account, please contact the administrator.'**
+  String get subscriptionExpiredMessage;
+
+  /// No description provided for @contactAdmin.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Administrator'**
+  String get contactAdmin;
+
+  /// No description provided for @renewalSubject.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscription Renewal - Warrior Path'**
+  String get renewalSubject;
+
+  /// No description provided for @mailError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open mail application.'**
+  String get mailError;
+
+  /// No description provided for @mailLaunchError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error trying to open mail: {e}'**
+  String mailLaunchError(String e);
 }
 
 class _AppLocalizationsDelegate

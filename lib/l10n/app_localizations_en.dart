@@ -420,4 +420,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get saveAndContinue => 'Save and Continue';
+
+  @override
+  String get subscriptionExpired => 'Subscription Expired';
+
+  @override
+  String get subscriptionExpiredMessage =>
+      'Your access to teacher tools has been paused. To renew your subscription and reactivate your account, please contact the administrator.';
+
+  @override
+  String get contactAdmin => 'Contact Administrator';
+
+  @override
+  String get renewalSubject => 'Subscription Renewal - Warrior Path';
+
+  @override
+  String get mailError => 'Could not open mail application.';
+
+  @override
+  String mailLaunchError(String e) {
+    return 'Error trying to open mail: $e';
+  }
 }

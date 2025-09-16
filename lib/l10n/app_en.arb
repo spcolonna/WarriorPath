@@ -180,5 +180,14 @@
         "placeholders": { "assignedPlanId": { "type": "String" } }
     },
     "contactData": "Contact Data",
-    "saveAndContinue": "Save and Continue"
+    "saveAndContinue": "Save and Continue",
+    "subscriptionExpired": "Subscription Expired",
+    "subscriptionExpiredMessage": "Your access to teacher tools has been paused. To renew your subscription and reactivate your account, please contact the administrator.",
+    "contactAdmin": "Contact Administrator",
+    "renewalSubject": "Subscription Renewal - Warrior Path",
+    "mailError": "Could not open mail application.",
+    "mailLaunchError": "Error trying to open mail: {e}",
+    "@mailLaunchError": {
+        "placeholders": { "e": { "type": "String" } }
+    }
 }
