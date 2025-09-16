@@ -133,7 +133,23 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
             stream: FirebaseFirestore.instance.collection('schools').doc(schoolId).snapshots(),
             builder: (context, snapshot) {
               final schoolName = snapshot.data?['name'] ?? l10n.loading;
-              return Flexible(child: Text(schoolName, overflow: TextOverflow.ellipsis));
+              final martialArt = snapshot.data?['martialArt'] ?? '';
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(schoolName),
+                  if (martialArt.isNotEmpty)
+                    Text(
+                      martialArt,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        color: Colors.white70,
+                      ),
+                    ),
+                ],
+              );
             },
           ),
           const Icon(Icons.arrow_drop_down),

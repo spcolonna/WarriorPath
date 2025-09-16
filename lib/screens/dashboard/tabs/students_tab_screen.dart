@@ -179,7 +179,7 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
           'activeMemberships': {
             schoolId: 'alumno',
           },
-          'pendingApplication': FieldValue.delete(),
+          'pendingApplications': FieldValue.delete(),
         }, SetOptions(merge: true));
 
         await batch.commit();
@@ -188,7 +188,7 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
       } else {
         final batch = firestore.batch();
         batch.delete(schoolMembersRef);
-        batch.update(userRef, {'pendingApplication': FieldValue.delete()});
+        batch.update(userRef, {'pendingApplications': FieldValue.delete()});
         await batch.commit();
         if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Solicitud rechazada.')));
       }
