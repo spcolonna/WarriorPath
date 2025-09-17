@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import 'package:warrior_path/providers/session_provider.dart';
 import 'package:warrior_path/screens/role_selector_screen.dart';
 import 'package:warrior_path/screens/teacher/attendance_checklist_screen.dart';
-
 import '../../../l10n/app_localizations.dart';
 
 class HomeTabScreen extends StatefulWidget {

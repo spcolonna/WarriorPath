@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../l10n/app_localizations.dart';
+
 class PaymentsTabScreen extends StatelessWidget {
   final String schoolId;
   final String memberId;
@@ -14,12 +16,12 @@ class PaymentsTabScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mis Pagos'),
+        title: Text(l10n.myPayments),
       ),
       body: StreamBuilder<QuerySnapshot>(
-        // Leemos la misma sub-colección que el maestro escribe
         stream: FirebaseFirestore.instance
             .collection('schools')
             .doc(schoolId)
@@ -33,14 +35,14 @@ class PaymentsTabScreen extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return const Center(child: Text('Error al cargar tu historial de pagos.'));
+            return Center(child: Text(l10n.errorLoadingPaymentHistory));
           }
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(
+            return Center(
               child: Padding(
                 padding: EdgeInsets.all(16.0),
                 child: Text(
-                  'Aún no tienes pagos registrados.',
+                  l10n.noPaymentsRegisteredYet,
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 18, color: Colors.grey),
                 ),
@@ -69,7 +71,7 @@ class PaymentsTabScreen extends StatelessWidget {
                     '${payment['amount']} ${payment['currency']}',
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
-                  subtitle: Text('${payment['concept']}\nPagado el $formattedDate'),
+                  subtitle: Text(l10n.paymentDetails(payment['concept'],formattedDate)),
                   isThreeLine: true,
                 ),
               );

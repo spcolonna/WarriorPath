@@ -3,7 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:warrior_path/screens/role_selector_screen.dart';
-
 import '../../../l10n/app_localizations.dart';
 import '../../../models/event_model.dart';
 import '../student_event_detail_screen.dart';
@@ -17,7 +16,7 @@ class SchoolInfoTabScreen extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mi Escuela'),
+        title: Text(l10n.mySchool),
       ),
       body: FutureBuilder<DocumentSnapshot>(
         future: FirebaseFirestore.instance.collection('schools').doc(schoolId).get(),
@@ -26,7 +25,7 @@ class SchoolInfoTabScreen extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
           if (!snapshot.hasData || !snapshot.data!.exists) {
-            return const Center(child: Text('No se pudo cargar la información de la escuela.'));
+            return Center(child: Text(l10n.couldNotLoadSchoolInfo));
           }
 
           final schoolData = snapshot.data!.data() as Map<String, dynamic>;
@@ -48,8 +47,8 @@ class SchoolInfoTabScreen extends StatelessWidget {
                         child: (logoUrl == null || logoUrl.isEmpty) ? const Icon(Icons.school, size: 50) : null,
                       ),
                       const SizedBox(height: 16),
-                      Text(schoolData['name'] ?? 'Nombre de la Escuela', style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
-                      Text(schoolData['martialArt'] ?? 'Arte Marcial', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.grey.shade600), textAlign: TextAlign.center),
+                      Text(schoolData['name'] ?? l10n.schoolName, style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
+                      Text(schoolData['martialArt'] ?? l10n.martialArt, style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.grey.shade600), textAlign: TextAlign.center),
                     ],
                   ),
                 ),
@@ -60,7 +59,7 @@ class SchoolInfoTabScreen extends StatelessWidget {
                     elevation: 2,
                     child: ListTile(
                       leading: Icon(Icons.swap_horiz, color: Theme.of(context).primaryColor),
-                      title: const Text('Cambiar de Perfil/Escuela'),
+                      title: Text(l10n.switchProfileSchool),
                       trailing: const Icon(Icons.arrow_forward_ios),
                       onTap: () {
                         Navigator.of(context).push(
@@ -71,18 +70,18 @@ class SchoolInfoTabScreen extends StatelessWidget {
                   ),
                 ),
 
-                _buildUpcomingEvents(context, schoolId),
+                _buildUpcomingEvents(context, schoolId, l10n),
 
                 _buildInfoCard(
                     context: context,
                     title: l10n.contactData,
                     children: [
-                      ListTile(leading: const Icon(Icons.location_on), title: const Text('Dirección'), subtitle: Text('${schoolData['address'] ?? ''}, ${schoolData['city'] ?? ''}')),
+                      ListTile(leading: const Icon(Icons.location_on), title: Text(l10n.address), subtitle: Text('${schoolData['address'] ?? ''}, ${schoolData['city'] ?? ''}')),
                       ListTile(leading: const Icon(Icons.phone), title: Text(l10n.phone), subtitle: Text(schoolData['phone'] ?? l10n.noSpecify)),
                     ]
                 ),
 
-                _buildScheduleCard(context, schoolId),
+                _buildScheduleCard(context, schoolId, l10n),
               ],
             ),
           );
@@ -110,7 +109,7 @@ class SchoolInfoTabScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildUpcomingEvents(BuildContext context, String schoolId) {
+  Widget _buildUpcomingEvents(BuildContext context, String schoolId, AppLocalizations l10n) {
     final studentId = FirebaseAuth.instance.currentUser?.uid;
     if (studentId == null) return const SizedBox.shrink();
 
@@ -128,7 +127,7 @@ class SchoolInfoTabScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Próximos Eventos', style: Theme.of(context).textTheme.titleLarge),
+              Text(l10n.upcomingEvents, style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 8),
               ...snapshot.data!.docs.map((doc) {
                 final event = EventModel.fromFirestore(doc);
@@ -150,7 +149,7 @@ class SchoolInfoTabScreen extends StatelessWidget {
                     },
                   ),
                 );
-              }).toList(),
+              }),
               const Divider(height: 32),
             ],
           ),
@@ -159,8 +158,8 @@ class SchoolInfoTabScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildScheduleCard(BuildContext context, String schoolId) {
-    final List<String> dayLabels = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+  Widget _buildScheduleCard(BuildContext context, String schoolId, AppLocalizations l10n) {
+    final List<String> dayLabels = [l10n.monday, l10n.tuesday, l10n.wednesday, l10n.thursday, l10n.friday, l10n.saturday, l10n.sunday];
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -170,14 +169,14 @@ class SchoolInfoTabScreen extends StatelessWidget {
           children: [
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Text('Horario de Clases', style: Theme.of(context).textTheme.titleLarge),
+              child: Text(l10n.classSchedule, style: Theme.of(context).textTheme.titleLarge),
             ),
             const Divider(height: 1),
             StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance.collection('schools').doc(schoolId).collection('classSchedules').orderBy('dayOfWeek').orderBy('startTime').snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) return const Padding(padding: EdgeInsets.all(16), child: Center(child: CircularProgressIndicator()));
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return const ListTile(title: Text('El horario aún no ha sido definido.'));
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return ListTile(title: Text(l10n.scheduleNotDefinedYet));
 
                 final Map<int, List<QueryDocumentSnapshot>> groupedSchedules = {};
                 for (var doc in snapshot.data!.docs) {

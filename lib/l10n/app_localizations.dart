@@ -1305,6 +1305,408 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Modify the address, phone, description, etc.'**
   String get editSchoolDataDescription;
+
+  /// No description provided for @upcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming'**
+  String get upcoming;
+
+  /// No description provided for @past.
+  ///
+  /// In en, this message translates to:
+  /// **'Past'**
+  String get past;
+
+  /// No description provided for @noUpcomingEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'No upcoming events.'**
+  String get noUpcomingEvents;
+
+  /// No description provided for @noPastEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'No past events.'**
+  String get noPastEvents;
+
+  /// No description provided for @errorNoActiveSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Error: No active session.'**
+  String get errorNoActiveSession;
+
+  /// No description provided for @profileLoadedError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load profile.'**
+  String get profileLoadedError;
+
+  /// No description provided for @fullName.
+  ///
+  /// In en, this message translates to:
+  /// **'Full Name'**
+  String get fullName;
+
+  /// No description provided for @saveChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Changes'**
+  String get saveChanges;
+
+  /// No description provided for @emergencyInfoNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'This information will only be visible to your school\'s teachers if necessary.'**
+  String get emergencyInfoNotice;
+
+  /// No description provided for @emergencyContactName.
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency Contact Name'**
+  String get emergencyContactName;
+
+  /// No description provided for @emergencyContactPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency Contact Phone'**
+  String get emergencyContactPhone;
+
+  /// No description provided for @medicalEmergencyService.
+  ///
+  /// In en, this message translates to:
+  /// **'Medical Emergency Service'**
+  String get medicalEmergencyService;
+
+  /// No description provided for @medicalServiceExample.
+  ///
+  /// In en, this message translates to:
+  /// **'Ex: 911, Local Paramedics'**
+  String get medicalServiceExample;
+
+  /// No description provided for @relevantMedicalInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Relevant Medical Information'**
+  String get relevantMedicalInfo;
+
+  /// No description provided for @medicalInfoExample.
+  ///
+  /// In en, this message translates to:
+  /// **'Ex: Allergies, asthma, medication, etc.'**
+  String get medicalInfoExample;
+
+  /// No description provided for @accountActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Account Actions'**
+  String get accountActions;
+
+  /// No description provided for @becomeATeacher.
+  ///
+  /// In en, this message translates to:
+  /// **'Become a teacher and start your journey.'**
+  String get becomeATeacher;
+
+  /// No description provided for @myData.
+  ///
+  /// In en, this message translates to:
+  /// **'My Data'**
+  String get myData;
+
+  /// No description provided for @myProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'My Profile'**
+  String get myProfile;
+
+  /// No description provided for @profileUpdateError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error updating profile: {message}'**
+  String profileUpdateError(String message);
+
+  /// No description provided for @noStudentsWithStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'No students with status {state}'**
+  String noStudentsWithStatus(String state);
+
+  /// No description provided for @noName.
+  ///
+  /// In en, this message translates to:
+  /// **'No Name'**
+  String get noName;
+
+  /// No description provided for @applicationDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Application date: {message}'**
+  String applicationDate(String message);
+
+  /// No description provided for @noLevelsConfiguredError.
+  ///
+  /// In en, this message translates to:
+  /// **'Your school has no levels configured. Go to Management -> Levels to add them.'**
+  String get noLevelsConfiguredError;
+
+  /// No description provided for @studentAcceptedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Student accepted successfully.'**
+  String get studentAcceptedSuccess;
+
+  /// No description provided for @applicationRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Application rejected.'**
+  String get applicationRejected;
+
+  /// No description provided for @monday.
+  ///
+  /// In en, this message translates to:
+  /// **'Monday'**
+  String get monday;
+
+  /// No description provided for @tuesday.
+  ///
+  /// In en, this message translates to:
+  /// **'Tuesday'**
+  String get tuesday;
+
+  /// No description provided for @wednesday.
+  ///
+  /// In en, this message translates to:
+  /// **'Wednesday'**
+  String get wednesday;
+
+  /// No description provided for @thursday.
+  ///
+  /// In en, this message translates to:
+  /// **'Thursday'**
+  String get thursday;
+
+  /// No description provided for @friday.
+  ///
+  /// In en, this message translates to:
+  /// **'Friday'**
+  String get friday;
+
+  /// No description provided for @saturday.
+  ///
+  /// In en, this message translates to:
+  /// **'Saturday'**
+  String get saturday;
+
+  /// No description provided for @sunday.
+  ///
+  /// In en, this message translates to:
+  /// **'Sunday'**
+  String get sunday;
+
+  /// No description provided for @noSchedulesDefined.
+  ///
+  /// In en, this message translates to:
+  /// **'No schedules defined.\nPress (+) to add the first one.'**
+  String get noSchedulesDefined;
+
+  /// No description provided for @schoolCommunity.
+  ///
+  /// In en, this message translates to:
+  /// **'School Community'**
+  String get schoolCommunity;
+
+  /// No description provided for @errorLoadingLevels.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading school levels.'**
+  String get errorLoadingLevels;
+
+  /// No description provided for @errorLoadingMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading members.'**
+  String get errorLoadingMembers;
+
+  /// No description provided for @noActiveMembersYet.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no active members in the school yet.'**
+  String get noActiveMembersYet;
+
+  /// No description provided for @instructors.
+  ///
+  /// In en, this message translates to:
+  /// **'Instructors'**
+  String get instructors;
+
+  /// No description provided for @myPayments.
+  ///
+  /// In en, this message translates to:
+  /// **'My Payments'**
+  String get myPayments;
+
+  /// No description provided for @errorLoadingPaymentHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading your payment history.'**
+  String get errorLoadingPaymentHistory;
+
+  /// No description provided for @noPaymentsRegisteredYet.
+  ///
+  /// In en, this message translates to:
+  /// **'You have no registered payments yet.'**
+  String get noPaymentsRegisteredYet;
+
+  /// No description provided for @paymentDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'{concept}\nPaid on {date}'**
+  String paymentDetails(String concept, String date);
+
+  /// No description provided for @myProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'My Progress'**
+  String get myProgress;
+
+  /// No description provided for @couldNotLoadProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load your progress.'**
+  String get couldNotLoadProgress;
+
+  /// No description provided for @yourPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Path'**
+  String get yourPath;
+
+  /// No description provided for @promotionHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Promotion History'**
+  String get promotionHistory;
+
+  /// No description provided for @assignedTechniques.
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned Techniques'**
+  String get assignedTechniques;
+
+  /// No description provided for @myAttendanceHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'My Attendance History'**
+  String get myAttendanceHistory;
+
+  /// No description provided for @noLevelAssignedYet.
+  ///
+  /// In en, this message translates to:
+  /// **'You don\'t have a level assigned yet.'**
+  String get noLevelAssignedYet;
+
+  /// No description provided for @yourCurrentLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Current Level'**
+  String get yourCurrentLevel;
+
+  /// No description provided for @progressionSystemNotDefined.
+  ///
+  /// In en, this message translates to:
+  /// **'The progression system has not been defined.'**
+  String get progressionSystemNotDefined;
+
+  /// No description provided for @teacherHasNotAssignedTechniques.
+  ///
+  /// In en, this message translates to:
+  /// **'Your teacher has not assigned you techniques yet.'**
+  String get teacherHasNotAssignedTechniques;
+
+  /// No description provided for @noPromotionsRegisteredYet.
+  ///
+  /// In en, this message translates to:
+  /// **'You have no promotions registered yet.'**
+  String get noPromotionsRegisteredYet;
+
+  /// No description provided for @couldNotOpenVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open video: {link}'**
+  String couldNotOpenVideo(String link);
+
+  /// No description provided for @noDescriptionAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No description available.'**
+  String get noDescriptionAvailable;
+
+  /// No description provided for @watchTechniqueVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Watch Technique Video'**
+  String get watchTechniqueVideo;
+
+  /// No description provided for @close.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
+
+  /// No description provided for @mySchool.
+  ///
+  /// In en, this message translates to:
+  /// **'My School'**
+  String get mySchool;
+
+  /// No description provided for @couldNotLoadSchoolInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load school information.'**
+  String get couldNotLoadSchoolInfo;
+
+  /// No description provided for @schoolName.
+  ///
+  /// In en, this message translates to:
+  /// **'School Name'**
+  String get schoolName;
+
+  /// No description provided for @martialArt.
+  ///
+  /// In en, this message translates to:
+  /// **'Martial Art'**
+  String get martialArt;
+
+  /// No description provided for @address.
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get address;
+
+  /// No description provided for @upcomingEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming Events'**
+  String get upcomingEvents;
+
+  /// No description provided for @classSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Class Schedule'**
+  String get classSchedule;
+
+  /// No description provided for @scheduleNotDefinedYet.
+  ///
+  /// In en, this message translates to:
+  /// **'The schedule has not been defined yet.'**
+  String get scheduleNotDefinedYet;
+
+  /// No description provided for @updateProfileSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile updated successfully.'**
+  String get updateProfileSuccess;
 }
 
 class _AppLocalizationsDelegate

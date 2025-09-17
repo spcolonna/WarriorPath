@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:warrior_path/providers/session_provider.dart';
 import 'package:warrior_path/screens/schedule/schedule_management_screen.dart';
-
 import '../../../l10n/app_localizations.dart';
 import '../../teacher/events/event_management_screen.dart';
 import '../../teacher/management/edit_school_data_screen.dart';

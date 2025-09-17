@@ -4,7 +4,6 @@ import 'package:warrior_path/screens/WelcomeScreen.dart';
 import 'package:warrior_path/screens/role_selector_screen.dart';
 import 'package:warrior_path/screens/student/school_search_screen.dart';
 import 'package:warrior_path/screens/wizard_create_school_screen.dart';
-
 import '../../../l10n/app_localizations.dart';
 import '../../teacher/edit_teacher_profile_screen.dart';
 

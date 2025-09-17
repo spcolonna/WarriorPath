@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:warrior_path/providers/session_provider.dart';
 import 'package:warrior_path/screens/teacher/student_detail_screen.dart';
-
 import '../../../l10n/app_localizations.dart';
 
 class StudentsTabScreen extends StatefulWidget {
@@ -89,7 +88,7 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
           return const Center(child: CircularProgressIndicator());
         }
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return Center(child: Text('No hay alumnos en estado "$status".'));
+          return Center(child: Text(l10n.noStudentsWithStatus(status)));
         }
 
         return ListView.builder(
@@ -106,7 +105,7 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               child: ListTile(
                 leading: const CircleAvatar(child: Icon(Icons.person)),
-                title: Text(data['displayName'] ?? 'Sin Nombre'),
+                title: Text(data['displayName'] ?? l10n.noName),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () {
                   Navigator.of(context).push(
@@ -137,9 +136,9 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(data['displayName'] ?? 'Usuario sin nombre', style: Theme.of(context).textTheme.titleLarge),
+            Text(data['displayName'] ?? l10n.noName, style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 4),
-            Text('Fecha de solicitud: ${ (data['applicationDate'] as Timestamp?)?.toDate().toLocal().toString().substring(0, 10) ?? 'N/A' }'),
+            Text(l10n.applicationDate((data['applicationDate'] as Timestamp?)?.toDate().toLocal().toString().substring(0, 10) ?? 'N/A' )),
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -170,7 +169,7 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
       if (accept) {
         final levelsQuery = await firestore.collection('schools').doc(schoolId).collection('levels').orderBy('order').limit(1).get();
         if (levelsQuery.docs.isEmpty) {
-          throw Exception('Tu escuela no tiene niveles configurados. Ve a Gestión -> Niveles para añadirlos.');
+          throw Exception(l10n.noLevelsConfiguredError);
         }
         final initialLevelId = levelsQuery.docs.first.id;
 
@@ -191,14 +190,14 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
         }, SetOptions(merge: true));
 
         await batch.commit();
-        if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Alumno aceptado con éxito.')));
+        if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.studentAcceptedSuccess)));
 
       } else {
         final batch = firestore.batch();
         batch.delete(schoolMembersRef);
         batch.update(userRef, {'pendingApplications': FieldValue.delete()});
         await batch.commit();
-        if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Solicitud rechazada.')));
+        if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.applicationRejected)));
       }
     } catch (e) {
       if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.genericErrorContent(e.toString()))));

@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import 'package:warrior_path/screens/WelcomeScreen.dart';
 import 'package:warrior_path/screens/student/school_search_screen.dart';
 import 'package:warrior_path/screens/wizard_create_school_screen.dart';
-
 import '../../../l10n/app_localizations.dart';
 
 class StudentProfileTabScreen extends StatefulWidget {
@@ -26,7 +25,6 @@ class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
 
   late Future<DocumentSnapshot> _userDataFuture;
 
-  // --- CAMBIO: Añadimos controllers y variables para los nuevos datos ---
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _dobController = TextEditingController();
@@ -57,7 +55,6 @@ class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
       _medicalEmergencyServiceController.text = data['medicalEmergencyService'] ?? '';
       _medicalInfoController.text = data['medicalInfo'] ?? '';
 
-      // --- CAMBIO: Cargamos los nuevos datos del perfil ---
       _selectedSex = data['gender'];
       _selectedDateOfBirth = (data['dateOfBirth'] as Timestamp?)?.toDate();
       if (_selectedDateOfBirth != null) {
@@ -98,7 +95,6 @@ class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
   Future<void> _saveProfileChanges() async {
     setState(() { _isLoading = true; });
     try {
-      // --- CAMBIO: Añadimos los nuevos campos a los datos a guardar ---
       final dataToUpdate = {
         'displayName': _nameController.text.trim(),
         'phoneNumber': _phoneController.text.trim(),
@@ -112,13 +108,13 @@ class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
       await FirebaseFirestore.instance.collection('users').doc(widget.memberId).update(dataToUpdate);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Perfil actualizado con éxito.'), backgroundColor: Colors.green),
+          SnackBar(content: Text(l10n.updateProfileSuccess), backgroundColor: Colors.green),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al actualizar el perfil: ${e.toString()}')),
+          SnackBar(content: Text(l10n.profileUpdateError(e.toString()))),
         );
       }
     } finally {
@@ -132,11 +128,11 @@ class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mi Perfil'),
+        title: Text(l10n.myProfile),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            tooltip: 'Cerrar Sesión',
+            tooltip: l10n.logOut,
             onPressed: () async {
               await FirebaseAuth.instance.signOut();
               if (context.mounted) {
@@ -156,7 +152,7 @@ class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError || !snapshot.data!.exists) {
-            return const Center(child: Text('No se pudo cargar tu perfil.'));
+            return Center(child: Text(l10n.profileErrorContent));
           }
 
           return AbsorbPointer(
@@ -166,21 +162,20 @@ class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('Mis Datos', style: Theme.of(context).textTheme.titleLarge),
+                  Text(l10n.myData, style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 16),
-                  TextFormField(controller: _nameController, decoration: const InputDecoration(labelText: 'Nombre y Apellido', border: OutlineInputBorder())),
+                  TextFormField(controller: _nameController, decoration: InputDecoration(labelText: l10n.fullName, border: OutlineInputBorder())),
                   const SizedBox(height: 16),
-                  TextFormField(controller: _phoneController, decoration: const InputDecoration(labelText: 'Mi Teléfono', border: OutlineInputBorder()), keyboardType: TextInputType.phone),
+                  TextFormField(controller: _phoneController, decoration: InputDecoration(labelText: l10n.phone, border: OutlineInputBorder()), keyboardType: TextInputType.phone),
 
-                  // --- CAMBIO: Añadimos los nuevos widgets de formulario ---
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     value: _selectedSex,
-                    decoration: const InputDecoration(labelText: 'Género', border: OutlineInputBorder()),
-                    items: ['Masculino', 'Femenino', 'Otro', 'Prefiero no decirlo']
+                    decoration: InputDecoration(labelText: l10n.gender, border: OutlineInputBorder()),
+                    items: [l10n.maleGender, l10n.femaleGender, l10n.otherGender, l10n.noSpecifyGender]
                         .map((label) => DropdownMenuItem(
-                      child: Text(label),
                       value: label.toLowerCase().replaceAll(' ', '_'),
+                      child: Text(label),
                     ))
                         .toList(),
                     onChanged: (value) {
@@ -204,29 +199,29 @@ class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
                   const SizedBox(height: 32),
                   Text(l10n.emergencyInfo, style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 8),
-                  const Text('Esta información solo será visible para los maestros de tu escuela en caso de ser necesario.', style: TextStyle(color: Colors.grey)),
+                  Text(l10n.emergencyInfoNotice, style: TextStyle(color: Colors.grey)),
                   const SizedBox(height: 16),
-                  TextFormField(controller: _emergencyContactNameController, decoration: const InputDecoration(labelText: 'Nombre del Contacto de Emergencia', border: OutlineInputBorder())),
+                  TextFormField(controller: _emergencyContactNameController, decoration: InputDecoration(labelText: l10n.emergencyContactName, border: OutlineInputBorder())),
                   const SizedBox(height: 16),
-                  TextFormField(controller: _emergencyContactPhoneController, decoration: const InputDecoration(labelText: 'Teléfono del Contacto de Emergencia', border: OutlineInputBorder()), keyboardType: TextInputType.phone),
+                  TextFormField(controller: _emergencyContactPhoneController, decoration: InputDecoration(labelText: l10n.emergencyContactPhone, border: OutlineInputBorder()), keyboardType: TextInputType.phone),
                   const SizedBox(height: 16),
-                  TextFormField(controller: _medicalEmergencyServiceController, decoration: const InputDecoration(labelText: 'Servicio de Emergencia Médica', hintText: 'Ej: SEMM, Emergencia Uno, UCM', border: OutlineInputBorder())),
+                  TextFormField(controller: _medicalEmergencyServiceController, decoration: InputDecoration(labelText: l10n.medicalEmergencyService, hintText: l10n.medicalServiceExample, border: OutlineInputBorder())),
                   const SizedBox(height: 16),
-                  TextFormField(controller: _medicalInfoController, decoration: const InputDecoration(labelText: 'Información Médica Relevante', hintText: 'Ej: Alergias, asma, medicación, etc.', border: OutlineInputBorder()), maxLines: 4),
+                  TextFormField(controller: _medicalInfoController, decoration: InputDecoration(labelText: l10n.relevantMedicalInfo, hintText: l10n.medicalInfoExample, border: OutlineInputBorder()), maxLines: 4),
                   const SizedBox(height: 32),
                   if (_isLoading)
                     const Center(child: CircularProgressIndicator())
                   else
                     ElevatedButton.icon(
                       icon: const Icon(Icons.save),
-                      label: Text('Guardar Cambios'),
+                      label: Text(l10n.saveChanges),
                       style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
                       onPressed: _saveProfileChanges,
                     ),
                   const SizedBox(height: 32),
                   const Divider(),
                   const SizedBox(height: 16),
-                  Text('Acciones de Cuenta', style: Theme.of(context).textTheme.titleLarge),
+                  Text(l10n.accountActions, style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 16),
                   Card(
                     elevation: 2,
@@ -244,7 +239,7 @@ class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
                     child: ListTile(
                       leading: Icon(Icons.add_business, color: Theme.of(context).primaryColor),
                       title: Text(l10n.createNewSchool),
-                      subtitle: const Text('Conviértete en maestro e inicia tu camino.'),
+                      subtitle: Text(l10n.becomeATeacher),
                       trailing: const Icon(Icons.arrow_forward_ios),
                       onTap: () { Navigator.of(context).push(MaterialPageRoute(builder: (context) => const WizardCreateSchoolScreen())); },
                     ),

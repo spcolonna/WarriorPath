@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-
 import '../../l10n/app_localizations.dart';
 
 class AddEditScheduleScreen extends StatefulWidget {
@@ -64,12 +63,12 @@ class _AddEditScheduleScreenState extends State<AddEditScheduleScreen> {
   Future<void> _saveSchedule() async {
     final activeDays = _selectedDays.entries.where((d) => d.value).map((d) => d.key).toList();
     if (_titleController.text.trim().isEmpty || _startTime == null || _endTime == null || activeDays.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Por favor, completa todos los campos requeridos.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.pleaseFillAllFields)));
       return;
     }
 
     if (_endTime!.hour < _startTime!.hour || (_endTime!.hour == _startTime!.hour && _endTime!.minute <= _startTime!.minute)) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('La hora de fin debe ser posterior a la hora de inicio.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.endTimeAfterStartTimeError)));
       return;
     }
 
@@ -93,7 +92,7 @@ class _AddEditScheduleScreenState extends State<AddEditScheduleScreen> {
       await batch.commit();
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Horario guardado con éxito.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.scheduleSavedSuccess)));
       Navigator.of(context).pop();
 
     } catch (e) {
@@ -120,10 +119,10 @@ class _AddEditScheduleScreenState extends State<AddEditScheduleScreen> {
             children: [
               TextField(
                 controller: _titleController,
-                decoration: const InputDecoration(labelText: 'Título de la Clase', hintText: 'Ej: Niños, Adultos, Kicks'),
+                decoration: InputDecoration(labelText: l10n.classTitle, hintText: l10n.classTitleExample),
               ),
               const SizedBox(height: 24),
-              Text('Días de la semana', style: Theme.of(context).textTheme.titleMedium),
+              Text(l10n.daysOfTheWeek, style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8.0,
@@ -146,7 +145,7 @@ class _AddEditScheduleScreenState extends State<AddEditScheduleScreen> {
                     child: InkWell(
                       onTap: () => _selectTime(context, true),
                       child: InputDecorator(
-                        decoration: const InputDecoration(labelText: 'Hora de Inicio'),
+                        decoration: InputDecoration(labelText: l10n.startTime),
                         child: Text(_startTime?.format(context) ?? l10n.select),
                       ),
                     ),
@@ -156,7 +155,7 @@ class _AddEditScheduleScreenState extends State<AddEditScheduleScreen> {
                     child: InkWell(
                       onTap: () => _selectTime(context, false),
                       child: InputDecorator(
-                        decoration: const InputDecoration(labelText: 'Hora de Fin'),
+                        decoration: InputDecoration(labelText: l10n.endTime),
                         child: Text(_endTime?.format(context) ?? l10n.select),
                       ),
                     ),

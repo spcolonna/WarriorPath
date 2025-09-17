@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../teacher/student_detail_screen.dart';
 
 class CommunityTabScreen extends StatefulWidget {
   final String schoolId;
@@ -10,6 +12,12 @@ class CommunityTabScreen extends StatefulWidget {
 }
 
 class _CommunityTabScreenState extends State<CommunityTabScreen> {
+  late AppLocalizations l10n;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    l10n = AppLocalizations.of(context);
+  }
   late Stream<QuerySnapshot> _membersStream;
   late Future<Map<String, dynamic>> _levelsMapFuture;
 
@@ -46,7 +54,7 @@ class _CommunityTabScreenState extends State<CommunityTabScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Comunidad de la Escuela'),
+        title: Text(l10n.schoolCommunity),
       ),
       body: FutureBuilder<Map<String, dynamic>>(
         future: _levelsMapFuture,
@@ -55,7 +63,7 @@ class _CommunityTabScreenState extends State<CommunityTabScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (levelsSnapshot.hasError) {
-            return const Center(child: Text('Error al cargar los niveles de la escuela.'));
+            return Center(child: Text(l10n.errorLoadingLevels));
           }
 
           final levelsMap = levelsSnapshot.data ?? {};
@@ -68,10 +76,10 @@ class _CommunityTabScreenState extends State<CommunityTabScreen> {
               }
               if (membersSnapshot.hasError) {
                 print('ERROR DEL STREAM DE COMUNIDAD: ${membersSnapshot.error}');
-                return const Center(child: Text('Error al cargar los miembros.'));
+                return Center(child: Text(l10n.errorLoadingMembers));
               }
               if (!membersSnapshot.hasData || membersSnapshot.data!.docs.isEmpty) {
-                return const Center(child: Text('Aún no hay miembros activos en la escuela.'));
+                return Center(child: Text(l10n.noActiveMembersYet));
               }
 
               final members = membersSnapshot.data!.docs;
@@ -86,21 +94,18 @@ class _CommunityTabScreenState extends State<CommunityTabScreen> {
                   final bool showHeader = memberRole != currentRole;
                   currentRole = memberRole;
 
-                  // --- CAMBIO PRINCIPAL AQUÍ ---
-                  // Lógica mejorada para pluralizar y poner en mayúscula el rol en ESPAÑOL
                   String roleHeader;
                   switch (memberRole) {
                     case 'alumno':
-                      roleHeader = 'Alumnos';
+                      roleHeader = l10n.students;
                       break;
                     case 'instructor':
-                      roleHeader = 'Instructores';
+                      roleHeader = l10n.instructors;
                       break;
                     case 'maestro':
-                      roleHeader = 'Maestros';
+                      roleHeader = l10n.teacher;
                       break;
                     default:
-                    // Un caso por si hay un rol inesperado
                       roleHeader = '${memberRole[0].toUpperCase()}${memberRole.substring(1)}s';
                   }
 
@@ -116,38 +121,52 @@ class _CommunityTabScreenState extends State<CommunityTabScreen> {
                           child: Text(roleHeader, style: Theme.of(context).textTheme.headlineSmall),
                         ),
 
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                        child: Row(
-                          children: [
-                            FutureBuilder<DocumentSnapshot>(
-                              future: FirebaseFirestore.instance.collection('users').doc(memberDoc.id).get(),
-                              builder: (context, userSnapshot) {
-                                if (!userSnapshot.hasData) {
-                                  return const CircleAvatar(radius: 20);
-                                }
-                                final photoUrl = (userSnapshot.data?.data() as Map<String, dynamic>?)?['photoUrl'] as String?;
-                                return CircleAvatar(
-                                  radius: 20,
-                                  backgroundImage: (photoUrl != null && photoUrl.isNotEmpty) ? NetworkImage(photoUrl) : null,
-                                  child: (photoUrl == null || photoUrl.isEmpty) ? const Icon(Icons.person) : null,
-                                );
-                              },
-                            ),
-                            const SizedBox(width: 16),
-
-                            Text(memberData['displayName'] ?? 'Sin Nombre', style: const TextStyle(fontSize: 16)),
-
-                            const SizedBox(width: 8),
-
-                            if (levelData != null)
-                              Chip(
-                                label: Text(levelData['name'], style: const TextStyle(color: Colors.white, fontSize: 12)),
-                                backgroundColor: Color(levelData['colorValue']),
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
-                                visualDensity: VisualDensity.compact,
+                      Card(
+                        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        child: ListTile(
+                          // 1. Hacemos el ListTile entero "clicable"
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                // 2. Navegamos a la pantalla de detalle del miembro
+                                builder: (context) => StudentDetailScreen(
+                                  schoolId: widget.schoolId,
+                                  studentId: memberDoc.id,
+                                ),
                               ),
-                          ],
+                            );
+                          },
+                          leading: FutureBuilder<DocumentSnapshot>(
+                            future: FirebaseFirestore.instance.collection('users').doc(memberDoc.id).get(),
+                            builder: (context, userSnapshot) {
+                              if (!userSnapshot.hasData) {
+                                return const CircleAvatar(radius: 20);
+                              }
+                              final photoUrl = (userSnapshot.data?.data() as Map<String, dynamic>?)?['photoUrl'] as String?;
+                              return CircleAvatar(
+                                radius: 20,
+                                backgroundImage: (photoUrl != null && photoUrl.isNotEmpty) ? NetworkImage(photoUrl) : null,
+                                child: (photoUrl == null || photoUrl.isEmpty) ? const Icon(Icons.person) : null,
+                              );
+                            },
+                          ),
+                          title: Text(memberData['displayName'] ?? l10n.noName, style: const TextStyle(fontWeight: FontWeight.bold)),
+                          // 3. Mostramos el rol como subtítulo para diferenciar
+                          subtitle: Text(memberRole[0].toUpperCase() + memberRole.substring(1)),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (levelData != null)
+                                Chip(
+                                  label: Text(levelData['name'], style: const TextStyle(color: Colors.white, fontSize: 12)),
+                                  backgroundColor: Color(levelData['colorValue']),
+                                  padding: EdgeInsets.zero,
+                                  visualDensity: VisualDensity.compact,
+                                ),
+                              const SizedBox(width: 8),
+                              const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+                            ],
+                          ),
                         ),
                       ),
                     ],

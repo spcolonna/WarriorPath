@@ -2,25 +2,32 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
-
+import '../../../l10n/app_localizations.dart';
 import '../../../models/technique_model.dart';
-import '../my_attendance_history_screen.dart'; // Asegúrate de tener este import
+import '../my_attendance_history_screen.dart';
 
 class ProgressTabScreen extends StatefulWidget {
   final String schoolId;
   final String memberId;
 
   const ProgressTabScreen({
-    Key? key,
+    super.key,
     required this.schoolId,
     required this.memberId,
-  }) : super(key: key);
+  });
 
   @override
   State<ProgressTabScreen> createState() => _ProgressTabScreenState();
 }
 
 class _ProgressTabScreenState extends State<ProgressTabScreen> {
+  late AppLocalizations l10n;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    l10n = AppLocalizations.of(context);
+  }
+
   late Future<Map<String, dynamic>> _progressDataFuture;
 
   @override
@@ -67,7 +74,7 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Mi Progreso')),
+      appBar: AppBar(title: Text(l10n.myProgress)),
       body: FutureBuilder<Map<String, dynamic>>(
         future: _progressDataFuture,
         builder: (context, snapshot) {
@@ -75,7 +82,7 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError || !snapshot.hasData) {
-            return const Center(child: Text('No se pudo cargar tu progreso.'));
+            return Center(child: Text(l10n.couldNotLoadProgress));
           }
 
           final currentLevelDoc = snapshot.data!['currentLevel'] as DocumentSnapshot?;
@@ -91,7 +98,7 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
 
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Text('Tu Camino', style: Theme.of(context).textTheme.headlineSmall),
+                  child: Text(l10n.yourPath, style: Theme.of(context).textTheme.headlineSmall),
                 ),
                 const SizedBox(height: 8),
                 _buildProgressionPath(currentLevelDoc, allLevels),
@@ -100,12 +107,12 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
 
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Text('Historial de Promociones', style: Theme.of(context).textTheme.headlineSmall),
+                  child: Text(l10n.promotionHistory, style: Theme.of(context).textTheme.headlineSmall),
                 ),
                 const Divider(height: 32, indent: 16, endIndent: 16),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Text('Técnicas Asignadas', style: Theme.of(context).textTheme.headlineSmall),
+                  child: Text(l10n.assignedTechniques, style: Theme.of(context).textTheme.headlineSmall),
                 ),
                 const SizedBox(height: 8),
                 _buildAssignedTechniques(context),
@@ -116,7 +123,7 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
                   margin: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: ListTile(
                     leading: Icon(Icons.fact_check_outlined, color: Theme.of(context).primaryColor),
-                    title: const Text('Mi Historial de Asistencia', style: TextStyle(fontWeight: FontWeight.bold)),
+                    title: Text(l10n.myAttendanceHistory, style: TextStyle(fontWeight: FontWeight.bold)),
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: () {
                       Navigator.of(context).push(
@@ -142,12 +149,12 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
     if (currentLevelDoc == null || !currentLevelDoc.exists) {
       return Container(
         padding: const EdgeInsets.all(24),
-        child: const Text('Aún no tienes un nivel asignado.'),
+        child: Text(l10n.noLevelAssignedYet),
       );
     }
 
     final data = currentLevelDoc.data() as Map<String, dynamic>;
-    final levelName = data['name'] ?? 'Nivel Desconocido';
+    final levelName = data['name'] ?? l10n.withPutLevel;
     final levelColor = Color(data['colorValue']);
 
     return Container(
@@ -156,7 +163,7 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
       padding: const EdgeInsets.symmetric(vertical: 24.0),
       child: Column(
         children: [
-          Text('Tu Nivel Actual', style: Theme.of(context).textTheme.titleMedium),
+          Text(l10n.yourCurrentLevel, style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -179,7 +186,7 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
 
   Widget _buildProgressionPath(DocumentSnapshot? currentLevelDoc, List<QueryDocumentSnapshot> allLevels) {
     if (allLevels.isEmpty) {
-      return const Text('El sistema de progresión no ha sido definido.');
+      return Text(l10n.progressionSystemNotDefined);
     }
 
     final currentLevelOrder = (currentLevelDoc?.data() as Map<String, dynamic>?)?['order'] ?? -1;
@@ -215,7 +222,7 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
 
         final assignedIds = List<String>.from(memberSnapshot.data?['assignedTechniqueIds'] ?? []);
         if (assignedIds.isEmpty) {
-          return const Center(child: Padding(padding: EdgeInsets.all(16), child: Text('Tu maestro aún no te ha asignado técnicas.')));
+          return Center(child: Padding(padding: EdgeInsets.all(16), child: Text(l10n.teacherHasNotAssignedTechniques)));
         }
 
         return StreamBuilder<QuerySnapshot>(
@@ -258,9 +265,9 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
           return const Center(child: CircularProgressIndicator());
         }
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const Padding(
+          return Padding(
             padding: EdgeInsets.all(16.0),
-            child: Center(child: Text('Aún no tienes promociones registradas.')),
+            child: Center(child: Text(l10n.noPromotionsRegisteredYet)),
           );
         }
 
@@ -287,7 +294,7 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
     final date = (history['date'] as Timestamp).toDate();
     final formattedDate = DateFormat('dd/MM/yyyy').format(date);
     final newRole = history['newRole'] ?? '';
-    final roleText = 'Rol actualizado a ${newRole[0].toUpperCase()}${newRole.substring(1)}';
+    final roleText = l10n.rolUpdatedTo(newRole[0].toUpperCase() + newRole.substring(1));
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -309,14 +316,14 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
       builder: (context, levelSnapshot) {
         String levelName = '...';
         if (levelSnapshot.hasData) {
-          levelName = levelSnapshot.data?['name'] ?? 'Nivel Desconocido';
+          levelName = levelSnapshot.data?['name'] ?? l10n.withPutLevel;
         }
         return Card(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           child: ListTile(
             leading: const Icon(Icons.military_tech),
-            title: Text('Promovido a $levelName'),
-            subtitle: (notes != null && notes.isNotEmpty) ? Text('Notas: "$notes"') : null,
+            title: Text(l10n.promotionTo(levelName)),
+            subtitle: (notes != null && notes.isNotEmpty) ? Text(l10n.notesValue(notes)) : null,
             trailing: Text(formattedDate),
           ),
         );
@@ -327,10 +334,9 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
   Future<void> _launchVideoUrl(String urlString) async {
     final Uri url = Uri.parse(urlString);
     if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-      // Si no se puede lanzar la URL, muestra un error.
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No se pudo abrir el video: $urlString')),
+          SnackBar(content: Text(l10n.couldNotOpenVideo(urlString))),
         );
       }
     }
@@ -342,18 +348,17 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
       builder: (context) {
         return AlertDialog(
           title: Text(technique.name),
-          content: SingleChildScrollView( // Para que la descripción no desborde
+          content: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min, // Para que la columna no ocupe todo el alto
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   technique.description.isEmpty
-                      ? 'No hay descripción disponible.'
+                      ? l10n.noDescriptionAvailable
                       : technique.description,
                   style: const TextStyle(height: 1.5), // Mejora la legibilidad
                 ),
-                // Solo muestra el botón si la URL del video existe y no está vacía
                 if (technique.videoUrl != null && technique.videoUrl!.isNotEmpty) ...[
                   const SizedBox(height: 24),
                   const Divider(),
@@ -361,7 +366,7 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
                   Center(
                     child: ElevatedButton.icon(
                       icon: const Icon(Icons.play_circle_outline),
-                      label: const Text('Ver Video de la Técnica'),
+                      label: Text(l10n.watchTechniqueVideo),
                       onPressed: () {
                         _launchVideoUrl(technique.videoUrl!);
                       },
@@ -374,7 +379,7 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cerrar'),
+              child: Text(l10n.close),
             ),
           ],
         );

@@ -672,4 +672,223 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get editSchoolDataDescription =>
       'Modify the address, phone, description, etc.';
+
+  @override
+  String get upcoming => 'Upcoming';
+
+  @override
+  String get past => 'Past';
+
+  @override
+  String get noUpcomingEvents => 'No upcoming events.';
+
+  @override
+  String get noPastEvents => 'No past events.';
+
+  @override
+  String get errorNoActiveSession => 'Error: No active session.';
+
+  @override
+  String get profileLoadedError => 'Could not load profile.';
+
+  @override
+  String get fullName => 'Full Name';
+
+  @override
+  String get saveChanges => 'Save Changes';
+
+  @override
+  String get emergencyInfoNotice =>
+      'This information will only be visible to your school\'s teachers if necessary.';
+
+  @override
+  String get emergencyContactName => 'Emergency Contact Name';
+
+  @override
+  String get emergencyContactPhone => 'Emergency Contact Phone';
+
+  @override
+  String get medicalEmergencyService => 'Medical Emergency Service';
+
+  @override
+  String get medicalServiceExample => 'Ex: 911, Local Paramedics';
+
+  @override
+  String get relevantMedicalInfo => 'Relevant Medical Information';
+
+  @override
+  String get medicalInfoExample => 'Ex: Allergies, asthma, medication, etc.';
+
+  @override
+  String get accountActions => 'Account Actions';
+
+  @override
+  String get becomeATeacher => 'Become a teacher and start your journey.';
+
+  @override
+  String get myData => 'My Data';
+
+  @override
+  String get myProfile => 'My Profile';
+
+  @override
+  String profileUpdateError(String message) {
+    return 'Error updating profile: $message';
+  }
+
+  @override
+  String noStudentsWithStatus(String state) {
+    return 'No students with status $state';
+  }
+
+  @override
+  String get noName => 'No Name';
+
+  @override
+  String applicationDate(String message) {
+    return 'Application date: $message';
+  }
+
+  @override
+  String get noLevelsConfiguredError =>
+      'Your school has no levels configured. Go to Management -> Levels to add them.';
+
+  @override
+  String get studentAcceptedSuccess => 'Student accepted successfully.';
+
+  @override
+  String get applicationRejected => 'Application rejected.';
+
+  @override
+  String get monday => 'Monday';
+
+  @override
+  String get tuesday => 'Tuesday';
+
+  @override
+  String get wednesday => 'Wednesday';
+
+  @override
+  String get thursday => 'Thursday';
+
+  @override
+  String get friday => 'Friday';
+
+  @override
+  String get saturday => 'Saturday';
+
+  @override
+  String get sunday => 'Sunday';
+
+  @override
+  String get noSchedulesDefined =>
+      'No schedules defined.\nPress (+) to add the first one.';
+
+  @override
+  String get schoolCommunity => 'School Community';
+
+  @override
+  String get errorLoadingLevels => 'Error loading school levels.';
+
+  @override
+  String get errorLoadingMembers => 'Error loading members.';
+
+  @override
+  String get noActiveMembersYet =>
+      'There are no active members in the school yet.';
+
+  @override
+  String get instructors => 'Instructors';
+
+  @override
+  String get myPayments => 'My Payments';
+
+  @override
+  String get errorLoadingPaymentHistory =>
+      'Error loading your payment history.';
+
+  @override
+  String get noPaymentsRegisteredYet => 'You have no registered payments yet.';
+
+  @override
+  String paymentDetails(String concept, String date) {
+    return '$concept\nPaid on $date';
+  }
+
+  @override
+  String get myProgress => 'My Progress';
+
+  @override
+  String get couldNotLoadProgress => 'Could not load your progress.';
+
+  @override
+  String get yourPath => 'Your Path';
+
+  @override
+  String get promotionHistory => 'Promotion History';
+
+  @override
+  String get assignedTechniques => 'Assigned Techniques';
+
+  @override
+  String get myAttendanceHistory => 'My Attendance History';
+
+  @override
+  String get noLevelAssignedYet => 'You don\'t have a level assigned yet.';
+
+  @override
+  String get yourCurrentLevel => 'Your Current Level';
+
+  @override
+  String get progressionSystemNotDefined =>
+      'The progression system has not been defined.';
+
+  @override
+  String get teacherHasNotAssignedTechniques =>
+      'Your teacher has not assigned you techniques yet.';
+
+  @override
+  String get noPromotionsRegisteredYet =>
+      'You have no promotions registered yet.';
+
+  @override
+  String couldNotOpenVideo(String link) {
+    return 'Could not open video: $link';
+  }
+
+  @override
+  String get noDescriptionAvailable => 'No description available.';
+
+  @override
+  String get watchTechniqueVideo => 'Watch Technique Video';
+
+  @override
+  String get close => 'Close';
+
+  @override
+  String get mySchool => 'My School';
+
+  @override
+  String get couldNotLoadSchoolInfo => 'Could not load school information.';
+
+  @override
+  String get schoolName => 'School Name';
+
+  @override
+  String get martialArt => 'Martial Art';
+
+  @override
+  String get address => 'Address';
+
+  @override
+  String get upcomingEvents => 'Upcoming Events';
+
+  @override
+  String get classSchedule => 'Class Schedule';
+
+  @override
+  String get scheduleNotDefinedYet => 'The schedule has not been defined yet.';
+
+  @override
+  String get updateProfileSuccess => 'Profile updated successfully.';
 }

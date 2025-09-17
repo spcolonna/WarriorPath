@@ -676,4 +676,224 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get editSchoolDataDescription =>
       'Modifique o endereço, telefone, descrição, etc.';
+
+  @override
+  String get upcoming => 'Próximos';
+
+  @override
+  String get past => 'Passados';
+
+  @override
+  String get noUpcomingEvents => 'Não há eventos futuros.';
+
+  @override
+  String get noPastEvents => 'Não há eventos passados.';
+
+  @override
+  String get errorNoActiveSession => 'Erro: Nenhuma sessão ativa.';
+
+  @override
+  String get profileLoadedError => 'Não foi possível carregar o perfil.';
+
+  @override
+  String get fullName => 'Nome e Sobrenome';
+
+  @override
+  String get saveChanges => 'Salvar Alterações';
+
+  @override
+  String get emergencyInfoNotice =>
+      'Esta informação será visível apenas para os professores da sua escola, se necessário.';
+
+  @override
+  String get emergencyContactName => 'Nome do Contato de Emergência';
+
+  @override
+  String get emergencyContactPhone => 'Telefone do Contato de Emergência';
+
+  @override
+  String get medicalEmergencyService => 'Serviço de Emergência Médica';
+
+  @override
+  String get medicalServiceExample => 'Ex: SAMU, Unimed, etc.';
+
+  @override
+  String get relevantMedicalInfo => 'Informações Médicas Relevantes';
+
+  @override
+  String get medicalInfoExample => 'Ex: Alergias, asma, medicação, etc.';
+
+  @override
+  String get accountActions => 'Ações da Conta';
+
+  @override
+  String get becomeATeacher => 'Torne-se um mestre e inicie seu caminho.';
+
+  @override
+  String get myData => 'Meus Dados';
+
+  @override
+  String get myProfile => 'Meu Perfil';
+
+  @override
+  String profileUpdateError(String message) {
+    return 'Erro ao atualizar o perfil: $message';
+  }
+
+  @override
+  String noStudentsWithStatus(String state) {
+    return 'Não há alunos com o status $state';
+  }
+
+  @override
+  String get noName => 'Sem Nome';
+
+  @override
+  String applicationDate(String message) {
+    return 'Data da solicitação: $message';
+  }
+
+  @override
+  String get noLevelsConfiguredError =>
+      'Sua escola não tem níveis configurados. Vá para Gestão -> Níveis para adicioná-los.';
+
+  @override
+  String get studentAcceptedSuccess => 'Aluno aceito com sucesso.';
+
+  @override
+  String get applicationRejected => 'Solicitação rejeitada.';
+
+  @override
+  String get monday => 'Segunda-feira';
+
+  @override
+  String get tuesday => 'Terça-feira';
+
+  @override
+  String get wednesday => 'Quarta-feira';
+
+  @override
+  String get thursday => 'Quinta-feira';
+
+  @override
+  String get friday => 'Sexta-feira';
+
+  @override
+  String get saturday => 'Sábado';
+
+  @override
+  String get sunday => 'Domingo';
+
+  @override
+  String get noSchedulesDefined =>
+      'Não há horários definidos.\nPressione (+) para adicionar o primeiro.';
+
+  @override
+  String get schoolCommunity => 'Comunidade da Escola';
+
+  @override
+  String get errorLoadingLevels => 'Erro ao carregar os níveis da escola.';
+
+  @override
+  String get errorLoadingMembers => 'Erro ao carregar os membros.';
+
+  @override
+  String get noActiveMembersYet => 'Ainda não há membros ativos na escola.';
+
+  @override
+  String get instructors => 'Instrutores';
+
+  @override
+  String get myPayments => 'Meus Pagamentos';
+
+  @override
+  String get errorLoadingPaymentHistory =>
+      'Erro ao carregar seu histórico de pagamentos.';
+
+  @override
+  String get noPaymentsRegisteredYet =>
+      'Você ainda não tem pagamentos registrados.';
+
+  @override
+  String paymentDetails(String concept, String date) {
+    return '$concept\nPago em $date';
+  }
+
+  @override
+  String get myProgress => 'Meu Progresso';
+
+  @override
+  String get couldNotLoadProgress => 'Não foi possível carregar seu progresso.';
+
+  @override
+  String get yourPath => 'Seu Caminho';
+
+  @override
+  String get promotionHistory => 'Histórico de Promoções';
+
+  @override
+  String get assignedTechniques => 'Técnicas Designadas';
+
+  @override
+  String get myAttendanceHistory => 'Meu Histórico de Presença';
+
+  @override
+  String get noLevelAssignedYet => 'Você ainda não tem um nível designado.';
+
+  @override
+  String get yourCurrentLevel => 'Seu Nível Atual';
+
+  @override
+  String get progressionSystemNotDefined =>
+      'O sistema de progressão não foi definido.';
+
+  @override
+  String get teacherHasNotAssignedTechniques =>
+      'Seu mestre ainda não lhe designou técnicas.';
+
+  @override
+  String get noPromotionsRegisteredYet =>
+      'Você ainda não tem promoções registradas.';
+
+  @override
+  String couldNotOpenVideo(String link) {
+    return 'Não foi possível abrir o vídeo: $link';
+  }
+
+  @override
+  String get noDescriptionAvailable => 'Nenhuma descrição disponível.';
+
+  @override
+  String get watchTechniqueVideo => 'Assistir Vídeo da Técnica';
+
+  @override
+  String get close => 'Fechar';
+
+  @override
+  String get mySchool => 'Minha Escola';
+
+  @override
+  String get couldNotLoadSchoolInfo =>
+      'Não foi possível carregar as informações da escola.';
+
+  @override
+  String get schoolName => 'Nome da Escola';
+
+  @override
+  String get martialArt => 'Arte Marcial';
+
+  @override
+  String get address => 'Endereço';
+
+  @override
+  String get upcomingEvents => 'Próximos Eventos';
+
+  @override
+  String get classSchedule => 'Horário de Aulas';
+
+  @override
+  String get scheduleNotDefinedYet => 'O horário ainda não foi definido.';
+
+  @override
+  String get updateProfileSuccess => 'Perfil atualizado com sucesso.';
 }

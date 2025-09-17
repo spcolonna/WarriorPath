@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:warrior_path/screens/schedule/add_edit_schedule_screen.dart';
-
 import '../../l10n/app_localizations.dart';
 
 class ScheduleManagementScreen extends StatefulWidget {
@@ -14,12 +13,21 @@ class ScheduleManagementScreen extends StatefulWidget {
 
 class _ScheduleManagementScreenState extends State<ScheduleManagementScreen> {
   late AppLocalizations l10n;
+  late final List<String> _dayLabels;
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     l10n = AppLocalizations.of(context);
+    _dayLabels = [
+      l10n.monday,
+      l10n.tuesday,
+      l10n.wednesday,
+      l10n.thursday,
+      l10n.friday,
+      l10n.saturday,
+      l10n.sunday,
+    ];
   }
-  final List<String> _dayLabels = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
   void _deleteSchedule(String scheduleId) {
     showDialog(
@@ -28,7 +36,7 @@ class _ScheduleManagementScreenState extends State<ScheduleManagementScreen> {
         title: Text(l10n.confirmDeletion),
         content: Text(l10n.confirmDeleteSchedule),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(l10n.cancel)),
           TextButton(
             onPressed: () {
               FirebaseFirestore.instance
@@ -50,7 +58,7 @@ class _ScheduleManagementScreenState extends State<ScheduleManagementScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Gestionar Horarios'),
+        title: Text(l10n.manageSchedules),
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
@@ -65,12 +73,11 @@ class _ScheduleManagementScreenState extends State<ScheduleManagementScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(
-              child: Text('No hay horarios definidos.\nPresiona (+) para añadir el primero.', textAlign: TextAlign.center),
+            return Center(
+              child: Text(l10n.noSchedulesDefined, textAlign: TextAlign.center),
             );
           }
 
-          // Agrupar horarios por día de la semana
           final Map<int, List<QueryDocumentSnapshot>> groupedSchedules = {};
           for (var doc in snapshot.data!.docs) {
             final day = doc['dayOfWeek'] as int;
