@@ -1,10 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // --- CAMBIO: Importamos intl para la fecha
+import 'package:intl/intl.dart';
 import 'package:warrior_path/screens/WelcomeScreen.dart';
 import 'package:warrior_path/screens/student/school_search_screen.dart';
 import 'package:warrior_path/screens/wizard_create_school_screen.dart';
+
+import '../../../l10n/app_localizations.dart';
 
 class StudentProfileTabScreen extends StatefulWidget {
   final String memberId;
@@ -15,6 +17,13 @@ class StudentProfileTabScreen extends StatefulWidget {
 }
 
 class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
+  late AppLocalizations l10n;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    l10n = AppLocalizations.of(context);
+  }
+
   late Future<DocumentSnapshot> _userDataFuture;
 
   // --- CAMBIO: Añadimos controllers y variables para los nuevos datos ---
@@ -66,11 +75,10 @@ class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
     _emergencyContactPhoneController.dispose();
     _medicalEmergencyServiceController.dispose();
     _medicalInfoController.dispose();
-    _dobController.dispose(); // --- CAMBIO: Hacemos dispose del nuevo controller
+    _dobController.dispose();
     super.dispose();
   }
 
-  // --- CAMBIO: Añadimos la función para seleccionar fecha (igual que en el wizard) ---
   Future<void> _selectDateOfBirth(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -184,18 +192,17 @@ class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _dobController,
-                    decoration: const InputDecoration(
-                      labelText: 'Fecha de Nacimiento',
+                    decoration: InputDecoration(
+                      labelText: l10n.birdthDate,
                       border: OutlineInputBorder(),
                       suffixIcon: Icon(Icons.calendar_today),
                     ),
                     readOnly: true,
                     onTap: () => _selectDateOfBirth(context),
                   ),
-                  // --- FIN DEL CAMBIO ---
 
                   const SizedBox(height: 32),
-                  Text('Información de Emergencia', style: Theme.of(context).textTheme.titleLarge),
+                  Text(l10n.emergencyInfo, style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 8),
                   const Text('Esta información solo será visible para los maestros de tu escuela en caso de ser necesario.', style: TextStyle(color: Colors.grey)),
                   const SizedBox(height: 16),
@@ -212,7 +219,7 @@ class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
                   else
                     ElevatedButton.icon(
                       icon: const Icon(Icons.save),
-                      label: const Text('Guardar Cambios'),
+                      label: Text('Guardar Cambios'),
                       style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
                       onPressed: _saveProfileChanges,
                     ),
@@ -225,8 +232,8 @@ class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
                     elevation: 2,
                     child: ListTile(
                       leading: Icon(Icons.search, color: Theme.of(context).primaryColor),
-                      title: const Text('Inscribirme en otra Escuela'),
-                      subtitle: const Text('Busca y postúlate a una nueva academia.'),
+                      title: Text(l10n.enrollInAnotherSchool),
+                      subtitle: Text(l10n.joinAnotherCommunity),
                       trailing: const Icon(Icons.arrow_forward_ios),
                       onTap: () { Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SchoolSearchScreen())); },
                     ),
@@ -236,7 +243,7 @@ class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
                     elevation: 2,
                     child: ListTile(
                       leading: Icon(Icons.add_business, color: Theme.of(context).primaryColor),
-                      title: const Text('Crear mi Propia Escuela'),
+                      title: Text(l10n.createNewSchool),
                       subtitle: const Text('Conviértete en maestro e inicia tu camino.'),
                       trailing: const Icon(Icons.arrow_forward_ios),
                       onTap: () { Navigator.of(context).push(MaterialPageRoute(builder: (context) => const WizardCreateSchoolScreen())); },

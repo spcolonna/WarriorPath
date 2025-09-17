@@ -5,20 +5,23 @@ import 'package:warrior_path/screens/role_selector_screen.dart';
 import 'package:warrior_path/screens/student/school_search_screen.dart';
 import 'package:warrior_path/screens/wizard_create_school_screen.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../teacher/edit_teacher_profile_screen.dart';
 
 class ProfileTabScreen extends StatelessWidget {
-  const ProfileTabScreen({Key? key}) : super(key: key);
+  const ProfileTabScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mi Perfil y Acciones'),
+        title: Text(l10n.myProfileAndActions),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            tooltip: 'Cerrar Sesión',
+            tooltip: l10n.logOut,
             onPressed: () async {
               await FirebaseAuth.instance.signOut();
               if (context.mounted) {
@@ -36,8 +39,8 @@ class ProfileTabScreen extends StatelessWidget {
         children: [
           ListTile(
             leading: const Icon(Icons.edit),
-            title: const Text('Editar mi Perfil'),
-            subtitle: const Text('Actualiza tu nombre, foto o contraseña.'),
+            title: Text(l10n.editMyProfile),
+            subtitle: Text(l10n.updateProfileInfo),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () {
               Navigator.of(context).push(
@@ -48,8 +51,8 @@ class ProfileTabScreen extends StatelessWidget {
           const Divider(),
           ListTile(
             leading: const Icon(Icons.swap_horiz),
-            title: const Text('Cambiar de Perfil/Escuela'),
-            subtitle: const Text('Accede a tus otros roles o escuelas.'),
+            title: Text(l10n.switchProfileSchool),
+            subtitle: Text(l10n.accessOtherRoles),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () {
               Navigator.of(context).push(
@@ -64,8 +67,8 @@ class ProfileTabScreen extends StatelessWidget {
             elevation: 2,
             child: ListTile(
               leading: Icon(Icons.search, color: Theme.of(context).primaryColor),
-              title: const Text('Inscribirme en otra Escuela'),
-              subtitle: const Text('Únete a otra comunidad como alumno.'),
+              title: Text(l10n.enrollInAnotherSchool),
+              subtitle: Text(l10n.joinAnotherCommunity),
               trailing: const Icon(Icons.arrow_forward_ios),
               onTap: () {
                 Navigator.of(context).push(
@@ -74,14 +77,14 @@ class ProfileTabScreen extends StatelessWidget {
               },
             ),
           ),
-          const SizedBox(height: 8), // Espacio entre las tarjetas
+          const SizedBox(height: 8),
 
           Card(
             elevation: 2,
             child: ListTile(
               leading: Icon(Icons.add_business, color: Theme.of(context).primaryColor),
-              title: const Text('Crear una Nueva Escuela'),
-              subtitle: const Text('Expande tu legado o abre una nueva sucursal.'),
+              title: Text(l10n.createNewSchool),
+              subtitle: Text(l10n.expandYourLegacy),
               trailing: const Icon(Icons.arrow_forward_ios),
               onTap: () {
                 Navigator.of(context).push(

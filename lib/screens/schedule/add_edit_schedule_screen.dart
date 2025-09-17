@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
+
 class AddEditScheduleScreen extends StatefulWidget {
   final String schoolId;
   // Opcional: podrías pasar un horario existente para editarlo en el futuro
@@ -13,6 +15,13 @@ class AddEditScheduleScreen extends StatefulWidget {
 }
 
 class _AddEditScheduleScreenState extends State<AddEditScheduleScreen> {
+  late AppLocalizations l10n;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    l10n = AppLocalizations.of(context);
+  }
+
   final _titleController = TextEditingController();
   TimeOfDay? _startTime;
   TimeOfDay? _endTime;
@@ -88,7 +97,7 @@ class _AddEditScheduleScreenState extends State<AddEditScheduleScreen> {
       Navigator.of(context).pop();
 
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al guardar: ${e.toString()}')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.saveError(e.toString()))));
     } finally {
       if (mounted) {
         setState(() { _isLoading = false; });
@@ -100,7 +109,7 @@ class _AddEditScheduleScreenState extends State<AddEditScheduleScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Añadir Horario'),
+        title: Text(l10n.addSchedule),
       ),
       body: AbsorbPointer(
         absorbing: _isLoading,
@@ -138,7 +147,7 @@ class _AddEditScheduleScreenState extends State<AddEditScheduleScreen> {
                       onTap: () => _selectTime(context, true),
                       child: InputDecorator(
                         decoration: const InputDecoration(labelText: 'Hora de Inicio'),
-                        child: Text(_startTime?.format(context) ?? 'Seleccionar'),
+                        child: Text(_startTime?.format(context) ?? l10n.select),
                       ),
                     ),
                   ),
@@ -148,7 +157,7 @@ class _AddEditScheduleScreenState extends State<AddEditScheduleScreen> {
                       onTap: () => _selectTime(context, false),
                       child: InputDecorator(
                         decoration: const InputDecoration(labelText: 'Hora de Fin'),
-                        child: Text(_endTime?.format(context) ?? 'Seleccionar'),
+                        child: Text(_endTime?.format(context) ?? l10n.select),
                       ),
                     ),
                   ),
@@ -160,10 +169,10 @@ class _AddEditScheduleScreenState extends State<AddEditScheduleScreen> {
               else
                 ElevatedButton(
                   onPressed: _saveSchedule,
-                  child: const Text('Guardar Horario'),
                   style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16)
                   ),
+                  child: Text(l10n.saveSchedule),
                 ),
             ],
           ),

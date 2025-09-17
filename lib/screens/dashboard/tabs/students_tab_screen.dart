@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:warrior_path/providers/session_provider.dart';
 import 'package:warrior_path/screens/teacher/student_detail_screen.dart';
 
+import '../../../l10n/app_localizations.dart';
+
 class StudentsTabScreen extends StatefulWidget {
   final int initialTabIndex;
 
@@ -17,6 +19,12 @@ class StudentsTabScreen extends StatefulWidget {
 }
 
 class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTickerProviderStateMixin {
+  late AppLocalizations l10n;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    l10n = AppLocalizations.of(context);
+  }
   late TabController _tabController;
 
   @override
@@ -41,18 +49,18 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
     final schoolId = Provider.of<SessionProvider>(context).activeSchoolId;
 
     if (schoolId == null) {
-      return const Center(child: Text('Error: No hay una escuela activa en la sesión.'));
+      return Center(child: Text(l10n.noActiveSchoolError));
     }
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Alumnos'),
+        title: Text(l10n.students),
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [
-            Tab(text: 'Activos'),
-            Tab(text: 'Pendientes'),
-            Tab(text: 'Inactivos'),
+          tabs: [
+            Tab(text: l10n.actives),
+            Tab(text: l10n.pending),
+            Tab(text: l10n.inactives),
           ],
         ),
       ),
@@ -138,12 +146,12 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
               children: [
                 TextButton(
                   onPressed: () => _handleApplication(userId, false, schoolId),
-                  child: const Text('Rechazar', style: TextStyle(color: Colors.red)),
+                  child: Text(l10n.reject, style: TextStyle(color: Colors.red)),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: () => _handleApplication(userId, true, schoolId),
-                  child: const Text('Aceptar'),
+                  child: Text(l10n.accept),
                 ),
               ],
             )
@@ -193,7 +201,7 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
         if(mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Solicitud rechazada.')));
       }
     } catch (e) {
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.genericErrorContent(e.toString()))));
     }
   }
 }

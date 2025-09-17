@@ -4,7 +4,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart'; // --- CAMBIO: Importamos intl
+import 'package:intl/intl.dart';
+
+import '../../l10n/app_localizations.dart'; // --- CAMBIO: Importamos intl
 
 class EditTeacherProfileScreen extends StatefulWidget {
   const EditTeacherProfileScreen({Key? key}) : super(key: key);
@@ -14,9 +16,15 @@ class EditTeacherProfileScreen extends StatefulWidget {
 }
 
 class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
+  late AppLocalizations l10n;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    l10n = AppLocalizations.of(context);
+  }
+
   late Future<DocumentSnapshot> _userDataFuture;
 
-  // --- CAMBIO: Añadimos controllers y variables de estado ---
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _dobController = TextEditingController();
@@ -45,7 +53,6 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
       _phoneController.text = data['phoneNumber'] ?? '';
       _currentPhotoUrl = data['photoUrl'];
 
-      // --- CAMBIO: Cargamos los nuevos datos del perfil ---
       _selectedSex = data['gender'];
       _selectedDateOfBirth = (data['dateOfBirth'] as Timestamp?)?.toDate();
       if (_selectedDateOfBirth != null) {
@@ -59,11 +66,10 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
-    _dobController.dispose(); // --- CAMBIO: Hacemos dispose del nuevo controller
+    _dobController.dispose();
     super.dispose();
   }
 
-  // --- CAMBIO: Añadimos la función para seleccionar fecha ---
   Future<void> _selectDateOfBirth(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -101,7 +107,6 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
         newPhotoUrl = await ref.getDownloadURL();
       }
 
-      // --- CAMBIO: Añadimos los nuevos campos a los datos a guardar ---
       final dataToUpdate = {
         'displayName': _nameController.text.trim(),
         'phoneNumber': _phoneController.text.trim(),
@@ -117,7 +122,7 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
         Navigator.of(context).pop();
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al guardar: ${e.toString()}')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.saveError(e.toString()))));
     } finally {
       if (mounted) setState(() { _isSaving = false; });
     }
@@ -126,7 +131,7 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Editar Mi Perfil')),
+      appBar: AppBar(title: Text(l10n.editMyProfile)),
       body: FutureBuilder<DocumentSnapshot>(
         future: _userDataFuture,
         builder: (context, snapshot) {
@@ -168,17 +173,16 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
                   const SizedBox(height: 24),
                   TextFormField(controller: _nameController, decoration: const InputDecoration(labelText: 'Nombre y Apellido', border: OutlineInputBorder())),
                   const SizedBox(height: 16),
-                  TextFormField(controller: _phoneController, decoration: const InputDecoration(labelText: 'Teléfono', border: OutlineInputBorder()), keyboardType: TextInputType.phone),
+                  TextFormField(controller: _phoneController, decoration: InputDecoration(labelText: l10n.phone, border: OutlineInputBorder()), keyboardType: TextInputType.phone),
 
-                  // --- CAMBIO: Añadimos los nuevos widgets de formulario ---
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     value: _selectedSex,
-                    decoration: const InputDecoration(labelText: 'Género', border: OutlineInputBorder()),
-                    items: ['Masculino', 'Femenino', 'Otro', 'Prefiero no decirlo']
+                    decoration:  InputDecoration(labelText: l10n.gender, border: OutlineInputBorder()),
+                    items: [l10n.maleGender, l10n.femaleGender, l10n.otherGender, l10n.noSpecifyGender]
                         .map((label) => DropdownMenuItem(
-                      child: Text(label),
                       value: label.toLowerCase().replaceAll(' ', '_'),
+                      child: Text(label),
                     ))
                         .toList(),
                     onChanged: (value) {
@@ -190,15 +194,14 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _dobController,
-                    decoration: const InputDecoration(
-                      labelText: 'Fecha de Nacimiento',
+                    decoration: InputDecoration(
+                      labelText: l10n.birdthDate,
                       border: OutlineInputBorder(),
                       suffixIcon: Icon(Icons.calendar_today),
                     ),
                     readOnly: true,
                     onTap: () => _selectDateOfBirth(context),
                   ),
-                  // --- FIN DEL CAMBIO ---
 
                   const SizedBox(height: 32),
                   if (_isSaving)
@@ -206,7 +209,7 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
                   else
                     ElevatedButton.icon(
                       icon: const Icon(Icons.save),
-                      label: const Text('Guardar Cambios'),
+                      label: Text('Guardar Cambios'),
                       style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
                       onPressed: _saveChanges,
                     ),

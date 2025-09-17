@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:warrior_path/providers/session_provider.dart';
 import 'package:warrior_path/screens/schedule/schedule_management_screen.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../teacher/events/event_management_screen.dart';
 import '../../teacher/management/edit_school_data_screen.dart';
 import '../../teacher/management/finance_management_screen.dart';
@@ -10,31 +11,31 @@ import '../../teacher/management/level_management_screen.dart';
 import '../../teacher/management/technique_management_screen.dart';
 
 class ManagementTabScreen extends StatelessWidget {
-  // 1. EL CONSTRUCTOR YA NO NECESITA schoolId
   const ManagementTabScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final schoolId = Provider.of<SessionProvider>(context).activeSchoolId;
 
     if (schoolId == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Gestión de la Escuela')),
-        body: const Center(child: Text('Error: No hay una escuela activa en la sesión.')),
+        appBar: AppBar(title: Text(l10n.schoolManagement)),
+        body: Center(child: Text(l10n.noActiveSchoolError)),
       );
     }
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Gestión de la Escuela'),
+        title: Text(l10n.schoolManagement),
       ),
       body: ListView(
         children: [
           _buildManagementTile(
             context: context,
             icon: Icons.event,
-            title: 'Gestionar Eventos',
-            subtitle: 'Crea exámenes, torneos y seminarios.',
+            title: l10n.manageEvents,
+            subtitle: l10n.manageEventsDescription,
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (context) => EventManagementScreen(schoolId: schoolId)),
@@ -45,8 +46,8 @@ class ManagementTabScreen extends StatelessWidget {
           _buildManagementTile(
             context: context,
             icon: Icons.calendar_today,
-            title: 'Gestionar Horarios',
-            subtitle: 'Define los turnos y días de tus clases.',
+            title: l10n.saveSchedule,
+            subtitle: l10n.manageSchedulesDescription,
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
@@ -59,8 +60,8 @@ class ManagementTabScreen extends StatelessWidget {
           _buildManagementTile(
             context: context,
             icon: Icons.leaderboard,
-            title: 'Gestionar Niveles',
-            subtitle: 'Edita los nombres, colores y orden de las fajas/cinturones.',
+            title: l10n.manageLevels,
+            subtitle: l10n.manageLevelsDescription,
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (context) => LevelManagementScreen(schoolId: schoolId)),
@@ -71,8 +72,8 @@ class ManagementTabScreen extends StatelessWidget {
           _buildManagementTile(
             context: context,
             icon: Icons.menu_book,
-            title: 'Gestionar Técnicas',
-            subtitle: 'Añade o modifica el currículo de tu escuela.',
+            title: l10n.manageTechniques,
+            subtitle: l10n.manageTechniquesDescription,
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (context) => TechniqueManagementScreen(schoolId: schoolId)),
@@ -83,8 +84,8 @@ class ManagementTabScreen extends StatelessWidget {
           _buildManagementTile(
             context: context,
             icon: Icons.price_check,
-            title: 'Gestionar Finanzas',
-            subtitle: 'Ajusta los precios y planes de pago.',
+            title: l10n.manageFinances,
+            subtitle: l10n.manageFinancesDescription,
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (context) => FinanceManagementScreen(schoolId: schoolId)),
@@ -95,8 +96,8 @@ class ManagementTabScreen extends StatelessWidget {
           _buildManagementTile(
             context: context,
             icon: Icons.store,
-            title: 'Editar Datos de la Escuela',
-            subtitle: 'Modifica la dirección, teléfono, descripción, etc.',
+            title: l10n.editSchoolData,
+            subtitle: l10n.editSchoolDataDescription,
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (context) => EditSchoolDataScreen(schoolId: schoolId)),

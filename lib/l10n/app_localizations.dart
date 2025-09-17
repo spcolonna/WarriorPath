@@ -885,6 +885,426 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Error trying to open mail: {e}'**
   String mailLaunchError(String e);
+
+  /// No description provided for @nameAndMartialArtRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Name and Martial Art are required.'**
+  String get nameAndMartialArtRequired;
+
+  /// No description provided for @needSelectSubSchool.
+  ///
+  /// In en, this message translates to:
+  /// **'If it is a sub-school, you must select the main school.'**
+  String get needSelectSubSchool;
+
+  /// No description provided for @notAuthenticatedUser.
+  ///
+  /// In en, this message translates to:
+  /// **'User not authenticated.'**
+  String get notAuthenticatedUser;
+
+  /// No description provided for @createSchoolError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error creating school: {e}'**
+  String createSchoolError(String e);
+
+  /// No description provided for @crateSchoolStep2.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Your School (Step 2)'**
+  String get crateSchoolStep2;
+
+  /// No description provided for @isSubSchool.
+  ///
+  /// In en, this message translates to:
+  /// **'Is it a Sub-School?'**
+  String get isSubSchool;
+
+  /// No description provided for @pickAColor.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a color'**
+  String get pickAColor;
+
+  /// No description provided for @select.
+  ///
+  /// In en, this message translates to:
+  /// **'Select'**
+  String get select;
+
+  /// No description provided for @configureLevelsStep3.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure Levels (Step 3)'**
+  String get configureLevelsStep3;
+
+  /// No description provided for @addYourFirstLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your first level below.'**
+  String get addYourFirstLevel;
+
+  /// No description provided for @addLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Level'**
+  String get addLevel;
+
+  /// No description provided for @schoolManagement.
+  ///
+  /// In en, this message translates to:
+  /// **'School Management'**
+  String get schoolManagement;
+
+  /// No description provided for @noActiveSchoolError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error: No active school in session.'**
+  String get noActiveSchoolError;
+
+  /// No description provided for @myProfileAndActions.
+  ///
+  /// In en, this message translates to:
+  /// **'My Profile & Actions'**
+  String get myProfileAndActions;
+
+  /// No description provided for @logOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Log Out'**
+  String get logOut;
+
+  /// No description provided for @editMyProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit My Profile'**
+  String get editMyProfile;
+
+  /// No description provided for @updateProfileInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Update your name, photo, or password.'**
+  String get updateProfileInfo;
+
+  /// No description provided for @switchProfileSchool.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch Profile/School'**
+  String get switchProfileSchool;
+
+  /// No description provided for @accessOtherRoles.
+  ///
+  /// In en, this message translates to:
+  /// **'Access your other roles or schools.'**
+  String get accessOtherRoles;
+
+  /// No description provided for @enrollInAnotherSchool.
+  ///
+  /// In en, this message translates to:
+  /// **'Enroll in another School'**
+  String get enrollInAnotherSchool;
+
+  /// No description provided for @joinAnotherCommunity.
+  ///
+  /// In en, this message translates to:
+  /// **'Join another community as a student.'**
+  String get joinAnotherCommunity;
+
+  /// No description provided for @createNewSchool.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a New School'**
+  String get createNewSchool;
+
+  /// No description provided for @expandYourLegacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand your legacy or open a new branch.'**
+  String get expandYourLegacy;
+
+  /// No description provided for @students.
+  ///
+  /// In en, this message translates to:
+  /// **'Students'**
+  String get students;
+
+  /// No description provided for @reject.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject'**
+  String get reject;
+
+  /// No description provided for @accept.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept'**
+  String get accept;
+
+  /// No description provided for @selectProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Profile'**
+  String get selectProfile;
+
+  /// No description provided for @addSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Schedule'**
+  String get addSchedule;
+
+  /// No description provided for @saveSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Schedule'**
+  String get saveSchedule;
+
+  /// No description provided for @confirmDeletion.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Deletion'**
+  String get confirmDeletion;
+
+  /// No description provided for @confirmDeleteSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this schedule?'**
+  String get confirmDeleteSchedule;
+
+  /// No description provided for @manageSchedules.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Schedules'**
+  String get manageSchedules;
+
+  /// No description provided for @confirmDeleteEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to permanently delete this event? This action cannot be undone.'**
+  String get confirmDeleteEvent;
+
+  /// No description provided for @eventDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Event deleted.'**
+  String get eventDeleted;
+
+  /// No description provided for @eventNoLongerExists.
+  ///
+  /// In en, this message translates to:
+  /// **'This event no longer exists.'**
+  String get eventNoLongerExists;
+
+  /// No description provided for @attendees.
+  ///
+  /// In en, this message translates to:
+  /// **'Attendees'**
+  String get attendees;
+
+  /// No description provided for @manageGuests.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Guests'**
+  String get manageGuests;
+
+  /// No description provided for @noStudentsInvitedYet.
+  ///
+  /// In en, this message translates to:
+  /// **'You haven\'t invited any students yet.'**
+  String get noStudentsInvitedYet;
+
+  /// No description provided for @endTime.
+  ///
+  /// In en, this message translates to:
+  /// **'End Time'**
+  String get endTime;
+
+  /// No description provided for @startTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Time'**
+  String get startTime;
+
+  /// No description provided for @daysOfTheWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Days of the week'**
+  String get daysOfTheWeek;
+
+  /// No description provided for @classTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Class Title'**
+  String get classTitle;
+
+  /// No description provided for @classTitleExample.
+  ///
+  /// In en, this message translates to:
+  /// **'Ex: Kids, Adults, Kicks'**
+  String get classTitleExample;
+
+  /// No description provided for @scheduleSavedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule saved successfully.'**
+  String get scheduleSavedSuccess;
+
+  /// No description provided for @endTimeAfterStartTimeError.
+  ///
+  /// In en, this message translates to:
+  /// **'The end time must be after the start time.'**
+  String get endTimeAfterStartTimeError;
+
+  /// No description provided for @pleaseFillAllFields.
+  ///
+  /// In en, this message translates to:
+  /// **'Please fill all required fields.'**
+  String get pleaseFillAllFields;
+
+  /// No description provided for @unknownSchool.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown School'**
+  String get unknownSchool;
+
+  /// No description provided for @noActiveProfilesFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No active profiles found.'**
+  String get noActiveProfilesFound;
+
+  /// No description provided for @enterAs.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter as {e}'**
+  String enterAs(String e);
+
+  /// No description provided for @inSchool.
+  ///
+  /// In en, this message translates to:
+  /// **'in {message}'**
+  String inSchool(String message);
+
+  /// No description provided for @yourAnswer.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Answer: {message}'**
+  String yourAnswer(String message);
+
+  /// No description provided for @cost.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost'**
+  String get cost;
+
+  /// No description provided for @time.
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get time;
+
+  /// No description provided for @date.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get date;
+
+  /// No description provided for @location.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get location;
+
+  /// No description provided for @invited.
+  ///
+  /// In en, this message translates to:
+  /// **'Invited'**
+  String get invited;
+
+  /// No description provided for @eventDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Event Details'**
+  String get eventDetails;
+
+  /// No description provided for @errorSendingResponse.
+  ///
+  /// In en, this message translates to:
+  /// **'Error sending response: {e}'**
+  String errorSendingResponse(String e);
+
+  /// No description provided for @responseSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Response sent: {message}'**
+  String responseSent(String message);
+
+  /// No description provided for @manageEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Events'**
+  String get manageEvents;
+
+  /// No description provided for @manageEventsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Create exams, tournaments, and seminars.'**
+  String get manageEventsDescription;
+
+  /// No description provided for @manageSchedulesDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Define the shifts and days of your classes.'**
+  String get manageSchedulesDescription;
+
+  /// No description provided for @manageLevels.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Levels'**
+  String get manageLevels;
+
+  /// No description provided for @manageLevelsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit the names, colors, and order of the sashes/belts.'**
+  String get manageLevelsDescription;
+
+  /// No description provided for @manageTechniques.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Techniques'**
+  String get manageTechniques;
+
+  /// No description provided for @manageTechniquesDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Add or modify your school\'s curriculum.'**
+  String get manageTechniquesDescription;
+
+  /// No description provided for @manageFinances.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Finances'**
+  String get manageFinances;
+
+  /// No description provided for @manageFinancesDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Adjust prices and payment plans.'**
+  String get manageFinancesDescription;
+
+  /// No description provided for @editSchoolData.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit School Data'**
+  String get editSchoolData;
+
+  /// No description provided for @editSchoolDataDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Modify the address, phone, description, etc.'**
+  String get editSchoolDataDescription;
 }
 
 class _AppLocalizationsDelegate

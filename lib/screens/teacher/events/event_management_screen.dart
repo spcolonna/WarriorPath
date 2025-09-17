@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:warrior_path/screens/teacher/events/add_edit_event_screen.dart';
 
+import '../../../l10n/app_localizations.dart';
 import 'event_detail_screen.dart';
 
 class EventManagementScreen extends StatefulWidget {
@@ -14,6 +15,13 @@ class EventManagementScreen extends StatefulWidget {
 }
 
 class _EventManagementScreenState extends State<EventManagementScreen> with SingleTickerProviderStateMixin {
+  late AppLocalizations l10n;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    l10n = AppLocalizations.of(context);
+  }
+
   late TabController _tabController;
 
   @override
@@ -32,7 +40,7 @@ class _EventManagementScreenState extends State<EventManagementScreen> with Sing
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Gestionar Eventos'),
+        title: Text(l10n.manageEvents),
         bottom: TabBar(
           controller: _tabController,
           tabs: const [Tab(text: 'Próximos'), Tab(text: 'Pasados')],

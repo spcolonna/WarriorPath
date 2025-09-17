@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:warrior_path/screens/role_selector_screen.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../models/event_model.dart';
 import '../student_event_detail_screen.dart';
 
@@ -13,6 +14,7 @@ class SchoolInfoTabScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mi Escuela'),
@@ -73,10 +75,10 @@ class SchoolInfoTabScreen extends StatelessWidget {
 
                 _buildInfoCard(
                     context: context,
-                    title: 'Información de Contacto',
+                    title: l10n.contactData,
                     children: [
                       ListTile(leading: const Icon(Icons.location_on), title: const Text('Dirección'), subtitle: Text('${schoolData['address'] ?? ''}, ${schoolData['city'] ?? ''}')),
-                      ListTile(leading: const Icon(Icons.phone), title: const Text('Teléfono'), subtitle: Text(schoolData['phone'] ?? 'No especificado')),
+                      ListTile(leading: const Icon(Icons.phone), title: Text(l10n.phone), subtitle: Text(schoolData['phone'] ?? l10n.noSpecify)),
                     ]
                 ),
 

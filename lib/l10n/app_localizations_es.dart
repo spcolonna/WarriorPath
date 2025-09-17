@@ -441,4 +441,238 @@ class AppLocalizationsEs extends AppLocalizations {
   String mailLaunchError(String e) {
     return 'Error al intentar abrir el correo: $e';
   }
+
+  @override
+  String get nameAndMartialArtRequired =>
+      'Nombre y Arte Marcial son requeridos.';
+
+  @override
+  String get needSelectSubSchool =>
+      'Si es una sub-escuela, debes seleccionar la escuela principal.';
+
+  @override
+  String get notAuthenticatedUser => 'Usuario no autenticado.';
+
+  @override
+  String createSchoolError(String e) {
+    return 'Error al crear la escuela: $e';
+  }
+
+  @override
+  String get crateSchoolStep2 => 'Crear tu Escuela (Paso 2)';
+
+  @override
+  String get isSubSchool => '¿Es una Sub-Escuela?';
+
+  @override
+  String get pickAColor => 'Elige un color';
+
+  @override
+  String get select => 'Seleccionar';
+
+  @override
+  String get configureLevelsStep3 => 'Configurar Niveles (Paso 3)';
+
+  @override
+  String get addYourFirstLevel => 'Añade tu primer nivel abajo.';
+
+  @override
+  String get addLevel => 'Añadir Nivel';
+
+  @override
+  String get schoolManagement => 'Gestión de la Escuela';
+
+  @override
+  String get noActiveSchoolError =>
+      'Error: No hay una escuela activa en la sesión.';
+
+  @override
+  String get myProfileAndActions => 'Mi Perfil y Acciones';
+
+  @override
+  String get logOut => 'Cerrar Sesión';
+
+  @override
+  String get editMyProfile => 'Editar mi Perfil';
+
+  @override
+  String get updateProfileInfo => 'Actualiza tu nombre, foto o contraseña.';
+
+  @override
+  String get switchProfileSchool => 'Cambiar de Perfil/Escuela';
+
+  @override
+  String get accessOtherRoles => 'Accede a tus otros roles o escuelas.';
+
+  @override
+  String get enrollInAnotherSchool => 'Inscribirme en otra Escuela';
+
+  @override
+  String get joinAnotherCommunity => 'Únete a otra comunidad como alumno.';
+
+  @override
+  String get createNewSchool => 'Crear una Nueva Escuela';
+
+  @override
+  String get expandYourLegacy => 'Expande tu legado o abre una nueva sucursal.';
+
+  @override
+  String get students => 'Alumnos';
+
+  @override
+  String get reject => 'Rechazar';
+
+  @override
+  String get accept => 'Aceptar';
+
+  @override
+  String get selectProfile => 'Seleccionar Perfil';
+
+  @override
+  String get addSchedule => 'Añadir Horario';
+
+  @override
+  String get saveSchedule => 'Guardar Horario';
+
+  @override
+  String get confirmDeletion => 'Confirmar Eliminación';
+
+  @override
+  String get confirmDeleteSchedule =>
+      '¿Estás seguro de que quieres eliminar este horario?';
+
+  @override
+  String get manageSchedules => 'Gestionar Horarios';
+
+  @override
+  String get confirmDeleteEvent =>
+      '¿Estás seguro de que quieres eliminar este evento permanentemente? Esta acción no se puede deshacer.';
+
+  @override
+  String get eventDeleted => 'Evento eliminado.';
+
+  @override
+  String get eventNoLongerExists => 'Este evento ya no existe.';
+
+  @override
+  String get attendees => 'Asistentes';
+
+  @override
+  String get manageGuests => 'Gestionar Invitados';
+
+  @override
+  String get noStudentsInvitedYet => 'Aún no has invitado a ningún alumno.';
+
+  @override
+  String get endTime => 'Hora de Fin';
+
+  @override
+  String get startTime => 'Hora de Inicio';
+
+  @override
+  String get daysOfTheWeek => 'Días de la semana';
+
+  @override
+  String get classTitle => 'Título de la Clase';
+
+  @override
+  String get classTitleExample => 'Ej: Niños, Adultos, Kicks';
+
+  @override
+  String get scheduleSavedSuccess => 'Horario guardado con éxito.';
+
+  @override
+  String get endTimeAfterStartTimeError =>
+      'La hora de fin debe ser posterior a la hora de inicio.';
+
+  @override
+  String get pleaseFillAllFields =>
+      'Por favor, completa todos los campos requeridos.';
+
+  @override
+  String get unknownSchool => 'Escuela Desconocida';
+
+  @override
+  String get noActiveProfilesFound => 'No se encontraron perfiles activos.';
+
+  @override
+  String enterAs(String e) {
+    return 'Entrar como $e';
+  }
+
+  @override
+  String inSchool(String message) {
+    return 'en $message';
+  }
+
+  @override
+  String yourAnswer(String message) {
+    return 'Tu Respuesta: $message';
+  }
+
+  @override
+  String get cost => 'Costo';
+
+  @override
+  String get time => 'Hora';
+
+  @override
+  String get date => 'Fecha';
+
+  @override
+  String get location => 'Ubicación';
+
+  @override
+  String get invited => 'Invitado';
+
+  @override
+  String get eventDetails => 'Detalles del Evento';
+
+  @override
+  String errorSendingResponse(String e) {
+    return 'Error al enviar respuesta: $e';
+  }
+
+  @override
+  String responseSent(String message) {
+    return 'Respuesta enviada: $message';
+  }
+
+  @override
+  String get manageEvents => 'Gestionar Eventos';
+
+  @override
+  String get manageEventsDescription => 'Crea exámenes, torneos y seminarios.';
+
+  @override
+  String get manageSchedulesDescription =>
+      'Define los turnos y días de tus clases.';
+
+  @override
+  String get manageLevels => 'Gestionar Niveles';
+
+  @override
+  String get manageLevelsDescription =>
+      'Edita los nombres, colores y orden de las fajas/cinturones.';
+
+  @override
+  String get manageTechniques => 'Gestionar Técnicas';
+
+  @override
+  String get manageTechniquesDescription =>
+      'Añade o modifica el currículo de tu escuela.';
+
+  @override
+  String get manageFinances => 'Gestionar Finanzas';
+
+  @override
+  String get manageFinancesDescription =>
+      'Ajusta los precios y planes de pago.';
+
+  @override
+  String get editSchoolData => 'Editar Datos de la Escuela';
+
+  @override
+  String get editSchoolDataDescription =>
+      'Modifica la dirección, teléfono, descripción, etc.';
 }

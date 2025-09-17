@@ -5,6 +5,7 @@ import 'package:warrior_path/providers/session_provider.dart';
 import 'package:warrior_path/providers/theme_provider.dart';
 import 'package:warrior_path/screens/subscription_lapsed_screen.dart';
 
+import '../l10n/app_localizations.dart';
 import 'dashboard/tabs/home_tab_screen.dart';
 import 'dashboard/tabs/management_tab_screen.dart';
 import 'dashboard/tabs/profile_tab_screen.dart';
@@ -19,6 +20,13 @@ class TeacherDashboardScreen extends StatefulWidget {
 }
 
 class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
+  late AppLocalizations l10n;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    l10n = AppLocalizations.of(context);
+  }
+
   int _selectedIndex = 0;
 
   bool _isCheckingSubscription = true;
@@ -112,11 +120,11 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
         children: _widgetOptions,
       ),
       bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Inicio'),
-          BottomNavigationBarItem(icon: Icon(Icons.groups), label: 'Alumnos'),
-          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Gestión'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Perfil'),
+        items:  <BottomNavigationBarItem>[
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: l10n.home),
+          BottomNavigationBarItem(icon: Icon(Icons.groups), label: l10n.students),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: l10n.managment),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: l10n.profile),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Theme.of(context).primaryColor,

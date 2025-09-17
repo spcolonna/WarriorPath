@@ -441,4 +441,235 @@ class AppLocalizationsEn extends AppLocalizations {
   String mailLaunchError(String e) {
     return 'Error trying to open mail: $e';
   }
+
+  @override
+  String get nameAndMartialArtRequired => 'Name and Martial Art are required.';
+
+  @override
+  String get needSelectSubSchool =>
+      'If it is a sub-school, you must select the main school.';
+
+  @override
+  String get notAuthenticatedUser => 'User not authenticated.';
+
+  @override
+  String createSchoolError(String e) {
+    return 'Error creating school: $e';
+  }
+
+  @override
+  String get crateSchoolStep2 => 'Create Your School (Step 2)';
+
+  @override
+  String get isSubSchool => 'Is it a Sub-School?';
+
+  @override
+  String get pickAColor => 'Pick a color';
+
+  @override
+  String get select => 'Select';
+
+  @override
+  String get configureLevelsStep3 => 'Configure Levels (Step 3)';
+
+  @override
+  String get addYourFirstLevel => 'Add your first level below.';
+
+  @override
+  String get addLevel => 'Add Level';
+
+  @override
+  String get schoolManagement => 'School Management';
+
+  @override
+  String get noActiveSchoolError => 'Error: No active school in session.';
+
+  @override
+  String get myProfileAndActions => 'My Profile & Actions';
+
+  @override
+  String get logOut => 'Log Out';
+
+  @override
+  String get editMyProfile => 'Edit My Profile';
+
+  @override
+  String get updateProfileInfo => 'Update your name, photo, or password.';
+
+  @override
+  String get switchProfileSchool => 'Switch Profile/School';
+
+  @override
+  String get accessOtherRoles => 'Access your other roles or schools.';
+
+  @override
+  String get enrollInAnotherSchool => 'Enroll in another School';
+
+  @override
+  String get joinAnotherCommunity => 'Join another community as a student.';
+
+  @override
+  String get createNewSchool => 'Create a New School';
+
+  @override
+  String get expandYourLegacy => 'Expand your legacy or open a new branch.';
+
+  @override
+  String get students => 'Students';
+
+  @override
+  String get reject => 'Reject';
+
+  @override
+  String get accept => 'Accept';
+
+  @override
+  String get selectProfile => 'Select Profile';
+
+  @override
+  String get addSchedule => 'Add Schedule';
+
+  @override
+  String get saveSchedule => 'Save Schedule';
+
+  @override
+  String get confirmDeletion => 'Confirm Deletion';
+
+  @override
+  String get confirmDeleteSchedule =>
+      'Are you sure you want to delete this schedule?';
+
+  @override
+  String get manageSchedules => 'Manage Schedules';
+
+  @override
+  String get confirmDeleteEvent =>
+      'Are you sure you want to permanently delete this event? This action cannot be undone.';
+
+  @override
+  String get eventDeleted => 'Event deleted.';
+
+  @override
+  String get eventNoLongerExists => 'This event no longer exists.';
+
+  @override
+  String get attendees => 'Attendees';
+
+  @override
+  String get manageGuests => 'Manage Guests';
+
+  @override
+  String get noStudentsInvitedYet => 'You haven\'t invited any students yet.';
+
+  @override
+  String get endTime => 'End Time';
+
+  @override
+  String get startTime => 'Start Time';
+
+  @override
+  String get daysOfTheWeek => 'Days of the week';
+
+  @override
+  String get classTitle => 'Class Title';
+
+  @override
+  String get classTitleExample => 'Ex: Kids, Adults, Kicks';
+
+  @override
+  String get scheduleSavedSuccess => 'Schedule saved successfully.';
+
+  @override
+  String get endTimeAfterStartTimeError =>
+      'The end time must be after the start time.';
+
+  @override
+  String get pleaseFillAllFields => 'Please fill all required fields.';
+
+  @override
+  String get unknownSchool => 'Unknown School';
+
+  @override
+  String get noActiveProfilesFound => 'No active profiles found.';
+
+  @override
+  String enterAs(String e) {
+    return 'Enter as $e';
+  }
+
+  @override
+  String inSchool(String message) {
+    return 'in $message';
+  }
+
+  @override
+  String yourAnswer(String message) {
+    return 'Your Answer: $message';
+  }
+
+  @override
+  String get cost => 'Cost';
+
+  @override
+  String get time => 'Time';
+
+  @override
+  String get date => 'Date';
+
+  @override
+  String get location => 'Location';
+
+  @override
+  String get invited => 'Invited';
+
+  @override
+  String get eventDetails => 'Event Details';
+
+  @override
+  String errorSendingResponse(String e) {
+    return 'Error sending response: $e';
+  }
+
+  @override
+  String responseSent(String message) {
+    return 'Response sent: $message';
+  }
+
+  @override
+  String get manageEvents => 'Manage Events';
+
+  @override
+  String get manageEventsDescription =>
+      'Create exams, tournaments, and seminars.';
+
+  @override
+  String get manageSchedulesDescription =>
+      'Define the shifts and days of your classes.';
+
+  @override
+  String get manageLevels => 'Manage Levels';
+
+  @override
+  String get manageLevelsDescription =>
+      'Edit the names, colors, and order of the sashes/belts.';
+
+  @override
+  String get manageTechniques => 'Manage Techniques';
+
+  @override
+  String get manageTechniquesDescription =>
+      'Add or modify your school\'s curriculum.';
+
+  @override
+  String get manageFinances => 'Manage Finances';
+
+  @override
+  String get manageFinancesDescription => 'Adjust prices and payment plans.';
+
+  @override
+  String get editSchoolData => 'Edit School Data';
+
+  @override
+  String get editSchoolDataDescription =>
+      'Modify the address, phone, description, etc.';
 }

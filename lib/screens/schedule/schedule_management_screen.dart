@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:warrior_path/screens/schedule/add_edit_schedule_screen.dart';
 
+import '../../l10n/app_localizations.dart';
+
 class ScheduleManagementScreen extends StatefulWidget {
   final String schoolId;
   const ScheduleManagementScreen({Key? key, required this.schoolId}) : super(key: key);
@@ -11,14 +13,20 @@ class ScheduleManagementScreen extends StatefulWidget {
 }
 
 class _ScheduleManagementScreenState extends State<ScheduleManagementScreen> {
+  late AppLocalizations l10n;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    l10n = AppLocalizations.of(context);
+  }
   final List<String> _dayLabels = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
   void _deleteSchedule(String scheduleId) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Confirmar Eliminación'),
-        content: const Text('¿Estás seguro de que quieres eliminar este horario?'),
+        title: Text(l10n.confirmDeletion),
+        content: Text(l10n.confirmDeleteSchedule),
         actions: [
           TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancelar')),
           TextButton(
@@ -31,7 +39,7 @@ class _ScheduleManagementScreenState extends State<ScheduleManagementScreen> {
                   .delete();
               Navigator.of(ctx).pop();
             },
-            child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
+            child: Text(l10n.eliminate, style: TextStyle(color: Colors.red)),
           ),
         ],
       ),

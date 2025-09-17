@@ -112,11 +112,11 @@ class _WizardCreateSchoolScreenState extends State<WizardCreateSchoolScreen> {
 
   Future<void> _continueToNextStep() async {
     if (_schoolNameController.text.trim().isEmpty || _selectedMartialArtTheme == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Nombre y Arte Marcial son requeridos.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.nameAndMartialArtRequired)));
       return;
     }
     if (_isSubSchool && _selectedParentSchool == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Si es una sub-escuela, debes seleccionar la escuela principal.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.needSelectSubSchool)));
       return;
     }
 
@@ -124,7 +124,7 @@ class _WizardCreateSchoolScreenState extends State<WizardCreateSchoolScreen> {
 
     try {
       final user = FirebaseAuth.instance.currentUser;
-      if (user == null) throw Exception("Usuario no autenticado.");
+      if (user == null) throw Exception(l10n.notAuthenticatedUser);
 
       String? logoUrl;
       if (_logoImageFile != null) {
@@ -185,7 +185,7 @@ class _WizardCreateSchoolScreenState extends State<WizardCreateSchoolScreen> {
       );
 
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al crear la escuela: ${e.toString()}')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.createSchoolError(e.toString()))));
     } finally {
       if (mounted) {
         setState(() { _isLoading = false; });
@@ -197,7 +197,7 @@ class _WizardCreateSchoolScreenState extends State<WizardCreateSchoolScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Crear tu Escuela (Paso 2)'),
+        title: Text(l10n.crateSchoolStep2),
         backgroundColor: _selectedMartialArtTheme?.primaryColor ?? AppColors.primaryColor,
       ),
       body: AbsorbPointer(
@@ -260,7 +260,7 @@ class _WizardCreateSchoolScreenState extends State<WizardCreateSchoolScreen> {
               ),
               const SizedBox(height: 16),
               SwitchListTile(
-                title: const Text("¿Es una Sub-Escuela?"),
+                title: const Text('¿Es una Sub-Escuela?'),
                 value: _isSubSchool,
                 onChanged: (bool value) {
                   setState(() {

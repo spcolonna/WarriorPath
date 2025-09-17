@@ -6,6 +6,8 @@ import 'package:warrior_path/providers/session_provider.dart';
 import 'package:warrior_path/screens/student/student_dashboard_screen.dart';
 import 'package:warrior_path/screens/teacher_dashboard_screen.dart';
 
+import '../l10n/app_localizations.dart';
+
 class RoleSelectorScreen extends StatefulWidget {
   const RoleSelectorScreen({Key? key}) : super(key: key);
 
@@ -14,6 +16,13 @@ class RoleSelectorScreen extends StatefulWidget {
 }
 
 class _RoleSelectorScreenState extends State<RoleSelectorScreen> {
+  late AppLocalizations l10n;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    l10n = AppLocalizations.of(context);
+  }
+
   late Future<List<Map<String, dynamic>>> _profilesFuture;
 
   @override
@@ -39,7 +48,7 @@ class _RoleSelectorScreenState extends State<RoleSelectorScreen> {
           return {
             'schoolId': schoolId,
             'role': role,
-            'schoolName': schoolDoc.data()?['name'] ?? 'Escuela Desconocida',
+            'schoolName': schoolDoc.data()?['name'] ?? l10n.unknownSchool,
             'logoUrl': schoolDoc.data()?['logoUrl'],
           };
         }),
@@ -73,7 +82,7 @@ class _RoleSelectorScreenState extends State<RoleSelectorScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Seleccionar Perfil')),
+      appBar: AppBar(title: Text(l10n.selectProfile)),
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _profilesFuture,
         builder: (context, snapshot) {
@@ -81,7 +90,7 @@ class _RoleSelectorScreenState extends State<RoleSelectorScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No se encontraron perfiles activos.'));
+            return Center(child: Text(l10n.noActiveProfilesFound));
           }
 
           final profiles = snapshot.data!;
@@ -99,8 +108,8 @@ class _RoleSelectorScreenState extends State<RoleSelectorScreen> {
                     backgroundImage: (logoUrl != null && logoUrl.isNotEmpty) ? NetworkImage(logoUrl) : null,
                     child: (logoUrl == null || logoUrl.isEmpty) ? const Icon(Icons.school) : null,
                   ),
-                  title: Text('Entrar como $roleText'),
-                  subtitle: Text('en ${profile['schoolName']}'),
+                  title: Text(l10n.enterAs(roleText)),
+                  subtitle: Text(l10n.inSchool(profile['schoolName'])),
                   onTap: () => _selectProfile(profile),
                 ),
               );

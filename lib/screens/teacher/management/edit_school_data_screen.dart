@@ -210,7 +210,7 @@ class _EditSchoolDataScreenState extends State<EditSchoolDataScreen> {
 
               // --- SECCIÓN DE SUB-ESCUELA AÑADIDA ---
               SwitchListTile(
-                title: const Text("Es una Sub-Escuela"),
+                title: const Text('Es una Sub-Escuela'),
                 value: _isSubSchool,
                 onChanged: (bool value) {
                   setState(() {
