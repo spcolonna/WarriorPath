@@ -266,5 +266,7 @@
     "upcomingEvents": "Próximos Eventos",
     "classSchedule": "Horário de Aulas",
     "scheduleNotDefinedYet": "O horário ainda não foi definido.",
-    "updateProfileSuccess": "Perfil atualizado com sucesso."
+    "updateProfileSuccess": "Perfil atualizado com sucesso.",
+    "manageChildren": "Gerenciar Filhos",
+    "manageChildrenSubtitle": "Adicione seus filhos e gerencie seus perfis."
 }

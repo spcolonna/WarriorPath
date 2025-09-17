@@ -1707,6 +1707,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Profile updated successfully.'**
   String get updateProfileSuccess;
+
+  /// No description provided for @manageChildren.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Children'**
+  String get manageChildren;
+
+  /// No description provided for @manageChildrenSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your children and manage their profiles.'**
+  String get manageChildrenSubtitle;
 }
 
 class _AppLocalizationsDelegate

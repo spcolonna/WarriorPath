@@ -350,5 +350,7 @@
     "upcomingEvents": "Upcoming Events",
     "classSchedule": "Class Schedule",
     "scheduleNotDefinedYet": "The schedule has not been defined yet.",
-    "updateProfileSuccess": "Profile updated successfully."
+    "updateProfileSuccess": "Profile updated successfully.",
+    "manageChildren": "Manage Children",
+    "manageChildrenSubtitle": "Add your children and manage their profiles."
 }

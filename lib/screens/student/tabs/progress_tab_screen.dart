@@ -218,11 +218,24 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
     return StreamBuilder<DocumentSnapshot>(
       stream: FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('members').doc(widget.memberId).snapshots(),
       builder: (context, memberSnapshot) {
-        if (!memberSnapshot.hasData) return const SizedBox.shrink();
+        if (memberSnapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (!memberSnapshot.hasData || !memberSnapshot.data!.exists) {
+          return const SizedBox.shrink();
+        }
 
-        final assignedIds = List<String>.from(memberSnapshot.data?['assignedTechniqueIds'] ?? []);
+        final data = memberSnapshot.data!.data() as Map<String, dynamic>?;
+        List<String> assignedIds = [];
+
+        if (data != null && data.containsKey('assignedTechniqueIds')) {
+          if (data['assignedTechniqueIds'] != null) {
+            assignedIds = List<String>.from(data['assignedTechniqueIds']);
+          }
+        }
+
         if (assignedIds.isEmpty) {
-          return Center(child: Padding(padding: EdgeInsets.all(16), child: Text(l10n.teacherHasNotAssignedTechniques)));
+          return Center(child: Padding(padding: const EdgeInsets.all(16), child: Text(l10n.teacherHasNotAssignedTechniques)));
         }
 
         return StreamBuilder<QuerySnapshot>(

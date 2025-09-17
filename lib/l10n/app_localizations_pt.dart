@@ -896,4 +896,11 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get updateProfileSuccess => 'Perfil atualizado com sucesso.';
+
+  @override
+  String get manageChildren => 'Gerenciar Filhos';
+
+  @override
+  String get manageChildrenSubtitle =>
+      'Adicione seus filhos e gerencie seus perfis.';
 }

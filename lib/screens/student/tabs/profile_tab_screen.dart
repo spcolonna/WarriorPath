@@ -152,8 +152,21 @@ class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError || !snapshot.data!.exists) {
-            return Center(child: Text(l10n.profileErrorContent));
+            return Center(child: Text(l10n.profileLoadedError)); // Corregido para usar la clave correcta
           }
+
+          // --- INICIO DE LA CORRECCIÓN PARA EL DROPDOWN ---
+          // 1. Definimos las opciones con claves estables y valores localizados.
+          final Map<String, String> sexOptions = {
+            'male': l10n.maleGender,
+            'female': l10n.femaleGender,
+            'other': l10n.otherGender,
+            'prefers_not_to_say': l10n.noSpecifyGender,
+          };
+
+          // 2. Validamos el valor actual (_selectedSex) contra las CLAVES estables.
+          final bool isValueValid = _selectedSex != null && sexOptions.containsKey(_selectedSex);
+          // --- FIN DE LA CORRECCIÓN ---
 
           return AbsorbPointer(
             absorbing: _isLoading,
@@ -164,50 +177,53 @@ class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
                 children: [
                   Text(l10n.myData, style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 16),
-                  TextFormField(controller: _nameController, decoration: InputDecoration(labelText: l10n.fullName, border: OutlineInputBorder())),
+                  TextFormField(controller: _nameController, decoration: InputDecoration(labelText: l10n.fullName, border: const OutlineInputBorder())),
                   const SizedBox(height: 16),
-                  TextFormField(controller: _phoneController, decoration: InputDecoration(labelText: l10n.phone, border: OutlineInputBorder()), keyboardType: TextInputType.phone),
+                  TextFormField(controller: _phoneController, decoration: InputDecoration(labelText: l10n.phone, border: const OutlineInputBorder()), keyboardType: TextInputType.phone),
+                  const SizedBox(height: 16),
 
-                  const SizedBox(height: 16),
+                  // --- DROPDOWN COMPLETAMENTE CORREGIDO ---
                   DropdownButtonFormField<String>(
-                    value: _selectedSex,
-                    decoration: InputDecoration(labelText: l10n.gender, border: OutlineInputBorder()),
-                    items: [l10n.maleGender, l10n.femaleGender, l10n.otherGender, l10n.noSpecifyGender]
-                        .map((label) => DropdownMenuItem(
-                      value: label.toLowerCase().replaceAll(' ', '_'),
-                      child: Text(label),
-                    ))
-                        .toList(),
+                    value: isValueValid ? _selectedSex : null,
+                    decoration: InputDecoration(labelText: l10n.gender, border: const OutlineInputBorder()),
+                    // 3. Construimos los items a partir del mapa.
+                    items: sexOptions.entries.map((entry) {
+                      return DropdownMenuItem(
+                        value: entry.key, // La clave estable (e.g., 'female')
+                        child: Text(entry.value), // El texto traducido (e.g., 'Femenino')
+                      );
+                    }).toList(),
                     onChanged: (value) {
                       setState(() {
-                        _selectedSex = value;
+                        _selectedSex = value; // Guardamos la clave estable en el estado
                       });
                     },
                   ),
+                  // --- FIN DEL DROPDOWN CORREGIDO ---
+
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _dobController,
                     decoration: InputDecoration(
                       labelText: l10n.birdthDate,
-                      border: OutlineInputBorder(),
-                      suffixIcon: Icon(Icons.calendar_today),
+                      border: const OutlineInputBorder(),
+                      suffixIcon: const Icon(Icons.calendar_today),
                     ),
                     readOnly: true,
                     onTap: () => _selectDateOfBirth(context),
                   ),
-
                   const SizedBox(height: 32),
                   Text(l10n.emergencyInfo, style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 8),
-                  Text(l10n.emergencyInfoNotice, style: TextStyle(color: Colors.grey)),
+                  Text(l10n.emergencyInfoNotice, style: const TextStyle(color: Colors.grey)),
                   const SizedBox(height: 16),
-                  TextFormField(controller: _emergencyContactNameController, decoration: InputDecoration(labelText: l10n.emergencyContactName, border: OutlineInputBorder())),
+                  TextFormField(controller: _emergencyContactNameController, decoration: InputDecoration(labelText: l10n.emergencyContactName, border: const OutlineInputBorder())),
                   const SizedBox(height: 16),
-                  TextFormField(controller: _emergencyContactPhoneController, decoration: InputDecoration(labelText: l10n.emergencyContactPhone, border: OutlineInputBorder()), keyboardType: TextInputType.phone),
+                  TextFormField(controller: _emergencyContactPhoneController, decoration: InputDecoration(labelText: l10n.emergencyContactPhone, border: const OutlineInputBorder()), keyboardType: TextInputType.phone),
                   const SizedBox(height: 16),
-                  TextFormField(controller: _medicalEmergencyServiceController, decoration: InputDecoration(labelText: l10n.medicalEmergencyService, hintText: l10n.medicalServiceExample, border: OutlineInputBorder())),
+                  TextFormField(controller: _medicalEmergencyServiceController, decoration: InputDecoration(labelText: l10n.medicalEmergencyService, hintText: l10n.medicalServiceExample, border: const OutlineInputBorder())),
                   const SizedBox(height: 16),
-                  TextFormField(controller: _medicalInfoController, decoration: InputDecoration(labelText: l10n.relevantMedicalInfo, hintText: l10n.medicalInfoExample, border: OutlineInputBorder()), maxLines: 4),
+                  TextFormField(controller: _medicalInfoController, decoration: InputDecoration(labelText: l10n.relevantMedicalInfo, hintText: l10n.medicalInfoExample, border: const OutlineInputBorder()), maxLines: 4),
                   const SizedBox(height: 32),
                   if (_isLoading)
                     const Center(child: CircularProgressIndicator())
@@ -222,6 +238,22 @@ class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
                   const Divider(),
                   const SizedBox(height: 16),
                   Text(l10n.accountActions, style: Theme.of(context).textTheme.titleLarge),
+                  const SizedBox(height: 16),
+                  Card(
+                    elevation: 2,
+                    child: ListTile(
+                      leading: Icon(Icons.escalator_warning, color: Theme.of(context).primaryColor),
+                      title: Text(l10n.manageChildren),
+                      subtitle: Text(l10n.manageChildrenSubtitle),
+                      trailing: const Icon(Icons.arrow_forward_ios),
+                      onTap: () {
+                        // TODO: Navegar a la pantalla de gestión de hijos.
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Próximo paso: construir esta pantalla.'))
+                        );
+                      },
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   Card(
                     elevation: 2,
