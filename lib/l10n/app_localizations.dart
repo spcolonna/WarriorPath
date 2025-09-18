@@ -1719,6 +1719,204 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add your children and manage their profiles.'**
   String get manageChildrenSubtitle;
+
+  /// No description provided for @iAmAParent.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'m a Parent/Guardian'**
+  String get iAmAParent;
+
+  /// No description provided for @parentFlowDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'By choosing \'Parent/Guardian\', the next step will be to add your children\'s profiles.'**
+  String get parentFlowDescription;
+
+  /// No description provided for @addChild.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Child'**
+  String get addChild;
+
+  /// No description provided for @childProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Child\'s Profile'**
+  String get childProfile;
+
+  /// No description provided for @childFullName.
+  ///
+  /// In en, this message translates to:
+  /// **'Child\'s Full Name'**
+  String get childFullName;
+
+  /// No description provided for @addChildTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Child\'s Profile'**
+  String get addChildTitle;
+
+  /// No description provided for @addChildDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete the data below to create a separate profile for your child. You will be able to enroll them in schools and manage their progress.'**
+  String get addChildDescription;
+
+  /// No description provided for @childData.
+  ///
+  /// In en, this message translates to:
+  /// **'Child\'s Data'**
+  String get childData;
+
+  /// No description provided for @saveChild.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Child'**
+  String get saveChild;
+
+  /// No description provided for @creatingChildProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Creating child\'s profile...'**
+  String get creatingChildProfile;
+
+  /// No description provided for @childProfileCreatedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Child\'s profile created successfully.'**
+  String get childProfileCreatedSuccess;
+
+  /// No description provided for @childProfileCreatedError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error creating child\'s profile: {e}'**
+  String childProfileCreatedError(String e);
+
+  /// No description provided for @requiredField.
+  ///
+  /// In en, this message translates to:
+  /// **'This field is required.'**
+  String get requiredField;
+
+  /// No description provided for @guardianPanel.
+  ///
+  /// In en, this message translates to:
+  /// **'Guardian Panel'**
+  String get guardianPanel;
+
+  /// No description provided for @myChildren.
+  ///
+  /// In en, this message translates to:
+  /// **'My Children'**
+  String get myChildren;
+
+  /// No description provided for @noChildrenAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'You haven\'t added any child profiles yet. Press (+) to start.'**
+  String get noChildrenAdded;
+
+  /// No description provided for @errorLoadingChildren.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading your children\'s profiles.'**
+  String get errorLoadingChildren;
+
+  /// No description provided for @noActiveProfilesMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This profile is not yet enrolled in any school.'**
+  String get noActiveProfilesMessage;
+
+  /// No description provided for @enrollInSchool.
+  ///
+  /// In en, this message translates to:
+  /// **'Enroll in a School'**
+  String get enrollInSchool;
+
+  /// No description provided for @searchForNewSchool.
+  ///
+  /// In en, this message translates to:
+  /// **'Search for a New School'**
+  String get searchForNewSchool;
+
+  /// No description provided for @schoolNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'School name'**
+  String get schoolNameLabel;
+
+  /// No description provided for @alreadyLinkedToSchool.
+  ///
+  /// In en, this message translates to:
+  /// **'You already have a link with this school.'**
+  String get alreadyLinkedToSchool;
+
+  /// No description provided for @confirmApplicationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Application'**
+  String get confirmApplicationTitle;
+
+  /// No description provided for @confirmApplicationMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you want to send your application to join \"{schoolName}\"?'**
+  String confirmApplicationMessage(String schoolName);
+
+  /// No description provided for @send.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get send;
+
+  /// No description provided for @applicationSentSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Application to \"{schoolName}\" sent!'**
+  String applicationSentSuccess(String schoolName);
+
+  /// No description provided for @applicationSentError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error sending application: {e}'**
+  String applicationSentError(String e);
+
+  /// No description provided for @errorLoadingSchools.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading schools.'**
+  String get errorLoadingSchools;
+
+  /// No description provided for @noNewSchoolsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No new schools found.'**
+  String get noNewSchoolsFound;
+
+  /// No description provided for @apply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get apply;
+
+  /// No description provided for @noCity.
+  ///
+  /// In en, this message translates to:
+  /// **'No City'**
+  String get noCity;
+
+  /// No description provided for @manageProfiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Profiles'**
+  String get manageProfiles;
+
+  /// No description provided for @myUser.
+  ///
+  /// In en, this message translates to:
+  /// **'My User'**
+  String get myUser;
 }
 
 class _AppLocalizationsDelegate

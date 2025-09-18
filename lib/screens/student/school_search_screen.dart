@@ -1,32 +1,51 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:warrior_path/providers/session_provider.dart';
 import 'package:warrior_path/screens/student/application_sent_screen.dart';
 
-class SchoolSearchScreen extends StatefulWidget {
-  // Añadimos un flag para saber si venimos del wizard de un nuevo usuario
-  final bool isFromWizard;
+import '../../l10n/app_localizations.dart';
 
-  const SchoolSearchScreen({Key? key, this.isFromWizard = false}) : super(key: key);
+class SchoolSearchScreen extends StatefulWidget {
+  final bool isFromWizard;
+  const SchoolSearchScreen({super.key, this.isFromWizard = false});
 
   @override
   State<SchoolSearchScreen> createState() => _SchoolSearchScreenState();
 }
 
 class _SchoolSearchScreenState extends State<SchoolSearchScreen> {
+  late AppLocalizations l10n;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    l10n = AppLocalizations.of(context);
+  }
+
   final _searchController = TextEditingController();
 
-  late Future<List<QueryDocumentSnapshot>> _schoolsFuture;
   List<QueryDocumentSnapshot> _allSchools = [];
   List<QueryDocumentSnapshot> _filteredSchools = [];
 
   Set<String> _userSchoolIds = {};
-  bool _isLoading = false;
+  bool _isLoading = true;
+  late String _activeProfileId;
 
   @override
   void initState() {
     super.initState();
-    _schoolsFuture = _fetchSchoolsAndFilter();
+    // Usamos WidgetsBinding para acceder al Provider de forma segura en initState
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final sessionProvider = Provider.of<SessionProvider>(context, listen: false);
+      final currentUser = FirebaseAuth.instance.currentUser;
+
+      // Determinamos para quién es la búsqueda (el usuario logueado o un hijo)
+      _activeProfileId = sessionProvider.activeProfileId ?? currentUser!.uid;
+
+      // Cargamos los datos iniciales
+      _fetchSchoolsAndFilter();
+    });
   }
 
   @override
@@ -35,23 +54,22 @@ class _SchoolSearchScreenState extends State<SchoolSearchScreen> {
     super.dispose();
   }
 
-  Future<List<QueryDocumentSnapshot>> _fetchSchoolsAndFilter() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-      if (userDoc.exists) {
-        final memberships = userDoc.data()?['activeMemberships'] as Map<String, dynamic>? ?? {};
-        final pendingApplications = userDoc.data()?['pendingApplications'] as Map<String, dynamic>? ?? {};
-        _userSchoolIds = {...memberships.keys, ...pendingApplications.keys}.toSet();
-      }
+  // --- CAMBIO: Toda la lógica ahora usa '_activeProfileId' ---
+  Future<void> _fetchSchoolsAndFilter() async {
+    setState(() => _isLoading = true);
+
+    final userDoc = await FirebaseFirestore.instance.collection('users').doc(_activeProfileId).get();
+    if (userDoc.exists) {
+      final memberships = userDoc.data()?['activeMemberships'] as Map<String, dynamic>? ?? {};
+      final pendingApplications = userDoc.data()?['pendingApplications'] as Map<String, dynamic>? ?? {};
+      _userSchoolIds = {...memberships.keys, ...pendingApplications.keys}.toSet();
     }
 
     final schoolsSnapshot = await FirebaseFirestore.instance.collection('schools').get();
     _allSchools = schoolsSnapshot.docs;
 
     _applyFilter();
-
-    return _filteredSchools;
+    setState(() => _isLoading = false);
   }
 
   void _applyFilter() {
@@ -67,12 +85,10 @@ class _SchoolSearchScreenState extends State<SchoolSearchScreen> {
     });
   }
 
+  // --- CAMBIO: Toda la lógica de postulación ahora usa '_activeProfileId' ---
   Future<void> _postulateToSchool(String schoolId, String schoolName) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
     if (_userSchoolIds.contains(schoolId)) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ya tienes un vínculo con esta escuela.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.alreadyLinkedToSchool)));
       return;
     }
 
@@ -80,10 +96,10 @@ class _SchoolSearchScreenState extends State<SchoolSearchScreen> {
       context: context,
       barrierDismissible: !_isLoading,
       builder: (ctx) => AlertDialog(
-        title: const Text('Confirmar Postulación'),
-        content: Text('¿Quieres enviar tu solicitud para unirte a "$schoolName"?'),
+        title: Text(l10n.confirmApplicationTitle),
+        content: Text(l10n.confirmApplicationMessage(schoolName)),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(l10n.cancel)),
           TextButton(
             onPressed: () async {
               Navigator.of(ctx).pop();
@@ -91,17 +107,17 @@ class _SchoolSearchScreenState extends State<SchoolSearchScreen> {
 
               try {
                 final firestore = FirebaseFirestore.instance;
-                final userDoc = await firestore.collection('users').doc(user.uid).get();
-                final displayName = userDoc.data()?['displayName'] ?? 'Usuario sin nombre';
-                final batch = firestore.batch();
-                final userRef = firestore.collection('users').doc(user.uid);
+                final userDoc = await firestore.collection('users').doc(_activeProfileId).get();
+                final displayName = userDoc.data()?['displayName'] ?? l10n.noName;
 
-                final memberRef = firestore.collection('schools').doc(schoolId).collection('members').doc(user.uid);
+                final batch = firestore.batch();
+                final userRef = firestore.collection('users').doc(_activeProfileId);
+                final memberRef = firestore.collection('schools').doc(schoolId).collection('members').doc(_activeProfileId);
+
                 batch.set(memberRef, {
-                  'userId': user.uid, 'displayName': displayName, 'status': 'pending', 'applicationDate': FieldValue.serverTimestamp(),
+                  'userId': _activeProfileId, 'displayName': displayName, 'status': 'pending', 'applicationDate': FieldValue.serverTimestamp(),
                 });
 
-                // Lógica unificada para guardar la postulación
                 final Map<String, dynamic> userDataToUpdate = {
                   'pendingApplications.$schoolId': {
                     'schoolName': schoolName,
@@ -109,7 +125,6 @@ class _SchoolSearchScreenState extends State<SchoolSearchScreen> {
                   }
                 };
 
-                // Si es un usuario nuevo, también finalizamos su wizard
                 if (widget.isFromWizard) {
                   userDataToUpdate['wizardStep'] = 99;
                 }
@@ -119,26 +134,23 @@ class _SchoolSearchScreenState extends State<SchoolSearchScreen> {
 
                 if (!mounted) return;
 
-                // Lógica de navegación condicional
                 if (widget.isFromWizard) {
-                  // Si es usuario nuevo, lo llevamos a la pantalla final
                   Navigator.of(context).pushAndRemoveUntil(
                     MaterialPageRoute(builder: (context) => ApplicationSentScreen(schoolName: schoolName)),
                         (route) => false,
                   );
                 } else {
-                  // Si es un usuario existente, solo mostramos un mensaje y volvemos
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('¡Solicitud para "$schoolName" enviada!'), backgroundColor: Colors.green));
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.applicationSentSuccess(schoolName)), backgroundColor: Colors.green));
                   Navigator.of(context).pop();
                 }
 
               } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al enviar la solicitud: ${e.toString()}')));
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.applicationSentError(e.toString()))));
               } finally {
                 if (mounted) setState(() { _isLoading = false; });
               }
             },
-            child: const Text('Enviar'),
+            child: Text(l10n.send),
           ),
         ],
       ),
@@ -148,7 +160,7 @@ class _SchoolSearchScreenState extends State<SchoolSearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Buscar Nueva Escuela')),
+      appBar: AppBar(title: Text(l10n.searchForNewSchool)),
       body: AbsorbPointer(
         absorbing: _isLoading,
         child: Column(
@@ -158,36 +170,34 @@ class _SchoolSearchScreenState extends State<SchoolSearchScreen> {
               child: TextField(
                 controller: _searchController,
                 onChanged: (_) => _applyFilter(),
-                decoration: const InputDecoration(labelText: 'Nombre de la escuela', prefixIcon: Icon(Icons.search), border: OutlineInputBorder()),
+                decoration: InputDecoration(labelText: l10n.schoolNameLabel, prefixIcon: const Icon(Icons.search), border: const OutlineInputBorder()),
               ),
             ),
-            if (_isLoading) const LinearProgressIndicator(),
-            Expanded(
-              child: FutureBuilder<List<QueryDocumentSnapshot>>(
-                future: _schoolsFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-                  if (snapshot.hasError) return const Center(child: Text('Error al cargar las escuelas.'));
-                  if (_filteredSchools.isEmpty) return const Center(child: Text('No se encontraron nuevas escuelas.'));
-
-                  return ListView.builder(
-                    itemCount: _filteredSchools.length,
-                    itemBuilder: (context, index) {
-                      final schoolDoc = _filteredSchools[index];
-                      final schoolData = schoolDoc.data() as Map<String, dynamic>;
-                      return Card(
-                        margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
-                        child: ListTile(
-                          title: Text(schoolData['name'] ?? 'Sin Nombre'),
-                          subtitle: Text('${schoolData['martialArt']} - ${schoolData['city'] ?? 'Sin Ciudad'}'),
-                          trailing: ElevatedButton(child: const Text('Postularme'), onPressed: () => _postulateToSchool(schoolDoc.id, schoolData['name'])),
+            if (_isLoading && _allSchools.isEmpty) // Muestra el loader solo en la carga inicial
+              const Expanded(child: Center(child: CircularProgressIndicator()))
+            else
+              Expanded(
+                child: _filteredSchools.isEmpty
+                    ? Center(child: Text(l10n.noNewSchoolsFound))
+                    : ListView.builder(
+                  itemCount: _filteredSchools.length,
+                  itemBuilder: (context, index) {
+                    final schoolDoc = _filteredSchools[index];
+                    final schoolData = schoolDoc.data() as Map<String, dynamic>;
+                    return Card(
+                      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                      child: ListTile(
+                        title: Text(schoolData['name'] ?? l10n.noName),
+                        subtitle: Text('${schoolData['martialArt']} - ${schoolData['city'] ?? l10n.noCity}'),
+                        trailing: ElevatedButton(
+                            child: Text(l10n.apply),
+                            onPressed: () => _postulateToSchool(schoolDoc.id, schoolData['name'])
                         ),
-                      );
-                    },
-                  );
-                },
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
           ],
         ),
       ),

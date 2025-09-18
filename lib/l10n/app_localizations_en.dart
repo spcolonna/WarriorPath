@@ -898,4 +898,117 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get manageChildrenSubtitle =>
       'Add your children and manage their profiles.';
+
+  @override
+  String get iAmAParent => 'I\'m a Parent/Guardian';
+
+  @override
+  String get parentFlowDescription =>
+      'By choosing \'Parent/Guardian\', the next step will be to add your children\'s profiles.';
+
+  @override
+  String get addChild => 'Add Child';
+
+  @override
+  String get childProfile => 'Child\'s Profile';
+
+  @override
+  String get childFullName => 'Child\'s Full Name';
+
+  @override
+  String get addChildTitle => 'Add Child\'s Profile';
+
+  @override
+  String get addChildDescription =>
+      'Complete the data below to create a separate profile for your child. You will be able to enroll them in schools and manage their progress.';
+
+  @override
+  String get childData => 'Child\'s Data';
+
+  @override
+  String get saveChild => 'Save Child';
+
+  @override
+  String get creatingChildProfile => 'Creating child\'s profile...';
+
+  @override
+  String get childProfileCreatedSuccess =>
+      'Child\'s profile created successfully.';
+
+  @override
+  String childProfileCreatedError(String e) {
+    return 'Error creating child\'s profile: $e';
+  }
+
+  @override
+  String get requiredField => 'This field is required.';
+
+  @override
+  String get guardianPanel => 'Guardian Panel';
+
+  @override
+  String get myChildren => 'My Children';
+
+  @override
+  String get noChildrenAdded =>
+      'You haven\'t added any child profiles yet. Press (+) to start.';
+
+  @override
+  String get errorLoadingChildren => 'Error loading your children\'s profiles.';
+
+  @override
+  String get noActiveProfilesMessage =>
+      'This profile is not yet enrolled in any school.';
+
+  @override
+  String get enrollInSchool => 'Enroll in a School';
+
+  @override
+  String get searchForNewSchool => 'Search for a New School';
+
+  @override
+  String get schoolNameLabel => 'School name';
+
+  @override
+  String get alreadyLinkedToSchool =>
+      'You already have a link with this school.';
+
+  @override
+  String get confirmApplicationTitle => 'Confirm Application';
+
+  @override
+  String confirmApplicationMessage(String schoolName) {
+    return 'Do you want to send your application to join \"$schoolName\"?';
+  }
+
+  @override
+  String get send => 'Send';
+
+  @override
+  String applicationSentSuccess(String schoolName) {
+    return 'Application to \"$schoolName\" sent!';
+  }
+
+  @override
+  String applicationSentError(String e) {
+    return 'Error sending application: $e';
+  }
+
+  @override
+  String get errorLoadingSchools => 'Error loading schools.';
+
+  @override
+  String get noNewSchoolsFound => 'No new schools found.';
+
+  @override
+  String get apply => 'Apply';
+
+  @override
+  String get noCity => 'No City';
+
+  @override
+  String get manageProfiles => 'Manage Profiles';
+
+  @override
+  String get myUser => 'My User';
 }

@@ -901,4 +901,117 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get manageChildrenSubtitle =>
       'Añade a tus hijos y gestiona sus perfiles.';
+
+  @override
+  String get iAmAParent => 'Soy Padre/Tutor';
+
+  @override
+  String get parentFlowDescription =>
+      'Al elegir \'Padre/Tutor\', el siguiente paso será añadir los perfiles de tus hijos.';
+
+  @override
+  String get addChild => 'Añadir Hijo/a';
+
+  @override
+  String get childProfile => 'Perfil del Hijo/a';
+
+  @override
+  String get childFullName => 'Nombre y Apellido del Hijo/a';
+
+  @override
+  String get addChildTitle => 'Añadir Perfil de Hijo/a';
+
+  @override
+  String get addChildDescription =>
+      'Completa los datos a continuación para crear un perfil separado para tu hijo/a. Podrás inscribirlo/a en escuelas y gestionar su progreso.';
+
+  @override
+  String get childData => 'Datos del Hijo/a';
+
+  @override
+  String get saveChild => 'Guardar Hijo/a';
+
+  @override
+  String get creatingChildProfile => 'Creando perfil del hijo/a...';
+
+  @override
+  String get childProfileCreatedSuccess =>
+      'Perfil del hijo/a creado con éxito.';
+
+  @override
+  String childProfileCreatedError(String e) {
+    return 'Error al crear el perfil del hijo/a: $e';
+  }
+
+  @override
+  String get requiredField => 'Este campo es requerido.';
+
+  @override
+  String get guardianPanel => 'Panel de Tutor';
+
+  @override
+  String get myChildren => 'Mis Hijos';
+
+  @override
+  String get noChildrenAdded =>
+      'Aún no has añadido ningún perfil de hijo/a. Presiona (+) para empezar.';
+
+  @override
+  String get errorLoadingChildren =>
+      'Error al cargar los perfiles de tus hijos.';
+
+  @override
+  String get noActiveProfilesMessage =>
+      'Este perfil todavía no está inscrito en ninguna escuela.';
+
+  @override
+  String get enrollInSchool => 'Inscribir en una Escuela';
+
+  @override
+  String get searchForNewSchool => 'Buscar Nueva Escuela';
+
+  @override
+  String get schoolNameLabel => 'Nombre de la escuela';
+
+  @override
+  String get alreadyLinkedToSchool => 'Ya tienes un vínculo con esta escuela.';
+
+  @override
+  String get confirmApplicationTitle => 'Confirmar Postulación';
+
+  @override
+  String confirmApplicationMessage(String schoolName) {
+    return '¿Quieres enviar tu solicitud para unirte a \"$schoolName\"?';
+  }
+
+  @override
+  String get send => 'Enviar';
+
+  @override
+  String applicationSentSuccess(String schoolName) {
+    return '¡Solicitud para \"$schoolName\" enviada!';
+  }
+
+  @override
+  String applicationSentError(String e) {
+    return 'Error al enviar la solicitud: $e';
+  }
+
+  @override
+  String get errorLoadingSchools => 'Error al cargar las escuelas.';
+
+  @override
+  String get noNewSchoolsFound => 'No se encontraron nuevas escuelas.';
+
+  @override
+  String get apply => 'Postularme';
+
+  @override
+  String get noCity => 'Sin Ciudad';
+
+  @override
+  String get manageProfiles => 'Gestionar Perfiles';
+
+  @override
+  String get myUser => 'Mi Usuario';
 }

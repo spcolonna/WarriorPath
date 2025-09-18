@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:warrior_path/screens/parent/guardian_dashboard_screen.dart';
 import 'package:warrior_path/screens/role_selector_screen.dart';
 import 'package:warrior_path/screens/student/application_sent_screen.dart';
 import 'package:warrior_path/screens/student/school_search_screen.dart';
@@ -51,22 +52,39 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const WizardProfileScreen()));
     } else {
       final memberships = userData['activeMemberships'] as Map<String, dynamic>? ?? {};
-      final pendingApplication = userData['pendingApplication'] as Map<String, dynamic>?;
-      if (memberships.isEmpty && pendingApplication != null) {
-        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => ApplicationSentScreen(schoolName: pendingApplication['schoolName'] ?? '')));
-      } else if (memberships.isEmpty){
-        Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SchoolSearchScreen()));
-      } else if (memberships.length == 1) {
-        final schoolId = memberships.keys.first;
-        final role = memberships.values.first;
-        Provider.of<SessionProvider>(context, listen: false).setActiveSession(schoolId, role);
-        Widget destination = (role == 'maestro') ? const TeacherDashboardScreen() : const StudentDashboardScreen();
-        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => destination));
-      } else if (memberships.length > 1) {
-        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const RoleSelectorScreen()));
+      // Leemos el rol principal que el usuario eligió en el wizard
+      final mainRole = userData['role'] as String?;
+
+      // Caso 1: El usuario es principalmente un tutor
+      if (mainRole == 'parent') {
+        // Si su rol es 'parent', SIEMPRE va a su panel de tutor.
+        // Aquí es donde verá la lista de sus hijos (o una lista vacía si aún no ha añadido ninguno).
+        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const GuardianDashboardScreen()));
+
+        // Caso 2: El usuario es alumno/maestro y ya tiene membresías activas
+      } else if (memberships.isNotEmpty) {
+        if (memberships.length == 1) {
+          // Entra directo a su único rol
+          final schoolId = memberships.keys.first;
+          final role = memberships.values.first;
+          Provider.of<SessionProvider>(context, listen: false).setFullActiveSession(schoolId, role, user.uid);
+          Widget destination = (role == 'maestro') ? const TeacherDashboardScreen() : const StudentDashboardScreen();
+          Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => destination));
+        } else {
+          // Tiene múltiples roles, va al selector
+          Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const RoleSelectorScreen()));
+        }
+
+        // Caso 3: El usuario es alumno/maestro pero AÚN NO tiene membresías
       } else {
-        _showErrorDialog(l10n.accessDeniedTitle, l10n.accessDeniedContent);
-        if (mounted) setState(() { _isLoading = false; });
+        final pendingApplication = userData['pendingApplications'] as Map<String, dynamic>?;
+        if (pendingApplication != null) {
+          // Tiene una postulación pendiente
+          Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => ApplicationSentScreen(schoolName: pendingApplication['schoolName'] ?? '')));
+        } else {
+          // Es un alumno/maestro sin escuela, lo mandamos a buscar una
+          Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SchoolSearchScreen()));
+        }
       }
     }
   }
@@ -172,7 +190,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      l10n.appName, 
+                      l10n.appName,
                       textAlign: TextAlign.center,
                       style: const TextStyle(fontSize: 42.0, fontWeight: FontWeight.bold, color: AppColors.textWhite),
                     ),
@@ -194,14 +212,14 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   children: [
                     const SizedBox(height: 20),
                     Text(
-                      l10n.appSlogan, 
+                      l10n.appSlogan,
                       textAlign: TextAlign.center,
                       style: const TextStyle(fontSize: 18, color: AppColors.textLight),
                     ),
                     const SizedBox(height: 32.0),
                     CustomInputField(
                       controller: _emailController,
-                      labelText: l10n.emailLabel, 
+                      labelText: l10n.emailLabel,
                       icon: Icons.email_outlined,
                     ),
                     const SizedBox(height: 16.0),
@@ -222,7 +240,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                             onPressed: () {
                               Navigator.of(context).push(MaterialPageRoute(builder: (context) => const ForgotPasswordScreen()));
                             },
-                            child: Text(l10n.forgotPasswordLink), 
+                            child: Text(l10n.forgotPasswordLink),
                           )
                         ],
                       ),

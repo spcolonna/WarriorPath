@@ -38,19 +38,20 @@ class UserModel {
     };
   }
 
-  // Crear un UserModel desde un DocumentSnapshot de Firestore
   factory UserModel.fromSnap(DocumentSnapshot snap) {
-    var data = snap.data() as Map<String, dynamic>;
+    var data = snap.data() as Map<String, dynamic>? ?? {};
+
     return UserModel(
-      uid: data['uid'],
-      email: data['email'],
+      uid: data['uid'] ?? snap.id,
+      email: data['email'] ?? '',
+
       displayName: data['displayName'],
       phoneNumber: data['phoneNumber'],
       photoUrl: data['photoUrl'],
       role: data['role'],
+      wizardStep: data['wizardStep'] ?? 0,
       gender: data['gender'],
       dateOfBirth: (data['dateOfBirth'] as Timestamp?)?.toDate(),
-      wizardStep: data['wizardStep'] ?? 0,
     );
   }
 }

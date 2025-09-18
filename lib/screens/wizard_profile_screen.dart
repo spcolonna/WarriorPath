@@ -5,10 +5,12 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:warrior_path/screens/parent/add_child_screen.dart';
 import 'package:warrior_path/screens/student/school_search_screen.dart';
 import 'package:warrior_path/screens/wizard_create_school_screen.dart';
+import 'package:warrior_path/l10n/app_localizations.dart';
+import '../enums/user_role.dart';
 
-enum UserRole { student, teacher, both }
 
 class WizardProfileScreen extends StatefulWidget {
   final bool isExistingUser;
@@ -20,6 +22,13 @@ class WizardProfileScreen extends StatefulWidget {
 }
 
 class _WizardProfileScreenState extends State<WizardProfileScreen> {
+  late AppLocalizations l10n;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    l10n = AppLocalizations.of(context);
+  }
+
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _dobController = TextEditingController();
@@ -29,7 +38,6 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
   bool _isLoading = false;
   String? _uid;
 
-  // --- CAMBIO: Variables de estado para los nuevos campos ---
   String? _selectedSex;
   DateTime? _selectedDateOfBirth;
 
@@ -44,7 +52,6 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
 
   @override
   void dispose() {
-    // --- CAMBIO: Hacemos dispose del nuevo controller ---
     _nameController.dispose();
     _phoneController.dispose();
     _dobController.dispose();
@@ -58,8 +65,6 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
       setState(() {
         _nameController.text = data['displayName'] ?? '';
         _phoneController.text = data['phoneNumber'] ?? '';
-
-        // --- CAMBIO: Cargamos los datos nuevos si existen ---
         _selectedSex = data['gender'];
         _selectedDateOfBirth = (data['dateOfBirth'] as Timestamp?)?.toDate();
         if (_selectedDateOfBirth != null) {
@@ -84,13 +89,12 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
     }
   }
 
-  // --- CAMBIO: Nueva función para mostrar el selector de fecha ---
   Future<void> _selectDateOfBirth(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: _selectedDateOfBirth ?? DateTime(2000), // Fecha inicial por defecto
-      firstDate: DateTime(1920), // Año mínimo
-      lastDate: DateTime.now(),   // No se puede nacer en el futuro
+      initialDate: _selectedDateOfBirth ?? DateTime(2000),
+      firstDate: DateTime(1920),
+      lastDate: DateTime.now(),
       locale: const Locale('es', 'ES'),
     );
     if (picked != null && picked != _selectedDateOfBirth) {
@@ -104,7 +108,7 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
   Future<void> _saveAndContinue() async {
     if (_nameController.text.trim().isEmpty || _selectedRole == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nombre y rol son requeridos.')),
+        SnackBar(content: Text(l10n.nameAndMartialArtRequired)), // Texto localizado
       );
       return;
     }
@@ -120,14 +124,13 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
         photoUrl = await ref.getDownloadURL();
       }
 
-      // --- CAMBIO: Añadimos los nuevos campos al mapa que se guarda ---
       final dataToUpdate = <String, dynamic>{
         'displayName': _nameController.text.trim(),
         'phoneNumber': _phoneController.text.trim(),
         'role': _selectedRole.toString().split('.').last,
         'wizardStep': 1,
         'gender': _selectedSex,
-        'dateOfBirth': _selectedDateOfBirth, // El modelo se encargará de convertirlo a Timestamp
+        'dateOfBirth': _selectedDateOfBirth,
       };
       if (photoUrl != null) {
         dataToUpdate['photoUrl'] = photoUrl;
@@ -138,17 +141,24 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
 
       if (!mounted) return;
 
-      if (_selectedRole == UserRole.student) {
-        Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => const SchoolSearchScreen(isFromWizard: true)));
-      } else {
-        Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => const WizardCreateSchoolScreen()));
+      switch (_selectedRole) {
+        case UserRole.student:
+          Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SchoolSearchScreen(isFromWizard: true)));
+          break;
+        case UserRole.teacher:
+        case UserRole.both:
+          Navigator.of(context).push(MaterialPageRoute(builder: (context) => const WizardCreateSchoolScreen()));
+          break;
+        case UserRole.parent:
+          Navigator.of(context).push(MaterialPageRoute(builder: (context) => const AddChildScreen()));
+          break;
+        default:
+          break;
       }
 
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al guardar: ${e.toString()}')),
+        SnackBar(content: Text(l10n.saveError(e.toString()))),
       );
     } finally {
       if (mounted) {
@@ -160,7 +170,7 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.isExistingUser ? 'Elige tu Rol' : 'Completa tu Perfil (Paso 1)')),
+      appBar: AppBar(title: Text(widget.isExistingUser ? l10n.selectProfile : 'Completa tu Perfil (Paso 1)')),
       body: AbsorbPointer(
         absorbing: _isLoading,
         child: SingleChildScrollView(
@@ -191,87 +201,54 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
               const SizedBox(height: 24),
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Nombre y Apellido *'),
+                decoration: InputDecoration(labelText: l10n.fullName),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _phoneController,
-                decoration: const InputDecoration(labelText: 'Teléfono de Contacto'),
+                decoration: InputDecoration(labelText: l10n.phone),
                 keyboardType: TextInputType.phone,
               ),
-
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 value: _selectedSex,
-                decoration: const InputDecoration(labelText: 'Género'),
-                items: ['Masculino', 'Femenino', 'Otro', 'Prefiero no decirlo']
-                    .map((label) => DropdownMenuItem(
-                  child: Text(label),
-                  value: label.toLowerCase().replaceAll(' ', '_'),
-                ))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedSex = value;
-                  });
-                },
+                decoration: InputDecoration(labelText: l10n.gender),
+                items: [
+                  DropdownMenuItem(value: 'masculino', child: Text(l10n.maleGender)),
+                  DropdownMenuItem(value: 'femenino', child: Text(l10n.femaleGender)),
+                  DropdownMenuItem(value: 'otro', child: Text(l10n.otherGender)),
+                  DropdownMenuItem(value: 'prefiero_no_decirlo', child: Text(l10n.noSpecifyGender)),
+                ],
+                onChanged: (value) => setState(() => _selectedSex = value),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _dobController,
-                decoration: const InputDecoration(
-                  labelText: 'Fecha de Nacimiento',
-                  suffixIcon: Icon(Icons.calendar_today),
+                decoration: InputDecoration(
+                  labelText: l10n.birdthDate,
+                  suffixIcon: const Icon(Icons.calendar_today),
                 ),
                 readOnly: true,
-                onTap: () {
-                  _selectDateOfBirth(context);
-                },
+                onTap: () => _selectDateOfBirth(context),
               ),
-
               const SizedBox(height: 24),
               Text('¿Cómo quieres empezar? *', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
 
               SegmentedButton<UserRole>(
-                style: ButtonStyle(
-                  padding: WidgetStateProperty.all<EdgeInsets>(
-                    const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
-                  ),
-                ),
+                style: ButtonStyle(padding: WidgetStateProperty.all<EdgeInsets>(const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0))),
                 segments: <ButtonSegment<UserRole>>[
                   ButtonSegment<UserRole>(
                     value: UserRole.student,
-                    label: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.school, size: 20),
-                        SizedBox(height: 4),
-                        Text('Estudiante', style: TextStyle(fontSize: 12)),
-                      ],
-                    ),
+                    label: Column(mainAxisSize: MainAxisSize.min, children: [const Icon(Icons.school, size: 20), const SizedBox(height: 4), Text(l10n.student, style: const TextStyle(fontSize: 12))]),
                   ),
                   ButtonSegment<UserRole>(
                     value: UserRole.teacher,
-                    label: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.sports_kabaddi, size: 20),
-                        SizedBox(height: 4),
-                        Text('Profesor', style: TextStyle(fontSize: 12)),
-                      ],
-                    ),
+                    label: Column(mainAxisSize: MainAxisSize.min, children: [const Icon(Icons.sports_kabaddi, size: 20), const SizedBox(height: 4), Text(l10n.teacher, style: const TextStyle(fontSize: 12))]),
                   ),
                   ButtonSegment<UserRole>(
-                    value: UserRole.both,
-                    label: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.group, size: 20),
-                        SizedBox(height: 4),
-                        Text('Ambos', style: TextStyle(fontSize: 12)),
-                      ],
-                    ),
+                    value: UserRole.parent,
+                    label: Column(mainAxisSize: MainAxisSize.min, children: [const Icon(Icons.family_restroom, size: 20), const SizedBox(height: 4), Text(l10n.iAmAParent, style: const TextStyle(fontSize: 12))]),
                   ),
                 ],
                 selected: _selectedRole != null ? <UserRole>{_selectedRole!} : <UserRole>{},
@@ -283,19 +260,18 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
                 emptySelectionAllowed: true,
                 showSelectedIcon: false,
               ),
-
               const SizedBox(height: 16),
               if (_selectedRole == UserRole.teacher || _selectedRole == UserRole.both)
                 Container(
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    'Al elegir "Profesor" o "Ambos", el siguiente paso será crear tu propia escuela.',
-                    textAlign: TextAlign.center,
-                  ),
+                  decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(8)),
+                  child: const Text('Al elegir "Profesor" o "Ambos", el siguiente paso será crear tu propia escuela.', textAlign: TextAlign.center), // TODO: Localizar
+                ),
+              if (_selectedRole == UserRole.parent)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(8)),
+                  child: Text(l10n.parentFlowDescription, textAlign: TextAlign.center),
                 ),
               const SizedBox(height: 32),
               if (_isLoading)
@@ -304,7 +280,7 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
                   onPressed: _saveAndContinue,
-                  child: const Text('Guardar y Continuar'),
+                  child: Text(l10n.saveAndContinue),
                 ),
             ],
           ),

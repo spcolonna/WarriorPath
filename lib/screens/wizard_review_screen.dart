@@ -39,7 +39,7 @@ class _WizardReviewScreenState extends State<WizardReviewScreen> {
       schoolRef.get(),
       schoolRef.collection('levels').orderBy('order').get(),
       schoolRef.collection('techniques').get(),
-      schoolRef.collection('paymentPlans').get(), // <-- AÑADIDO
+      schoolRef.collection('paymentPlans').get(),
     ]);
 
     final schoolDoc = results[0] as DocumentSnapshot<Map<String, dynamic>>;
@@ -51,7 +51,7 @@ class _WizardReviewScreenState extends State<WizardReviewScreen> {
       'school': schoolDoc.data(),
       'levels': levelsQuery.docs,
       'techniques': techniquesQuery.docs,
-      'paymentPlans': paymentPlansQuery.docs, // <-- AÑADIDO
+      'paymentPlans': paymentPlansQuery.docs,
     };
   }
 
@@ -61,7 +61,8 @@ class _WizardReviewScreenState extends State<WizardReviewScreen> {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception("Usuario no autenticado.");
       await FirebaseFirestore.instance.collection('users').doc(user.uid).update({'wizardStep': 99});
-      Provider.of<SessionProvider>(context, listen: false).setActiveSession(widget.schoolId, 'maestro');
+      Provider.of<SessionProvider>(context, listen: false)
+          .setFullActiveSession(widget.schoolId, 'maestro', user.uid);
       if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (context) => const TeacherDashboardScreen()),

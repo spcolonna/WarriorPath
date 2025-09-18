@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:confetti/confetti.dart';
@@ -10,14 +9,23 @@ import 'package:warrior_path/screens/student/tabs/profile_tab_screen.dart';
 import 'package:warrior_path/screens/student/tabs/progress_tab_screen.dart';
 import 'package:warrior_path/screens/student/tabs/school_info_tab_screen.dart';
 
+import '../../l10n/app_localizations.dart';
+
 class StudentDashboardScreen extends StatefulWidget {
-  const StudentDashboardScreen({Key? key}) : super(key: key);
+  const StudentDashboardScreen({super.key});
 
   @override
   State<StudentDashboardScreen> createState() => _StudentDashboardScreenState();
 }
 
 class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
+  late AppLocalizations l10n;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    l10n = AppLocalizations.of(context);
+  }
+
   int _selectedIndex = 0;
   late ConfettiController _confettiController;
 
@@ -26,7 +34,6 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     super.initState();
     _confettiController = ConfettiController(duration: const Duration(seconds: 4));
 
-    // Usamos esto para ejecutar una función después de que la pantalla se haya construido
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkUnseenPromotion();
     });
@@ -38,12 +45,11 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     super.dispose();
   }
 
-  // Revisa si el alumno tiene una promoción que no ha visto para mostrar la celebración
   Future<void> _checkUnseenPromotion() async {
-    // listen: false porque solo necesitamos leer el valor una vez aquí
     final session = Provider.of<SessionProvider>(context, listen: false);
     final schoolId = session.activeSchoolId;
-    final memberId = FirebaseAuth.instance.currentUser?.uid;
+
+    final memberId = session.activeProfileId;
 
     if (schoolId == null || memberId == null) return;
 
@@ -61,10 +67,11 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     }
   }
 
-  // Muestra el diálogo de felicitación y la animación de confeti
-  void _showPromotionCelebration(String schoolId, String newLevelId) async {
-    final memberId = FirebaseAuth.instance.currentUser?.uid;
-    if (memberId == null) return;
+  void _showPromotionCelebration(String schoolId, String? newLevelId) async {
+    final session = Provider.of<SessionProvider>(context, listen: false);
+    final memberId = session.activeProfileId;
+
+    if (memberId == null || newLevelId == null) return;
 
     final levelDoc = await FirebaseFirestore.instance.collection('schools').doc(schoolId).collection('levels').doc(newLevelId).get();
     final newLevelName = levelDoc.data()?['name'] ?? 'un nuevo nivel';
@@ -79,7 +86,6 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       ),
     );
 
-    // Inmediatamente después, limpiamos la bandera para que no se muestre de nuevo
     await FirebaseFirestore.instance.collection('schools').doc(schoolId).collection('members').doc(memberId).update({
       'hasUnseenPromotion': false,
     });
@@ -93,17 +99,14 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Obtenemos la sesión activa desde el Provider. La pantalla ahora depende de esto.
     final session = Provider.of<SessionProvider>(context);
     final schoolId = session.activeSchoolId;
-    final memberId = FirebaseAuth.instance.currentUser?.uid;
+    final memberId = session.activeProfileId;
 
-    // Si por alguna razón no hay sesión, mostramos un estado de error seguro.
     if (schoolId == null || memberId == null) {
-      return const Scaffold(body: Center(child: Text('Error: No hay una sesión activa.')));
+      return Scaffold(body: Center(child: Text(l10n.errorNoActiveSession)));
     }
 
-    // Definimos las pantallas que irán en las pestañas, pasándoles los IDs necesarios
     final List<Widget> widgetOptions = <Widget>[
       SchoolInfoTabScreen(schoolId: schoolId),
       ProgressTabScreen(schoolId: schoolId, memberId: memberId),
@@ -122,11 +125,11 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           ),
           bottomNavigationBar: BottomNavigationBar(
             items: <BottomNavigationBarItem>[
-              BottomNavigationBarItem(icon: Icon(Icons.school), label: 'Mi Escuela'),
-              BottomNavigationBarItem(icon: Icon(Icons.leaderboard), label: 'Mi Progreso'),
-              BottomNavigationBarItem(icon: Icon(Icons.groups), label: 'Comunidad'),
+              BottomNavigationBarItem(icon: const Icon(Icons.school), label: l10n.mySchool),
+              BottomNavigationBarItem(icon: const Icon(Icons.leaderboard), label: l10n.myProgress),
+              BottomNavigationBarItem(icon: const Icon(Icons.groups), label: l10n.schoolCommunity),
               BottomNavigationBarItem(
-                label: 'Mis Pagos',
+                label: l10n.myPayments,
                 icon: StreamBuilder<QuerySnapshot>(
                   stream: FirebaseFirestore.instance
                       .collection('schools').doc(schoolId)
@@ -135,22 +138,16 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                       .where('status', isEqualTo: 'pending')
                       .limit(1)
                       .snapshots(),
-
                   builder: (context, snapshot) {
-                    // Si hay data y la lista de documentos NO está vacía, mostramos el badge.
                     final bool hasPendingPayments = snapshot.hasData && snapshot.data!.docs.isNotEmpty;
-
-                    // Usamos un Stack para poner el punto rojo (Badge) encima del ícono.
                     return Stack(
-                      clipBehavior: Clip.none, // Permite que el punto se vea fuera del ícono
+                      clipBehavior: Clip.none,
                       children: [
-                        const Icon(Icons.payment), // El ícono original
-
-                        // Si hay pagos pendientes, muestra el punto rojo
+                        const Icon(Icons.payment),
                         if (hasPendingPayments)
                           Positioned(
-                            top: -4,  // Ajusta la posición vertical del punto
-                            right: -6, // Ajusta la posición horizontal del punto
+                            top: -4,
+                            right: -6,
                             child: Container(
                               padding: const EdgeInsets.all(4),
                               decoration: const BoxDecoration(
@@ -164,11 +161,11 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                   },
                 ),
               ),
-              BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Mi Perfil'),
+              BottomNavigationBarItem(icon: const Icon(Icons.person), label: l10n.myProfile),
             ],
             currentIndex: _selectedIndex,
             onTap: _onItemTapped,
-            type: BottomNavigationBarType.fixed, // Asegura que se vean todas las pestañas
+            type: BottomNavigationBarType.fixed,
           ),
         ),
         ConfettiWidget(
