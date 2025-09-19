@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -13,9 +15,26 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
   BannerAd? _bannerAd;
   bool _isAdLoaded = false;
 
-  final String _adUnitId = kDebugMode
-      ? 'ca-app-pub-3940256099942544/6300978111' // ID de prueba de Google
-      : 'ca-app-pub-9552343552775183/7045215370'; // Tu ID de producción
+  String get _adUnitId {
+    if (kDebugMode) {
+      if (Platform.isAndroid) {
+        return 'ca-app-pub-3940256099942544/6300978111'; // ID de prueba para Banner en Android
+      } else if (Platform.isIOS) {
+        return 'ca-app-pub-3940256099942544/2934735716'; // ID de prueba para Banner en iOS
+      }
+    }
+
+    if (Platform.isAndroid) {
+      // --- PON AQUÍ TU ID DE PRODUCCIÓN DE ANDROID ---
+      return 'ca-app-pub-9552343552775183/7045215370';
+    } else if (Platform.isIOS) {
+      // --- PON AQUÍ TU ID DE PRODUCCIÓN DE iOS ---
+      return 'ca-app-pub-9552343552775183/8187504751';
+    }
+
+    // Si no es ninguna de las dos (ej. web), no mostramos anuncio.
+    throw UnsupportedError('Plataforma no soportada para anuncios');
+  }
 
   @override
   void didChangeDependencies() {

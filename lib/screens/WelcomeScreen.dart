@@ -178,30 +178,34 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               color: AppColors.primaryColor,
               borderRadius: BorderRadius.vertical(bottom: Radius.circular(50)),
             ),
-            child: Stack( // Usamos un Stack para posicionar el switcher
-              children: [
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Center(
-                      child: ClipOval(
-                        child: Image.asset('assets/logo/Logo.png', height: 90, width: 90, fit: BoxFit.cover),
+            child: SafeArea( // 1. Envolvemos el Stack con SafeArea
+              child: Stack(
+                children: [
+                  // La columna con el logo y el título no cambia...
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Center(
+                        child: ClipOval(
+                          child: Image.asset('assets/logo/Logo.png', height: 90, width: 90, fit: BoxFit.cover),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      l10n.appName,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 42.0, fontWeight: FontWeight.bold, color: AppColors.textWhite),
-                    ),
-                  ],
-                ),
-                const Positioned(
-                  top: 12,
-                  right: 6,
-                  child: LanguageSwitcher(),
-                ),
-              ],
+                      const SizedBox(height: 16),
+                      Text(
+                        l10n.appName,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 42.0, fontWeight: FontWeight.bold, color: AppColors.textWhite),
+                      ),
+                    ],
+                  ),
+                  Positioned(
+                    // 2. Ahora podemos usar top: 0 porque es relativo al ÁREA SEGURA, no a la pantalla.
+                    top: 0,
+                    right: 12, // Un poco de espacio desde el borde
+                    child: const LanguageSwitcher(),
+                  ),
+                ],
+              ),
             ),
           ),
           Expanded(

@@ -42,11 +42,10 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final remoteConfigService = RemoteConfigService.instance;
-    final bool showBannerAd = remoteConfigService.getBool('show_banner_ad');
+    final bool showBannerAd = true;//remoteConfigService.getBool('show_banner_ad');
 
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
-        // --- CAMBIO: Envolvemos todo en un Consumer para el LocaleProvider ---
         return Consumer<LocaleProvider>(
           builder: (context, localeProvider, child) {
             return MaterialApp(

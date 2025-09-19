@@ -6,6 +6,7 @@ import 'package:warrior_path/screens/WelcomeScreen.dart';
 import 'package:warrior_path/screens/student/school_search_screen.dart';
 import 'package:warrior_path/screens/wizard_create_school_screen.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../parent/add_child_screen.dart';
 
 class StudentProfileTabScreen extends StatefulWidget {
   final String memberId;
@@ -247,9 +248,8 @@ class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
                       subtitle: Text(l10n.manageChildrenSubtitle),
                       trailing: const Icon(Icons.arrow_forward_ios),
                       onTap: () {
-                        // TODO: Navegar a la pantalla de gestión de hijos.
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Próximo paso: construir esta pantalla.'))
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (context) => const AddChildScreen()),
                         );
                       },
                     ),

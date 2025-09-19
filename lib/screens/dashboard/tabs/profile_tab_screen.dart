@@ -5,6 +5,7 @@ import 'package:warrior_path/screens/role_selector_screen.dart';
 import 'package:warrior_path/screens/student/school_search_screen.dart';
 import 'package:warrior_path/screens/wizard_create_school_screen.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../parent/add_child_screen.dart';
 import '../../teacher/edit_teacher_profile_screen.dart';
 
 class ProfileTabScreen extends StatelessWidget {
@@ -61,7 +62,21 @@ class ProfileTabScreen extends StatelessWidget {
           ),
           const Divider(),
 
-          // --- 2. TARJETA AÑADIDA AQUÍ ---
+          Card(
+            elevation: 2,
+            child: ListTile(
+              leading: Icon(Icons.escalator_warning, color: Theme.of(context).primaryColor),
+              title: Text(l10n.manageChildren),
+              subtitle: Text(l10n.manageChildrenSubtitle),
+              trailing: const Icon(Icons.arrow_forward_ios),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => const AddChildScreen()),
+                );
+              },
+            ),
+          ),
+
           Card(
             elevation: 2,
             child: ListTile(
