@@ -172,7 +172,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get birdthDate => 'Data de Nascimento';
 
   @override
-  String get gender => 'Sexo';
+  String get gender => 'Gênero';
 
   @override
   String get years => 'anos';
@@ -258,17 +258,12 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get notes => 'Notas';
-
-  @override
-  String notesWith(Object notesWith) {
-    return 'Notes: $notesWith';
-  }
-
-  @override
   String notesValue(String notes) {
     return 'Notas: $notes';
   }
+
+  @override
+  String get notesLabel => 'Notas';
 
   @override
   String get revertPromotion => 'Reverter Promoção';
@@ -362,7 +357,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get changeRolMember => 'Mudar Papel do Membro';
 
   @override
-  String get instructor => 'instructor';
+  String get instructor => 'instrutor';
 
   @override
   String get save => 'Salvar';
@@ -594,7 +589,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get unknownSchool => 'Escola Desconhecida';
 
   @override
-  String get noActiveProfilesFound => 'Nenhum perfil ativo encontrado.';
+  String get noActiveProfilesFound => 'Não há perfis ativos.';
 
   @override
   String enterAs(String e) {
@@ -715,7 +710,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get medicalEmergencyService => 'Serviço de Emergência Médica';
 
   @override
-  String get medicalServiceExample => 'Ex: SAMU, Unimed, etc.';
+  String get medicalServiceExample => 'Ex: SAMU, etc.';
 
   @override
   String get relevantMedicalInfo => 'Informações Médicas Relevantes';
@@ -741,6 +736,9 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get profileUpdatedSuccess => 'Profile updated successfully.';
+
+  @override
   String noStudentsWithStatus(String state) {
     return 'Não há alunos com o status $state';
   }
@@ -764,25 +762,25 @@ class AppLocalizationsPt extends AppLocalizations {
   String get applicationRejected => 'Solicitação rejeitada.';
 
   @override
-  String get monday => 'Segunda-feira';
+  String get monday => 'Monday';
 
   @override
-  String get tuesday => 'Terça-feira';
+  String get tuesday => 'Tuesday';
 
   @override
-  String get wednesday => 'Quarta-feira';
+  String get wednesday => 'Wednesday';
 
   @override
-  String get thursday => 'Quinta-feira';
+  String get thursday => 'Thursday';
 
   @override
-  String get friday => 'Sexta-feira';
+  String get friday => 'Friday';
 
   @override
-  String get saturday => 'Sábado';
+  String get saturday => 'Saturday';
 
   @override
-  String get sunday => 'Domingo';
+  String get sunday => 'Sunday';
 
   @override
   String get noSchedulesDefined =>
@@ -799,9 +797,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get noActiveMembersYet => 'Ainda não há membros ativos na escola.';
-
-  @override
-  String get instructors => 'Instrutores';
 
   @override
   String get myPayments => 'Meus Pagamentos';
@@ -877,10 +872,10 @@ class AppLocalizationsPt extends AppLocalizations {
       'Não foi possível carregar as informações da escola.';
 
   @override
-  String get schoolName => 'Nome da Escola';
+  String get schoolNameLabel => 'School name';
 
   @override
-  String get martialArt => 'Arte Marcial';
+  String get martialArt => 'Martial Art';
 
   @override
   String get address => 'Endereço';
@@ -893,9 +888,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get scheduleNotDefinedYet => 'O horário ainda não foi definido.';
-
-  @override
-  String get updateProfileSuccess => 'Perfil atualizado com sucesso.';
 
   @override
   String get manageChildren => 'Gerenciar Filhos';
@@ -973,9 +965,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get searchForNewSchool => 'Buscar Nova Escola';
 
   @override
-  String get schoolNameLabel => 'Nome da escola';
-
-  @override
   String get alreadyLinkedToSchool => 'Você já tem um vínculo com esta escola.';
 
   @override
@@ -1016,4 +1005,336 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get myUser => 'Meu Usuário';
+
+  @override
+  String associatedWith(String schoolName) {
+    return 'Associada a: $schoolName';
+  }
+
+  @override
+  String get searchParentSchool => 'Buscar escola principal';
+
+  @override
+  String get associateLaterMessage =>
+      'Se você не encontrar a escola, pode associá-la mais tarde no painel de gestão.';
+
+  @override
+  String get disciplines => 'Disciplinas';
+
+  @override
+  String get addAtLeastOneDiscipline =>
+      'Você deve adicionar pelo menos uma disciplina à sua escola.';
+
+  @override
+  String get disciplineName => 'Nome da Disciplina';
+
+  @override
+  String get addDiscipline => 'Adicionar Disciplina';
+
+  @override
+  String get noDisciplinesAdded => 'Nenhuma disciplina adicionada ainda.';
+
+  @override
+  String get baseStyle => 'Estilo Base';
+
+  @override
+  String get selectDisciplineToConfigure =>
+      'Selecione uma disciplina para configurar seus níveis';
+
+  @override
+  String get selectDisciplineToConfigureTechniques =>
+      'Selecione uma disciplina para configurar suas técnicas';
+
+  @override
+  String get configureTechniquesStep4 => 'Adicionar Técnicas (Passo 4)';
+
+  @override
+  String get defineYourCategories => '1. Defina suas Categorias';
+
+  @override
+  String get categoryName => 'Nome da Categoria';
+
+  @override
+  String get categoryNameHint => 'Ex: Formas, Katas, Técnicas, Armas';
+
+  @override
+  String get categoriesAppearHere =>
+      'As categorias que você adicionar aparecerão aqui.';
+
+  @override
+  String get addYourTechniques => '2. Adicione suas Técnicas';
+
+  @override
+  String get createCategoriesFirst =>
+      'Crie categorias primeiro e, em seguida, adicione sua primeira técnica.';
+
+  @override
+  String techniqueNumber(String index) {
+    return 'Técnica #$index';
+  }
+
+  @override
+  String get techniqueName => 'Nome da Técnica *';
+
+  @override
+  String get selectCategory => 'Selecione uma categoria';
+
+  @override
+  String get categoryLabel => 'Categoria *';
+
+  @override
+  String get descriptionOptional => 'Descrição (opcional)';
+
+  @override
+  String get videoLinkOptional => 'Link do Vídeo (opcional)';
+
+  @override
+  String get videoLinkHint => 'https://youtube.com/...';
+
+  @override
+  String get addTechnique => 'Adicionar Técnica';
+
+  @override
+  String get dontWorryAddEverythingNow =>
+      'Não se preocupe em adicionar tudo agora. Você sempre pode gerenciar suas técnicas no painel de controle da sua escola.';
+
+  @override
+  String get atLeastOneCategoryError =>
+      'Você deve criar pelo menos uma categoria.';
+
+  @override
+  String get allTechniquesNeedNameCategoryError =>
+      'Todas as técnicas devem ter um nome e uma categoria atribuída.';
+
+  @override
+  String techniquesFor(String disciplineName) {
+    return 'Técnicas para \"$disciplineName\"';
+  }
+
+  @override
+  String get editTechnique => 'Editar Técnica';
+
+  @override
+  String get curriculumUpdated => 'Currículo atualizado.';
+
+  @override
+  String get configurePricingStep5 => 'Configurar Preços (Passo 5)';
+
+  @override
+  String get uniqueCostsAndCurrency => 'Custos Únicos e Moeda';
+
+  @override
+  String get currency => 'Moeda';
+
+  @override
+  String get inscriptionFee => 'Taxa de Inscrição';
+
+  @override
+  String get examFee => 'Taxa por Exame';
+
+  @override
+  String get monthlyFeePlans => 'Planos de Mensalidades';
+
+  @override
+  String get addNewPlan => 'Adicionar novo plano';
+
+  @override
+  String get addAtLeastOnePlan =>
+      'Adicione pelo menos um plano de pagamento mensal.';
+
+  @override
+  String get planTitle => 'Título do Plano';
+
+  @override
+  String get planTitleExample => 'Ex: Plano Familiar';
+
+  @override
+  String get monthlyAmount => 'Valor Mensal';
+
+  @override
+  String get planDescriptionOptional => 'Descrição (opcional)';
+
+  @override
+  String get planDescriptionExample => 'Ex: Para 2 ou mais irmãos';
+
+  @override
+  String get allPlansNeedTitleAndAmount =>
+      'Todos os planos devem ter um título e um valor maior que zero.';
+
+  @override
+  String get reviewAndFinalizeStep6 => 'Revisar e Finalizar (Passo 6)';
+
+  @override
+  String get almostDoneReviewInfo =>
+      'Quase pronto! Revise se todas as informações da sua escola estão corretas.';
+
+  @override
+  String get schoolData => 'Dados da Escola';
+
+  @override
+  String get progressionSystem => 'Sistema de Progressão';
+
+  @override
+  String get initialCurriculum => 'Currículo Inicial';
+
+  @override
+  String get pricingAndPlans => 'Preços e Planos';
+
+  @override
+  String disciplineLabel(String disciplineName) {
+    return 'Disciplina: $disciplineName';
+  }
+
+  @override
+  String get levelsCreated => 'Níveis Criados';
+
+  @override
+  String get techniquesAdded => 'Técnicas Adicionadas';
+
+  @override
+  String get finalizeAndOpenSchool => 'Finalizar e Abrir minha Escola';
+
+  @override
+  String errorFinalizing(String e) {
+    return 'Erro ao finalizar: $e';
+  }
+
+  @override
+  String get categoriesLabel => 'Categorias';
+
+  @override
+  String get selectDisciplinesPrompt =>
+      'Selecione uma ou mais. A primeira que escolher será a principal.';
+
+  @override
+  String get institutionalDataOptional => 'Dados Institucionais (Opcional)';
+
+  @override
+  String get city => 'Cidade';
+
+  @override
+  String get description => 'Descrição';
+
+  @override
+  String get disciplineConfigPanel => 'Configuração de Disciplinas';
+
+  @override
+  String get disciplineConfigMessage =>
+      'Selecione uma disciplina para configurar seus níveis e técnicas. Quando terminar com todas, pressione \'Continuar\'.';
+
+  @override
+  String get statusNotConfigured => 'Não configurado';
+
+  @override
+  String get statusConfigured => 'Configurado';
+
+  @override
+  String get continueToPricing => 'Continuar para Preços';
+
+  @override
+  String get errorLoadingDisciplines => 'Erro ao carregar as disciplinas.';
+
+  @override
+  String levelsFor(String disciplineName) {
+    return 'Níveis para \"$disciplineName\"';
+  }
+
+  @override
+  String get progressionSystemName => 'Nome do Sistema de Progressão *';
+
+  @override
+  String get progressionSystemHint => 'Ex: Faixas, Cintos, Graus';
+
+  @override
+  String get levelsOrderHint => 'Níveis (ordene do mais baixo ao mais alto)';
+
+  @override
+  String get levelName => 'Nome do Nível';
+
+  @override
+  String get progressionSystemNameRequired =>
+      'Por favor, dê um nome ao seu sistema de progressão.';
+
+  @override
+  String get allLevelsNeedAName =>
+      'Certifique-se de que todos os níveis tenham um nome.';
+
+  @override
+  String get noDisciplinesFound => 'Nenhuma disciplina encontrada.';
+
+  @override
+  String get levelModel => 'Modelo de Nível';
+
+  @override
+  String get levelDeletedSuccess => 'Nível excluído com sucesso.';
+
+  @override
+  String get levelNameHint => 'Nome do Nível';
+
+  @override
+  String get confirmDeleteLevelMessage =>
+      'Tem certeza que deseja excluir este nível?';
+
+  @override
+  String get noLevelsConfigured =>
+      'Nenhum nível configurado para esta disciplina';
+
+  @override
+  String get configureDiscipline => 'Configurar Disciplina';
+
+  @override
+  String get step1Levels => 'Passo 1: Configurar Níveis';
+
+  @override
+  String get step2Techniques => 'Passo 2: Configurar Técnicas';
+
+  @override
+  String get continueStep => 'Continuar';
+
+  @override
+  String get finish => 'Finalizar e Voltar ao Painel';
+
+  @override
+  String get skipStep => 'Pular esta etapa';
+
+  @override
+  String get unsavedChangesWarning =>
+      'Você tem alterações não salvas. Tem certeza de que deseja sair? O progresso para esta disciplina não será salvo.';
+
+  @override
+  String get yesExit => 'Sim, sair';
+
+  @override
+  String get noStay => 'Não, ficar';
+
+  @override
+  String get noDiscipline => 'Sem Disciplina';
+
+  @override
+  String get selectDiscipline => 'Selecione uma disciplina *';
+
+  @override
+  String get manageCurriculum => 'Gerenciar Currículo';
+
+  @override
+  String get manageCurriculumDescription =>
+      'Edite níveis e técnicas para cada disciplina.';
+
+  @override
+  String get curriculumByDiscipline => 'Currículo por Disciplina';
+
+  @override
+  String get selectDisciplineToEdit =>
+      'Selecione uma disciplina para ver e editar seus níveis e técnicas.';
+
+  @override
+  String curriculumFor(String disciplineName) {
+    return 'Currículo de $disciplineName';
+  }
+
+  @override
+  String get saveAllChanges => 'Salvar Todas as Alterações';
+
+  @override
+  String get curriculumSaveSuccess => 'Currículo salvo com sucesso.';
 }

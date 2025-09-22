@@ -47,7 +47,7 @@ class SchoolInfoTabScreen extends StatelessWidget {
                         child: (logoUrl == null || logoUrl.isEmpty) ? const Icon(Icons.school, size: 50) : null,
                       ),
                       const SizedBox(height: 16),
-                      Text(schoolData['name'] ?? l10n.schoolName, style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
+                      Text(schoolData['name'] ?? l10n.schoolNameLabel, style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
                       Text(schoolData['martialArt'] ?? l10n.martialArt, style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.grey.shade600), textAlign: TextAlign.center),
                     ],
                   ),

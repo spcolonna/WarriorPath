@@ -109,7 +109,7 @@ class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
       await FirebaseFirestore.instance.collection('users').doc(widget.memberId).update(dataToUpdate);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.updateProfileSuccess), backgroundColor: Colors.green),
+          SnackBar(content: Text(l10n.profileUpdatedSuccess), backgroundColor: Colors.green),
         );
       }
     } catch (e) {

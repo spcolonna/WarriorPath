@@ -226,7 +226,7 @@ abstract class AppLocalizations {
   /// **'Ok'**
   String get ok;
 
-  /// A welcome message with the user's name
+  /// No description provided for @welcomeTitle.
   ///
   /// In en, this message translates to:
   /// **'Welcome, {userName}!'**
@@ -562,23 +562,17 @@ abstract class AppLocalizations {
   /// **'Promoted to {level}'**
   String promotionTo(String level);
 
-  /// No description provided for @notes.
-  ///
-  /// In en, this message translates to:
-  /// **'Notes'**
-  String get notes;
-
-  /// No description provided for @notesWith.
-  ///
-  /// In en, this message translates to:
-  /// **'Notes: {notesWith}'**
-  String notesWith(Object notesWith);
-
   /// No description provided for @notesValue.
   ///
   /// In en, this message translates to:
   /// **'Notes: {notes}'**
   String notesValue(String notes);
+
+  /// No description provided for @notesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get notesLabel;
 
   /// No description provided for @revertPromotion.
   ///
@@ -727,7 +721,7 @@ abstract class AppLocalizations {
   /// No description provided for @studentSuccessPromotion.
   ///
   /// In en, this message translates to:
-  /// **'Student successfully promoted!'**
+  /// **'Student promoted successfully!'**
   String get studentSuccessPromotion;
 
   /// No description provided for @promotionError.
@@ -1426,6 +1420,12 @@ abstract class AppLocalizations {
   /// **'Error updating profile: {message}'**
   String profileUpdateError(String message);
 
+  /// No description provided for @profileUpdatedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile updated successfully.'**
+  String get profileUpdatedSuccess;
+
   /// No description provided for @noStudentsWithStatus.
   ///
   /// In en, this message translates to:
@@ -1533,12 +1533,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'There are no active members in the school yet.'**
   String get noActiveMembersYet;
-
-  /// No description provided for @instructors.
-  ///
-  /// In en, this message translates to:
-  /// **'Instructors'**
-  String get instructors;
 
   /// No description provided for @myPayments.
   ///
@@ -1666,11 +1660,11 @@ abstract class AppLocalizations {
   /// **'Could not load school information.'**
   String get couldNotLoadSchoolInfo;
 
-  /// No description provided for @schoolName.
+  /// No description provided for @schoolNameLabel.
   ///
   /// In en, this message translates to:
-  /// **'School Name'**
-  String get schoolName;
+  /// **'School name'**
+  String get schoolNameLabel;
 
   /// No description provided for @martialArt.
   ///
@@ -1701,12 +1695,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The schedule has not been defined yet.'**
   String get scheduleNotDefinedYet;
-
-  /// No description provided for @updateProfileSuccess.
-  ///
-  /// In en, this message translates to:
-  /// **'Profile updated successfully.'**
-  String get updateProfileSuccess;
 
   /// No description provided for @manageChildren.
   ///
@@ -1840,12 +1828,6 @@ abstract class AppLocalizations {
   /// **'Search for a New School'**
   String get searchForNewSchool;
 
-  /// No description provided for @schoolNameLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'School name'**
-  String get schoolNameLabel;
-
   /// No description provided for @alreadyLinkedToSchool.
   ///
   /// In en, this message translates to:
@@ -1917,6 +1899,600 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'My User'**
   String get myUser;
+
+  /// No description provided for @associatedWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Associated with: {schoolName}'**
+  String associatedWith(String schoolName);
+
+  /// No description provided for @searchParentSchool.
+  ///
+  /// In en, this message translates to:
+  /// **'Search for main school'**
+  String get searchParentSchool;
+
+  /// No description provided for @associateLaterMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'If you can\'t find the school, you can associate it later from the management panel.'**
+  String get associateLaterMessage;
+
+  /// No description provided for @disciplines.
+  ///
+  /// In en, this message translates to:
+  /// **'Disciplines'**
+  String get disciplines;
+
+  /// No description provided for @addAtLeastOneDiscipline.
+  ///
+  /// In en, this message translates to:
+  /// **'You must add at least one discipline to your school.'**
+  String get addAtLeastOneDiscipline;
+
+  /// No description provided for @disciplineName.
+  ///
+  /// In en, this message translates to:
+  /// **'Discipline Name'**
+  String get disciplineName;
+
+  /// No description provided for @addDiscipline.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Discipline'**
+  String get addDiscipline;
+
+  /// No description provided for @noDisciplinesAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'No disciplines added yet.'**
+  String get noDisciplinesAdded;
+
+  /// No description provided for @baseStyle.
+  ///
+  /// In en, this message translates to:
+  /// **'Base Style'**
+  String get baseStyle;
+
+  /// No description provided for @selectDisciplineToConfigure.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a discipline to configure its levels'**
+  String get selectDisciplineToConfigure;
+
+  /// No description provided for @selectDisciplineToConfigureTechniques.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a discipline to configure its techniques'**
+  String get selectDisciplineToConfigureTechniques;
+
+  /// No description provided for @configureTechniquesStep4.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Techniques (Step 4)'**
+  String get configureTechniquesStep4;
+
+  /// No description provided for @defineYourCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'1. Define your Categories'**
+  String get defineYourCategories;
+
+  /// No description provided for @categoryName.
+  ///
+  /// In en, this message translates to:
+  /// **'Category Name'**
+  String get categoryName;
+
+  /// No description provided for @categoryNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Ex: Forms, Katas, Techniques, Weapons'**
+  String get categoryNameHint;
+
+  /// No description provided for @categoriesAppearHere.
+  ///
+  /// In en, this message translates to:
+  /// **'The categories you add will appear here.'**
+  String get categoriesAppearHere;
+
+  /// No description provided for @addYourTechniques.
+  ///
+  /// In en, this message translates to:
+  /// **'2. Add your Techniques'**
+  String get addYourTechniques;
+
+  /// No description provided for @createCategoriesFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Create categories first, then add your first technique.'**
+  String get createCategoriesFirst;
+
+  /// No description provided for @techniqueNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Technique #{index}'**
+  String techniqueNumber(String index);
+
+  /// No description provided for @techniqueName.
+  ///
+  /// In en, this message translates to:
+  /// **'Technique Name *'**
+  String get techniqueName;
+
+  /// No description provided for @selectCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a category'**
+  String get selectCategory;
+
+  /// No description provided for @categoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Category *'**
+  String get categoryLabel;
+
+  /// No description provided for @descriptionOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Description (optional)'**
+  String get descriptionOptional;
+
+  /// No description provided for @videoLinkOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Video Link (optional)'**
+  String get videoLinkOptional;
+
+  /// No description provided for @videoLinkHint.
+  ///
+  /// In en, this message translates to:
+  /// **'https://youtube.com/...'**
+  String get videoLinkHint;
+
+  /// No description provided for @addTechnique.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Technique'**
+  String get addTechnique;
+
+  /// No description provided for @dontWorryAddEverythingNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t worry about adding everything now. You can always manage your techniques from your school\'s control panel.'**
+  String get dontWorryAddEverythingNow;
+
+  /// No description provided for @atLeastOneCategoryError.
+  ///
+  /// In en, this message translates to:
+  /// **'You must create at least one category.'**
+  String get atLeastOneCategoryError;
+
+  /// No description provided for @allTechniquesNeedNameCategoryError.
+  ///
+  /// In en, this message translates to:
+  /// **'All techniques must have a name and a category assigned.'**
+  String get allTechniquesNeedNameCategoryError;
+
+  /// No description provided for @techniquesFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Techniques for \"{disciplineName}\"'**
+  String techniquesFor(String disciplineName);
+
+  /// No description provided for @editTechnique.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Technique'**
+  String get editTechnique;
+
+  /// No description provided for @curriculumUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Curriculum updated.'**
+  String get curriculumUpdated;
+
+  /// No description provided for @configurePricingStep5.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure Pricing (Step 5)'**
+  String get configurePricingStep5;
+
+  /// No description provided for @uniqueCostsAndCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'Unique Costs & Currency'**
+  String get uniqueCostsAndCurrency;
+
+  /// No description provided for @currency.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get currency;
+
+  /// No description provided for @inscriptionFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Inscription Fee'**
+  String get inscriptionFee;
+
+  /// No description provided for @examFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Fee per Exam'**
+  String get examFee;
+
+  /// No description provided for @monthlyFeePlans.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly Fee Plans'**
+  String get monthlyFeePlans;
+
+  /// No description provided for @addNewPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'Add new plan'**
+  String get addNewPlan;
+
+  /// No description provided for @addAtLeastOnePlan.
+  ///
+  /// In en, this message translates to:
+  /// **'Add at least one monthly payment plan.'**
+  String get addAtLeastOnePlan;
+
+  /// No description provided for @planTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan Title'**
+  String get planTitle;
+
+  /// No description provided for @planTitleExample.
+  ///
+  /// In en, this message translates to:
+  /// **'Ex: Family Plan'**
+  String get planTitleExample;
+
+  /// No description provided for @monthlyAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly Amount'**
+  String get monthlyAmount;
+
+  /// No description provided for @planDescriptionOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Description (optional)'**
+  String get planDescriptionOptional;
+
+  /// No description provided for @planDescriptionExample.
+  ///
+  /// In en, this message translates to:
+  /// **'Ex: For 2 or more siblings'**
+  String get planDescriptionExample;
+
+  /// No description provided for @allPlansNeedTitleAndAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'All plans must have a title and an amount greater than zero.'**
+  String get allPlansNeedTitleAndAmount;
+
+  /// No description provided for @reviewAndFinalizeStep6.
+  ///
+  /// In en, this message translates to:
+  /// **'Review and Finalize (Step 6)'**
+  String get reviewAndFinalizeStep6;
+
+  /// No description provided for @almostDoneReviewInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Almost there! Please review that all your school\'s information is correct.'**
+  String get almostDoneReviewInfo;
+
+  /// No description provided for @schoolData.
+  ///
+  /// In en, this message translates to:
+  /// **'School Data'**
+  String get schoolData;
+
+  /// No description provided for @progressionSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'Progression System'**
+  String get progressionSystem;
+
+  /// No description provided for @initialCurriculum.
+  ///
+  /// In en, this message translates to:
+  /// **'Initial Curriculum'**
+  String get initialCurriculum;
+
+  /// No description provided for @pricingAndPlans.
+  ///
+  /// In en, this message translates to:
+  /// **'Pricing and Plans'**
+  String get pricingAndPlans;
+
+  /// No description provided for @disciplineLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Discipline: {disciplineName}'**
+  String disciplineLabel(String disciplineName);
+
+  /// No description provided for @levelsCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Levels Created'**
+  String get levelsCreated;
+
+  /// No description provided for @techniquesAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Techniques Added'**
+  String get techniquesAdded;
+
+  /// No description provided for @finalizeAndOpenSchool.
+  ///
+  /// In en, this message translates to:
+  /// **'Finalize and Open my School'**
+  String get finalizeAndOpenSchool;
+
+  /// No description provided for @errorFinalizing.
+  ///
+  /// In en, this message translates to:
+  /// **'Error finalizing: {e}'**
+  String errorFinalizing(String e);
+
+  /// No description provided for @categoriesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories'**
+  String get categoriesLabel;
+
+  /// No description provided for @selectDisciplinesPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Select one or more. The first one you choose will be the primary.'**
+  String get selectDisciplinesPrompt;
+
+  /// No description provided for @institutionalDataOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Institutional Data (Optional)'**
+  String get institutionalDataOptional;
+
+  /// No description provided for @city.
+  ///
+  /// In en, this message translates to:
+  /// **'City'**
+  String get city;
+
+  /// No description provided for @description.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get description;
+
+  /// No description provided for @disciplineConfigPanel.
+  ///
+  /// In en, this message translates to:
+  /// **'Discipline Configuration'**
+  String get disciplineConfigPanel;
+
+  /// No description provided for @disciplineConfigMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a discipline to configure its levels and techniques. When you\'re done with all of them, press \'Continue\'.'**
+  String get disciplineConfigMessage;
+
+  /// No description provided for @statusNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Not configured'**
+  String get statusNotConfigured;
+
+  /// No description provided for @statusConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'Configured'**
+  String get statusConfigured;
+
+  /// No description provided for @continueToPricing.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue to Pricing'**
+  String get continueToPricing;
+
+  /// No description provided for @errorLoadingDisciplines.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading disciplines.'**
+  String get errorLoadingDisciplines;
+
+  /// No description provided for @levelsFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Levels for \"{disciplineName}\"'**
+  String levelsFor(String disciplineName);
+
+  /// No description provided for @progressionSystemName.
+  ///
+  /// In en, this message translates to:
+  /// **'Progression System Name *'**
+  String get progressionSystemName;
+
+  /// No description provided for @progressionSystemHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Ex: Sashes, Belts, Grades'**
+  String get progressionSystemHint;
+
+  /// No description provided for @levelsOrderHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Levels (order from lowest to highest)'**
+  String get levelsOrderHint;
+
+  /// No description provided for @levelName.
+  ///
+  /// In en, this message translates to:
+  /// **'Level Name'**
+  String get levelName;
+
+  /// No description provided for @progressionSystemNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Please give your progression system a name.'**
+  String get progressionSystemNameRequired;
+
+  /// No description provided for @allLevelsNeedAName.
+  ///
+  /// In en, this message translates to:
+  /// **'Make sure all levels have a name.'**
+  String get allLevelsNeedAName;
+
+  /// No description provided for @noDisciplinesFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No disciplines found.'**
+  String get noDisciplinesFound;
+
+  /// No description provided for @levelModel.
+  ///
+  /// In en, this message translates to:
+  /// **'Level Model'**
+  String get levelModel;
+
+  /// No description provided for @levelDeletedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Level deleted successfully.'**
+  String get levelDeletedSuccess;
+
+  /// No description provided for @levelNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Level Name'**
+  String get levelNameHint;
+
+  /// No description provided for @confirmDeleteLevelMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this level?'**
+  String get confirmDeleteLevelMessage;
+
+  /// No description provided for @noLevelsConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'No levels configured for this discipline'**
+  String get noLevelsConfigured;
+
+  /// No description provided for @configureDiscipline.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure Discipline'**
+  String get configureDiscipline;
+
+  /// No description provided for @step1Levels.
+  ///
+  /// In en, this message translates to:
+  /// **'Step 1: Configure Levels'**
+  String get step1Levels;
+
+  /// No description provided for @step2Techniques.
+  ///
+  /// In en, this message translates to:
+  /// **'Step 2: Configure Techniques'**
+  String get step2Techniques;
+
+  /// No description provided for @continueStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get continueStep;
+
+  /// No description provided for @finish.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish & Return to Panel'**
+  String get finish;
+
+  /// No description provided for @skipStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip this step'**
+  String get skipStep;
+
+  /// No description provided for @unsavedChangesWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'You have unsaved changes. Are you sure you want to exit? Progress for this discipline will not be saved.'**
+  String get unsavedChangesWarning;
+
+  /// No description provided for @yesExit.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes, exit'**
+  String get yesExit;
+
+  /// No description provided for @noStay.
+  ///
+  /// In en, this message translates to:
+  /// **'No, stay'**
+  String get noStay;
+
+  /// No description provided for @noDiscipline.
+  ///
+  /// In en, this message translates to:
+  /// **'No Discipline'**
+  String get noDiscipline;
+
+  /// No description provided for @selectDiscipline.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a discipline *'**
+  String get selectDiscipline;
+
+  /// No description provided for @manageCurriculum.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Curriculum'**
+  String get manageCurriculum;
+
+  /// No description provided for @manageCurriculumDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit levels and techniques for each discipline.'**
+  String get manageCurriculumDescription;
+
+  /// No description provided for @curriculumByDiscipline.
+  ///
+  /// In en, this message translates to:
+  /// **'Curriculum by Discipline'**
+  String get curriculumByDiscipline;
+
+  /// No description provided for @selectDisciplineToEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a discipline to view and edit its levels and techniques.'**
+  String get selectDisciplineToEdit;
+
+  /// No description provided for @curriculumFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Curriculum for {disciplineName}'**
+  String curriculumFor(String disciplineName);
+
+  /// No description provided for @saveAllChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Save All Changes'**
+  String get saveAllChanges;
+
+  /// No description provided for @curriculumSaveSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Curriculum saved successfully.'**
+  String get curriculumSaveSuccess;
 }
 
 class _AppLocalizationsDelegate

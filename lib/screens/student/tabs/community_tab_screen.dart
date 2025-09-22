@@ -100,7 +100,7 @@ class _CommunityTabScreenState extends State<CommunityTabScreen> {
                       roleHeader = l10n.students;
                       break;
                     case 'instructor':
-                      roleHeader = l10n.instructors;
+                      roleHeader = l10n.instructor;
                       break;
                     case 'maestro':
                       roleHeader = l10n.teacher;

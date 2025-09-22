@@ -121,7 +121,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
             onChanged: (value) => setDialogState(() => selectedNextLevel = value),
           ),
           const SizedBox(height: 16),
-          TextField(controller: notesController, decoration: InputDecoration(labelText: ('${l10n.notes} (${l10n.optional})')), maxLines: 3),
+          TextField(controller: notesController, decoration: InputDecoration(labelText: ('${l10n.notesLabel} (${l10n.optional})')), maxLines: 3),
         ]),
         actions: [
           TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.cancel)),
@@ -769,7 +769,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
           child: ListTile(
             leading: Icon(Icons.military_tech, color: levelColor),
             title: Text(l10n.promotionTo(levelName)),
-            subtitle: (notes != null && notes.isNotEmpty) ? Text(l10n.notesWith(notes)) : null,
+            subtitle: (notes != null && notes.isNotEmpty) ? Text(l10n.notesValue(notes)) : null,
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [

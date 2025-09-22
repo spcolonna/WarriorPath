@@ -257,17 +257,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get notes => 'Notes';
-
-  @override
-  String notesWith(Object notesWith) {
-    return 'Notes: $notesWith';
-  }
-
-  @override
   String notesValue(String notes) {
     return 'Notes: $notes';
   }
+
+  @override
+  String get notesLabel => 'Notes';
 
   @override
   String get revertPromotion => 'Revert Promotion';
@@ -350,7 +345,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get optional => 'optional';
 
   @override
-  String get studentSuccessPromotion => 'Student successfully promoted!';
+  String get studentSuccessPromotion => 'Student promoted successfully!';
 
   @override
   String promotionError(String e) {
@@ -737,6 +732,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get profileUpdatedSuccess => 'Profile updated successfully.';
+
+  @override
   String noStudentsWithStatus(String state) {
     return 'No students with status $state';
   }
@@ -796,9 +794,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get noActiveMembersYet =>
       'There are no active members in the school yet.';
-
-  @override
-  String get instructors => 'Instructors';
 
   @override
   String get myPayments => 'My Payments';
@@ -872,7 +867,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get couldNotLoadSchoolInfo => 'Could not load school information.';
 
   @override
-  String get schoolName => 'School Name';
+  String get schoolNameLabel => 'School name';
 
   @override
   String get martialArt => 'Martial Art';
@@ -888,9 +883,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get scheduleNotDefinedYet => 'The schedule has not been defined yet.';
-
-  @override
-  String get updateProfileSuccess => 'Profile updated successfully.';
 
   @override
   String get manageChildren => 'Manage Children';
@@ -967,9 +959,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get searchForNewSchool => 'Search for a New School';
 
   @override
-  String get schoolNameLabel => 'School name';
-
-  @override
   String get alreadyLinkedToSchool =>
       'You already have a link with this school.';
 
@@ -1011,4 +1000,332 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get myUser => 'My User';
+
+  @override
+  String associatedWith(String schoolName) {
+    return 'Associated with: $schoolName';
+  }
+
+  @override
+  String get searchParentSchool => 'Search for main school';
+
+  @override
+  String get associateLaterMessage =>
+      'If you can\'t find the school, you can associate it later from the management panel.';
+
+  @override
+  String get disciplines => 'Disciplines';
+
+  @override
+  String get addAtLeastOneDiscipline =>
+      'You must add at least one discipline to your school.';
+
+  @override
+  String get disciplineName => 'Discipline Name';
+
+  @override
+  String get addDiscipline => 'Add Discipline';
+
+  @override
+  String get noDisciplinesAdded => 'No disciplines added yet.';
+
+  @override
+  String get baseStyle => 'Base Style';
+
+  @override
+  String get selectDisciplineToConfigure =>
+      'Select a discipline to configure its levels';
+
+  @override
+  String get selectDisciplineToConfigureTechniques =>
+      'Select a discipline to configure its techniques';
+
+  @override
+  String get configureTechniquesStep4 => 'Add Techniques (Step 4)';
+
+  @override
+  String get defineYourCategories => '1. Define your Categories';
+
+  @override
+  String get categoryName => 'Category Name';
+
+  @override
+  String get categoryNameHint => 'Ex: Forms, Katas, Techniques, Weapons';
+
+  @override
+  String get categoriesAppearHere => 'The categories you add will appear here.';
+
+  @override
+  String get addYourTechniques => '2. Add your Techniques';
+
+  @override
+  String get createCategoriesFirst =>
+      'Create categories first, then add your first technique.';
+
+  @override
+  String techniqueNumber(String index) {
+    return 'Technique #$index';
+  }
+
+  @override
+  String get techniqueName => 'Technique Name *';
+
+  @override
+  String get selectCategory => 'Select a category';
+
+  @override
+  String get categoryLabel => 'Category *';
+
+  @override
+  String get descriptionOptional => 'Description (optional)';
+
+  @override
+  String get videoLinkOptional => 'Video Link (optional)';
+
+  @override
+  String get videoLinkHint => 'https://youtube.com/...';
+
+  @override
+  String get addTechnique => 'Add Technique';
+
+  @override
+  String get dontWorryAddEverythingNow =>
+      'Don\'t worry about adding everything now. You can always manage your techniques from your school\'s control panel.';
+
+  @override
+  String get atLeastOneCategoryError =>
+      'You must create at least one category.';
+
+  @override
+  String get allTechniquesNeedNameCategoryError =>
+      'All techniques must have a name and a category assigned.';
+
+  @override
+  String techniquesFor(String disciplineName) {
+    return 'Techniques for \"$disciplineName\"';
+  }
+
+  @override
+  String get editTechnique => 'Edit Technique';
+
+  @override
+  String get curriculumUpdated => 'Curriculum updated.';
+
+  @override
+  String get configurePricingStep5 => 'Configure Pricing (Step 5)';
+
+  @override
+  String get uniqueCostsAndCurrency => 'Unique Costs & Currency';
+
+  @override
+  String get currency => 'Currency';
+
+  @override
+  String get inscriptionFee => 'Inscription Fee';
+
+  @override
+  String get examFee => 'Fee per Exam';
+
+  @override
+  String get monthlyFeePlans => 'Monthly Fee Plans';
+
+  @override
+  String get addNewPlan => 'Add new plan';
+
+  @override
+  String get addAtLeastOnePlan => 'Add at least one monthly payment plan.';
+
+  @override
+  String get planTitle => 'Plan Title';
+
+  @override
+  String get planTitleExample => 'Ex: Family Plan';
+
+  @override
+  String get monthlyAmount => 'Monthly Amount';
+
+  @override
+  String get planDescriptionOptional => 'Description (optional)';
+
+  @override
+  String get planDescriptionExample => 'Ex: For 2 or more siblings';
+
+  @override
+  String get allPlansNeedTitleAndAmount =>
+      'All plans must have a title and an amount greater than zero.';
+
+  @override
+  String get reviewAndFinalizeStep6 => 'Review and Finalize (Step 6)';
+
+  @override
+  String get almostDoneReviewInfo =>
+      'Almost there! Please review that all your school\'s information is correct.';
+
+  @override
+  String get schoolData => 'School Data';
+
+  @override
+  String get progressionSystem => 'Progression System';
+
+  @override
+  String get initialCurriculum => 'Initial Curriculum';
+
+  @override
+  String get pricingAndPlans => 'Pricing and Plans';
+
+  @override
+  String disciplineLabel(String disciplineName) {
+    return 'Discipline: $disciplineName';
+  }
+
+  @override
+  String get levelsCreated => 'Levels Created';
+
+  @override
+  String get techniquesAdded => 'Techniques Added';
+
+  @override
+  String get finalizeAndOpenSchool => 'Finalize and Open my School';
+
+  @override
+  String errorFinalizing(String e) {
+    return 'Error finalizing: $e';
+  }
+
+  @override
+  String get categoriesLabel => 'Categories';
+
+  @override
+  String get selectDisciplinesPrompt =>
+      'Select one or more. The first one you choose will be the primary.';
+
+  @override
+  String get institutionalDataOptional => 'Institutional Data (Optional)';
+
+  @override
+  String get city => 'City';
+
+  @override
+  String get description => 'Description';
+
+  @override
+  String get disciplineConfigPanel => 'Discipline Configuration';
+
+  @override
+  String get disciplineConfigMessage =>
+      'Select a discipline to configure its levels and techniques. When you\'re done with all of them, press \'Continue\'.';
+
+  @override
+  String get statusNotConfigured => 'Not configured';
+
+  @override
+  String get statusConfigured => 'Configured';
+
+  @override
+  String get continueToPricing => 'Continue to Pricing';
+
+  @override
+  String get errorLoadingDisciplines => 'Error loading disciplines.';
+
+  @override
+  String levelsFor(String disciplineName) {
+    return 'Levels for \"$disciplineName\"';
+  }
+
+  @override
+  String get progressionSystemName => 'Progression System Name *';
+
+  @override
+  String get progressionSystemHint => 'Ex: Sashes, Belts, Grades';
+
+  @override
+  String get levelsOrderHint => 'Levels (order from lowest to highest)';
+
+  @override
+  String get levelName => 'Level Name';
+
+  @override
+  String get progressionSystemNameRequired =>
+      'Please give your progression system a name.';
+
+  @override
+  String get allLevelsNeedAName => 'Make sure all levels have a name.';
+
+  @override
+  String get noDisciplinesFound => 'No disciplines found.';
+
+  @override
+  String get levelModel => 'Level Model';
+
+  @override
+  String get levelDeletedSuccess => 'Level deleted successfully.';
+
+  @override
+  String get levelNameHint => 'Level Name';
+
+  @override
+  String get confirmDeleteLevelMessage =>
+      'Are you sure you want to delete this level?';
+
+  @override
+  String get noLevelsConfigured => 'No levels configured for this discipline';
+
+  @override
+  String get configureDiscipline => 'Configure Discipline';
+
+  @override
+  String get step1Levels => 'Step 1: Configure Levels';
+
+  @override
+  String get step2Techniques => 'Step 2: Configure Techniques';
+
+  @override
+  String get continueStep => 'Continue';
+
+  @override
+  String get finish => 'Finish & Return to Panel';
+
+  @override
+  String get skipStep => 'Skip this step';
+
+  @override
+  String get unsavedChangesWarning =>
+      'You have unsaved changes. Are you sure you want to exit? Progress for this discipline will not be saved.';
+
+  @override
+  String get yesExit => 'Yes, exit';
+
+  @override
+  String get noStay => 'No, stay';
+
+  @override
+  String get noDiscipline => 'No Discipline';
+
+  @override
+  String get selectDiscipline => 'Select a discipline *';
+
+  @override
+  String get manageCurriculum => 'Manage Curriculum';
+
+  @override
+  String get manageCurriculumDescription =>
+      'Edit levels and techniques for each discipline.';
+
+  @override
+  String get curriculumByDiscipline => 'Curriculum by Discipline';
+
+  @override
+  String get selectDisciplineToEdit =>
+      'Select a discipline to view and edit its levels and techniques.';
+
+  @override
+  String curriculumFor(String disciplineName) {
+    return 'Curriculum for $disciplineName';
+  }
+
+  @override
+  String get saveAllChanges => 'Save All Changes';
+
+  @override
+  String get curriculumSaveSuccess => 'Curriculum saved successfully.';
 }

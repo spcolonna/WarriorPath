@@ -21,6 +21,12 @@ class MartialArtTheme {
     // logoPath: 'assets/logos_martial_arts/kungfu_logo.png', // Si tuvieras un logo específico
   );
 
+  static final MartialArtTheme taiChi = MartialArtTheme(
+    name: 'Tai Chi',
+    primaryColor: const Color(0xFF4CAF50), // Un verde sereno
+    accentColor: const Color(0xFF81C784),
+  );
+
   static const MartialArtTheme karate = MartialArtTheme(
     name: 'Karate',
     primaryColor: Color(0xFF0D47A1), // Azul profundo
@@ -44,6 +50,7 @@ class MartialArtTheme {
 
   static List<MartialArtTheme> get allThemes => [
     kungFu,
+    taiChi,
     karate,
     taekwondo,
     jiuJitsu,

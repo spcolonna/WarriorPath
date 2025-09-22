@@ -130,24 +130,44 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
         children: [
           StreamBuilder<DocumentSnapshot>(
             stream: FirebaseFirestore.instance.collection('schools').doc(schoolId).snapshots(),
-            builder: (context, snapshot) {
-              final schoolName = snapshot.data?['name'] ?? l10n.loading;
-              final martialArt = snapshot.data?['martialArt'] ?? '';
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(schoolName),
-                  if (martialArt.isNotEmpty)
-                    Text(
-                      martialArt,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.white70,
-                      ),
-                    ),
-                ],
+            builder: (context, schoolSnapshot) {
+              if (!schoolSnapshot.hasData) {
+                return Text(l10n.loading);
+              }
+              final schoolName = schoolSnapshot.data?['name'] ?? l10n.unknownSchool;
+
+              return StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('schools').doc(schoolId)
+                    .collection('disciplines')
+                    .where('isPrimary', isEqualTo: true) // Buscamos la que marcamos como principal
+                    .limit(1)
+                    .snapshots(),
+                builder: (context, disciplineSnapshot) {
+                  String disciplineName = ''; // Valor por defecto
+
+                  if (disciplineSnapshot.hasData && disciplineSnapshot.data!.docs.isNotEmpty) {
+                    final disciplineData = disciplineSnapshot.data!.docs.first.data() as Map<String, dynamic>?;
+                    disciplineName = disciplineData?['name'] ?? '';
+                  }
+
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(schoolName),
+                      if (disciplineName.isNotEmpty)
+                        Text(
+                          disciplineName,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.white70,
+                          ),
+                        ),
+                    ],
+                  );
+                },
               );
             },
           ),
@@ -190,24 +210,49 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
 
   Widget _buildTodaySchedules(String schoolId) {
     final today = DateTime.now().weekday;
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('schools').doc(schoolId).collection('classSchedules').where('dayOfWeek', isEqualTo: today).orderBy('startTime').snapshots(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-        if (snapshot.data!.docs.isEmpty) {
-          return Card(child: ListTile(leading: const Icon(Icons.info_outline), title: Text(l10n.noSchedulerClass)));
+    return FutureBuilder<Map<String, Map<String, dynamic>>>(
+      future: _fetchDisciplinesAsMap(), // Primero cargamos las disciplinas
+      builder: (context, disciplinesSnapshot) {
+        if (!disciplinesSnapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
         }
-        return ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: snapshot.data!.docs.length,
-          itemBuilder: (context, index) {
-            final schedule = snapshot.data!.docs[index].data() as Map<String, dynamic>;
-            return Card(child: ListTile(
-              leading: const Icon(Icons.schedule),
-              title: Text(schedule['title']),
-              trailing: Text('${schedule['startTime']} - ${schedule['endTime']}'),
-            ));
+        final disciplinesMap = disciplinesSnapshot.data ?? {};
+
+        return StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance.collection('schools').doc(schoolId).collection('classSchedules').where('dayOfWeek', isEqualTo: today).orderBy('startTime').snapshots(),
+          builder: (context, scheduleSnapshot) {
+            if (!scheduleSnapshot.hasData) return const Center(child: CircularProgressIndicator());
+            if (scheduleSnapshot.data!.docs.isEmpty) {
+              return Card(child: ListTile(leading: const Icon(Icons.info_outline), title: Text(l10n.noSchedulerClass)));
+            }
+            return ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: scheduleSnapshot.data!.docs.length,
+              itemBuilder: (context, index) {
+                final schedule = scheduleSnapshot.data!.docs[index].data() as Map<String, dynamic>;
+                final disciplineId = schedule['disciplineId'] as String?;
+                final disciplineInfo = disciplinesMap[disciplineId];
+
+                final disciplineName = disciplineInfo?['name'] ?? l10n.noDiscipline;
+                final themeData = disciplineInfo?['theme'] as Map<String, dynamic>? ?? {};
+                final color = themeData.containsKey('primaryColor')
+                    ? Color(int.parse('FF${themeData['primaryColor']}', radix: 16))
+                    : Theme.of(context).primaryColor;
+
+                return Card(
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: color,
+                      child: const Icon(Icons.sports_martial_arts, color: Colors.white),
+                    ),
+                    title: Text(schedule['title']),
+                    subtitle: Text(disciplineName), // Mostramos la disciplina
+                    trailing: Text('${schedule['startTime']} - ${schedule['endTime']}'),
+                  ),
+                );
+              },
+            );
           },
         );
       },
@@ -238,5 +283,22 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
         ),
       ),
     );
+  }
+
+  Future<Map<String, Map<String, dynamic>>> _fetchDisciplinesAsMap() async {
+    final disciplinesSnapshot = await FirebaseFirestore.instance
+        .collection('schools')
+        .doc(Provider.of<SessionProvider>(context, listen: false).activeSchoolId)
+        .collection('disciplines')
+        .get();
+
+    final Map<String, Map<String, dynamic>> disciplinesMap = {};
+    for (var doc in disciplinesSnapshot.docs) {
+      disciplinesMap[doc.id] = {
+        'name': (doc.data()['name'] as String?) ?? 'Sin Disciplina',
+        'theme': doc.data()['theme'] as Map<String, dynamic>? ?? {},
+      };
+    }
+    return disciplinesMap;
   }
 }

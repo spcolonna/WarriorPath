@@ -4,16 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:warrior_path/providers/session_provider.dart';
 import 'package:warrior_path/screens/teacher_dashboard_screen.dart';
-import 'package:warrior_path/theme/martial_art_themes.dart';
+
+import '../l10n/app_localizations.dart';
 
 class WizardReviewScreen extends StatefulWidget {
   final String schoolId;
-  final MartialArtTheme martialArtTheme;
-
   const WizardReviewScreen({
     Key? key,
     required this.schoolId,
-    required this.martialArtTheme,
   }) : super(key: key);
 
   @override
@@ -21,8 +19,16 @@ class WizardReviewScreen extends StatefulWidget {
 }
 
 class _WizardReviewScreenState extends State<WizardReviewScreen> {
+  late AppLocalizations l10n;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    l10n = AppLocalizations.of(context);
+  }
+
   late Future<Map<String, dynamic>> _schoolDataFuture;
   bool _isLoading = false;
+  Color _primaryColor = Colors.blue;
 
   @override
   void initState() {
@@ -30,27 +36,47 @@ class _WizardReviewScreenState extends State<WizardReviewScreen> {
     _schoolDataFuture = _fetchSchoolData();
   }
 
-  // --- FUNCIÓN DE CARGA DE DATOS ACTUALIZADA ---
+  // --- CAMBIO: La función de carga ahora es mucho más compleja ---
   Future<Map<String, dynamic>> _fetchSchoolData() async {
-    final schoolRef = FirebaseFirestore.instance.collection('schools').doc(widget.schoolId);
+    final firestore = FirebaseFirestore.instance;
+    final schoolRef = firestore.collection('schools').doc(widget.schoolId);
 
-    // Ahora también buscamos los planes de pago que se crearon
-    final results = await Future.wait([
-      schoolRef.get(),
-      schoolRef.collection('levels').orderBy('order').get(),
-      schoolRef.collection('techniques').get(),
-      schoolRef.collection('paymentPlans').get(),
-    ]);
+    // 1. Obtenemos los datos principales de la escuela y los planes de pago
+    final schoolDocFuture = schoolRef.get();
+    final paymentPlansFuture = schoolRef.collection('paymentPlans').get();
+    // Obtenemos todas las disciplinas
+    final disciplinesFuture = schoolRef.collection('disciplines').get();
 
+    final results = await Future.wait([schoolDocFuture, paymentPlansFuture, disciplinesFuture]);
     final schoolDoc = results[0] as DocumentSnapshot<Map<String, dynamic>>;
-    final levelsQuery = results[1] as QuerySnapshot<Map<String, dynamic>>;
-    final techniquesQuery = results[2] as QuerySnapshot<Map<String, dynamic>>;
-    final paymentPlansQuery = results[3] as QuerySnapshot<Map<String, dynamic>>;
+    final paymentPlansQuery = results[1] as QuerySnapshot<Map<String, dynamic>>;
+    final disciplinesQuery = results[2] as QuerySnapshot<Map<String, dynamic>>;
+
+    // Lista para guardar los datos completos de cada disciplina
+    final List<Map<String, dynamic>> disciplinesData = [];
+
+    // 2. Para cada disciplina, buscamos sus niveles y técnicas
+    for (final disciplineDoc in disciplinesQuery.docs) {
+      // Si es la disciplina principal, guardamos su color para la UI
+      if (disciplineDoc.data()['isPrimary'] == true) {
+        final themeData = disciplineDoc.data()['theme'] as Map<String, dynamic>;
+        _primaryColor = Color(int.parse('FF${themeData['primaryColor']}', radix: 16));
+      }
+
+      final levelsFuture = disciplineDoc.reference.collection('levels').orderBy('order').get();
+      final techniquesFuture = disciplineDoc.reference.collection('techniques').get();
+      final disciplineDetails = await Future.wait([levelsFuture, techniquesFuture]);
+
+      disciplinesData.add({
+        'discipline': disciplineDoc.data(),
+        'levels': (disciplineDetails[0] as QuerySnapshot).docs,
+        'techniques': (disciplineDetails[1] as QuerySnapshot).docs,
+      });
+    }
 
     return {
       'school': schoolDoc.data(),
-      'levels': levelsQuery.docs,
-      'techniques': techniquesQuery.docs,
+      'disciplinesData': disciplinesData,
       'paymentPlans': paymentPlansQuery.docs,
     };
   }
@@ -59,17 +85,21 @@ class _WizardReviewScreenState extends State<WizardReviewScreen> {
     setState(() { _isLoading = true; });
     try {
       final user = FirebaseAuth.instance.currentUser;
-      if (user == null) throw Exception("Usuario no autenticado.");
+      if (user == null) throw Exception(l10n.notAuthenticatedUser);
+
+      // Marcamos el wizard como 100% completo
       await FirebaseFirestore.instance.collection('users').doc(user.uid).update({'wizardStep': 99});
+
       Provider.of<SessionProvider>(context, listen: false)
           .setFullActiveSession(widget.schoolId, 'maestro', user.uid);
+
       if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (context) => const TeacherDashboardScreen()),
             (Route<dynamic> route) => false,
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al finalizar: ${e.toString()}')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.errorFinalizing(e.toString()))));
       setState(() { _isLoading = false; });
     }
   }
@@ -78,8 +108,8 @@ class _WizardReviewScreenState extends State<WizardReviewScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Revisar y Finalizar (Paso 6)'),
-        backgroundColor: widget.martialArtTheme.primaryColor,
+        title: Text(l10n.reviewAndFinalizeStep6),
+        backgroundColor: _primaryColor,
       ),
       body: FutureBuilder<Map<String, dynamic>>(
         future: _schoolDataFuture,
@@ -95,8 +125,7 @@ class _WizardReviewScreenState extends State<WizardReviewScreen> {
           }
 
           final school = snapshot.data!['school'] as Map<String, dynamic>;
-          final levels = snapshot.data!['levels'] as List<QueryDocumentSnapshot>;
-          final techniques = snapshot.data!['techniques'] as List<QueryDocumentSnapshot>;
+          final disciplinesData = snapshot.data!['disciplinesData'] as List<Map<String, dynamic>>;
           final paymentPlans = snapshot.data!['paymentPlans'] as List<QueryDocumentSnapshot>;
           final financials = school['financials'] as Map<String, dynamic>? ?? {};
 
@@ -110,72 +139,69 @@ class _WizardReviewScreenState extends State<WizardReviewScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Text('¡Casi listo! Revisa que toda la información de tu escuela sea correcta.', style: Theme.of(context).textTheme.titleMedium, textAlign: TextAlign.center),
+                        Text(l10n.almostDoneReviewInfo, style: Theme.of(context).textTheme.titleMedium, textAlign: TextAlign.center),
                         const SizedBox(height: 20),
 
-                        _buildReviewCard(title: 'Datos de la Escuela', icon: Icons.school, children: [
+                        _buildReviewCard(title: l10n.schoolData, icon: Icons.school, children: [
                           _buildInfoRow('Nombre:', school['name'] ?? 'N/A'),
-                          _buildInfoRow('Arte Marcial:', school['martialArt'] ?? 'N/A'),
                           _buildInfoRow('Dirección:', '${school['address']}, ${school['city']}'),
                           _buildInfoRow('Teléfono:', school['phone'] ?? 'N/A'),
                         ]),
 
-                        _buildReviewCard(title: 'Sistema de Progresión', icon: Icons.leaderboard, children: [
-                          _buildInfoRow('Sistema:', school['progressionSystemName'] ?? 'N/A'),
-                          const SizedBox(height: 8),
-                          Text('Niveles:', style: Theme.of(context).textTheme.titleSmall),
-                          ...levels.map((levelDoc) {
-                            final level = levelDoc.data() as Map<String, dynamic>;
-                            return ListTile(dense: true, leading: CircleAvatar(backgroundColor: Color(level['colorValue']), radius: 12), title: Text(level['name']));
-                          }).toList(),
-                        ]),
+                        ...disciplinesData.map((data) {
+                          final discipline = data['discipline'] as Map<String, dynamic>;
+                          final levels = data['levels'] as List<QueryDocumentSnapshot>;
+                          final techniques = data['techniques'] as List<QueryDocumentSnapshot>;
+                          final categories = List<String>.from(discipline['techniqueCategories'] ?? []);
 
-                        _buildReviewCard(title: 'Currículo Inicial', icon: Icons.menu_book, children: [
-                          _buildInfoRow('Técnicas añadidas:', '${techniques.length}'),
-                          const SizedBox(height: 8),
-                          Text('Categorías:', style: Theme.of(context).textTheme.titleSmall),
-                          Wrap(spacing: 8.0, children: List<Widget>.from((school['techniqueCategories'] as List<dynamic>? ?? []).map((cat) => Chip(label: Text(cat))))),
-                        ]),
+                          return _buildReviewCard(
+                            title: l10n.disciplineLabel(discipline['name']),
+                            icon: Icons.sports_martial_arts,
+                            children: [
+                              _buildInfoRow('${l10n.progressionSystem}:', discipline['progressionSystemName'] ?? 'N/A'),
+                              _buildInfoRow('${l10n.levelsCreated}:', levels.length.toString()),
+                              const SizedBox(height: 8),
+                              _buildInfoRow('${l10n.techniquesAdded}:', techniques.length.toString()),
+                              Text('${l10n.categoriesLabel}:', style: const TextStyle(fontWeight: FontWeight.bold)),
+                              Wrap(spacing: 8.0, children: categories.map((cat) => Chip(label: Text(cat))).toList()),
+                            ],
+                          );
+                        }).toList(),
 
-                        // --- TARJETA DE PRECIOS CORREGIDA ---
                         _buildReviewCard(
-                          title: 'Precios y Planes',
+                          title: l10n.pricingAndPlans,
                           icon: Icons.price_check,
                           children: [
-                            _buildInfoRow('Inscripción:', '${financials['inscriptionFee']} ${financials['currency']}'),
-                            _buildInfoRow('Precio por Examen:', '${financials['examFee']} ${financials['currency']}'),
+                            _buildInfoRow('${l10n.inscriptionFee}:', '${financials['inscriptionFee']} ${financials['currency']}'),
+                            _buildInfoRow('${l10n.examFee}:', '${financials['examFee']} ${financials['currency']}'),
                             const Divider(height: 20),
-                            Text('Planes de Pago Mensual:', style: Theme.of(context).textTheme.titleSmall),
-                            const SizedBox(height: 8),
-                            if (paymentPlans.isEmpty)
-                              const Text('No se crearon planes de pago.')
-                            else
-                              Column(
-                                children: paymentPlans.map((planDoc) {
-                                  final plan = planDoc.data() as Map<String, dynamic>;
-                                  return ListTile(
-                                    dense: true,
-                                    title: Text(plan['title'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                                    trailing: Text('${plan['amount']} ${plan['currency']}'),
-                                    subtitle: plan['description'] != '' ? Text(plan['description']) : null,
-                                  );
-                                }).toList(),
-                              )
+                            Text('${l10n.monthlyFeePlans}:', style: Theme.of(context).textTheme.titleSmall),
+                            if (paymentPlans.isEmpty) const Text('No se crearon planes de pago.')
+                            else Column(
+                              children: paymentPlans.map((planDoc) {
+                                final plan = planDoc.data() as Map<String, dynamic>;
+                                return ListTile(
+                                  dense: true,
+                                  title: Text(plan['title'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  trailing: Text('${plan['amount']} ${plan['currency']}'),
+                                  subtitle: plan['description'] != '' ? Text(plan['description']) : null,
+                                );
+                              }).toList(),
+                            )
                           ],
                         ),
                       ],
                     ),
                   ),
                 ),
-
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: _isLoading ? const Center(child: CircularProgressIndicator()) : ElevatedButton.icon(
                     icon: const Icon(Icons.rocket_launch, color: Colors.white),
-                    label: const Text('Finalizar y Abrir mi Escuela', style: TextStyle(color: Colors.white, fontSize: 18)),
+                    label: Text(l10n.finalizeAndOpenSchool, style: const TextStyle(color: Colors.white, fontSize: 18)),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      backgroundColor: widget.martialArtTheme.primaryColor,
+                      backgroundColor: _primaryColor,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     onPressed: _finalizeSetup,
@@ -197,7 +223,7 @@ class _WizardReviewScreenState extends State<WizardReviewScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(children: [Icon(icon, color: widget.martialArtTheme.primaryColor), const SizedBox(width: 8), Text(title, style: Theme.of(context).textTheme.titleLarge)]),
+            Row(children: [Icon(icon, color: _primaryColor), const SizedBox(width: 8), Text(title, style: Theme.of(context).textTheme.titleLarge)]),
             const Divider(height: 20),
             ...children,
           ],
@@ -212,7 +238,7 @@ class _WizardReviewScreenState extends State<WizardReviewScreen> {
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(width: 8),
-        Expanded(child: Text(value.isEmpty ? 'No especificado' : value)),
+        Expanded(child: Text(value.isEmpty ? l10n.noSpecify : value)),
       ]),
     );
   }

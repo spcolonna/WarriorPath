@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:warrior_path/providers/session_provider.dart';
 import 'package:warrior_path/screens/schedule/schedule_management_screen.dart';
+import 'package:warrior_path/screens/teacher/events/event_management_screen.dart';
+import 'package:warrior_path/screens/teacher/management/edit_school_data_screen.dart';
+import 'package:warrior_path/screens/teacher/management/finance_management_screen.dart';
+
 import '../../../l10n/app_localizations.dart';
-import '../../teacher/events/event_management_screen.dart';
-import '../../teacher/management/edit_school_data_screen.dart';
-import '../../teacher/management/finance_management_screen.dart';
-import '../../teacher/management/level_management_screen.dart';
-import '../../teacher/management/technique_management_screen.dart';
+import '../../teacher/curriculum/curriculum_hub_screen.dart';
 
 class ManagementTabScreen extends StatelessWidget {
-  const ManagementTabScreen({Key? key}) : super(key: key);
+  const ManagementTabScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +45,7 @@ class ManagementTabScreen extends StatelessWidget {
           _buildManagementTile(
             context: context,
             icon: Icons.calendar_today,
-            title: l10n.saveSchedule,
+            title: l10n.manageSchedules, // Corregida la clave
             subtitle: l10n.manageSchedulesDescription,
             onTap: () {
               Navigator.of(context).push(
@@ -56,29 +56,19 @@ class ManagementTabScreen extends StatelessWidget {
             },
           ),
           const Divider(),
+
           _buildManagementTile(
             context: context,
-            icon: Icons.leaderboard,
-            title: l10n.manageLevels,
-            subtitle: l10n.manageLevelsDescription,
+            icon: Icons.class_,
+            title: l10n.manageCurriculum,
+            subtitle: l10n.manageCurriculumDescription,
             onTap: () {
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => LevelManagementScreen(schoolId: schoolId)),
+                MaterialPageRoute(builder: (context) => CurriculumHubScreen(schoolId: schoolId)),
               );
             },
           ),
-          const Divider(),
-          _buildManagementTile(
-            context: context,
-            icon: Icons.menu_book,
-            title: l10n.manageTechniques,
-            subtitle: l10n.manageTechniquesDescription,
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => TechniqueManagementScreen(schoolId: schoolId)),
-              );
-            },
-          ),
+
           const Divider(),
           _buildManagementTile(
             context: context,

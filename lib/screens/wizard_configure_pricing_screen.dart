@@ -4,23 +4,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:warrior_path/models/payment_plan_model.dart';
 import 'package:warrior_path/screens/wizard_review_screen.dart';
-import 'package:warrior_path/theme/martial_art_themes.dart';
+
+import '../l10n/app_localizations.dart';
 
 class WizardConfigurePricingScreen extends StatefulWidget {
   final String schoolId;
-  final MartialArtTheme martialArtTheme;
-
   const WizardConfigurePricingScreen({
-    Key? key,
+    super.key,
     required this.schoolId,
-    required this.martialArtTheme,
-  }) : super(key: key);
+  });
 
   @override
   State<WizardConfigurePricingScreen> createState() => _WizardConfigurePricingScreenState();
 }
 
 class _WizardConfigurePricingScreenState extends State<WizardConfigurePricingScreen> {
+  late AppLocalizations l10n;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    l10n = AppLocalizations.of(context);
+  }
+
   final _inscriptionFeeController = TextEditingController();
   final _examFeeController = TextEditingController();
 
@@ -28,13 +33,32 @@ class _WizardConfigurePricingScreenState extends State<WizardConfigurePricingScr
   final List<String> _currencies = ['UYU', 'USD', 'ARS', 'EUR', 'MXN'];
 
   List<PaymentPlanModel> _plans = [];
-
   bool _isLoading = false;
+  Color _primaryColor = Colors.blue;
 
   @override
   void initState() {
     super.initState();
+    _fetchThemeColor();
     _addPlan();
+  }
+
+  Future<void> _fetchThemeColor() async {
+    try {
+      final primaryDiscipline = await FirebaseFirestore.instance
+          .collection('schools').doc(widget.schoolId)
+          .collection('disciplines').where('isPrimary', isEqualTo: true).limit(1).get();
+
+      if (primaryDiscipline.docs.isNotEmpty && mounted) {
+        final themeData = primaryDiscipline.docs.first['theme'] as Map<String, dynamic>;
+        setState(() {
+          _primaryColor = Color(int.parse('FF${themeData['primaryColor']}', radix: 16));
+        });
+      }
+    } catch (e) {
+      // Usar color por defecto en caso de error
+      print('Error fetching theme color: $e');
+    }
   }
 
   @override
@@ -47,10 +71,7 @@ class _WizardConfigurePricingScreenState extends State<WizardConfigurePricingScr
   void _addPlan() {
     setState(() {
       _plans.add(PaymentPlanModel(
-          title: '',
-          amount: 0.0,
-          currency: _selectedCurrency,
-          description: ''
+          title: '', amount: 0.0, currency: _selectedCurrency, description: ''
       ));
     });
   }
@@ -62,10 +83,9 @@ class _WizardConfigurePricingScreenState extends State<WizardConfigurePricingScr
   }
 
   Future<void> _saveAndContinue() async {
-    // Validación de datos
     if (_plans.any((p) => p.title.trim().isEmpty || p.amount <= 0)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Todos los planes deben tener un título y un monto mayor a cero.')),
+        SnackBar(content: Text(l10n.allPlansNeedTitleAndAmount)),
       );
       return;
     }
@@ -74,13 +94,12 @@ class _WizardConfigurePricingScreenState extends State<WizardConfigurePricingScr
 
     try {
       final user = FirebaseAuth.instance.currentUser;
-      if (user == null) throw Exception("Usuario no autenticado.");
+      if (user == null) throw Exception(l10n.notAuthenticatedUser);
 
       final firestore = FirebaseFirestore.instance;
       final schoolRef = firestore.collection('schools').doc(widget.schoolId);
       final batch = firestore.batch();
 
-      // 1. Guardar los costos únicos en el documento principal de la escuela
       final financialData = {
         'inscriptionFee': double.tryParse(_inscriptionFeeController.text) ?? 0.0,
         'examFee': double.tryParse(_examFeeController.text) ?? 0.0,
@@ -88,30 +107,24 @@ class _WizardConfigurePricingScreenState extends State<WizardConfigurePricingScr
       };
       batch.update(schoolRef, {'financials': financialData});
 
-      // 2. Guardar cada plan como un documento separado en la sub-colección 'paymentPlans'
       for (final plan in _plans) {
-        plan.currency = _selectedCurrency; // Aseguramos que todos los planes tengan la moneda seleccionada
+        plan.currency = _selectedCurrency;
         final planRef = schoolRef.collection('paymentPlans').doc();
         batch.set(planRef, plan.toJson());
       }
 
-      // 3. Actualizar el progreso del wizard
       batch.update(firestore.collection('users').doc(user.uid), {'wizardStep': 5});
-
       await batch.commit();
 
       if (!mounted) return;
       Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (context) => WizardReviewScreen(
-            schoolId: widget.schoolId,
-            martialArtTheme: widget.martialArtTheme,
-          ),
+          builder: (context) => WizardReviewScreen(schoolId: widget.schoolId),
         ),
       );
 
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al guardar: ${e.toString()}')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.saveError(e.toString()))));
     } finally {
       if (mounted) setState(() { _isLoading = false; });
     }
@@ -121,8 +134,8 @@ class _WizardConfigurePricingScreenState extends State<WizardConfigurePricingScr
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Configurar Precios (Paso 5)'),
-        backgroundColor: widget.martialArtTheme.primaryColor,
+        title: Text(l10n.configurePricingStep5),
+        backgroundColor: _primaryColor,
       ),
       body: AbsorbPointer(
         absorbing: _isLoading,
@@ -131,25 +144,25 @@ class _WizardConfigurePricingScreenState extends State<WizardConfigurePricingScr
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Costos Únicos y Moneda', style: Theme.of(context).textTheme.titleLarge, textAlign: TextAlign.center),
+              Text(l10n.uniqueCostsAndCurrency, style: Theme.of(context).textTheme.titleLarge, textAlign: TextAlign.center),
               const SizedBox(height: 24),
               DropdownButtonFormField<String>(
                 value: _selectedCurrency,
-                decoration: const InputDecoration(labelText: 'Moneda', border: OutlineInputBorder()),
+                decoration: InputDecoration(labelText: l10n.currency, border: const OutlineInputBorder()),
                 items: _currencies.map((c) => DropdownMenuItem<String>(value: c, child: Text(c))).toList(),
                 onChanged: (v) => setState(() => _selectedCurrency = v!),
               ),
               const SizedBox(height: 24),
               TextFormField(
                 controller: _inscriptionFeeController,
-                decoration: InputDecoration(labelText: 'Precio de Inscripción', prefixText: '$_selectedCurrency ', border: const OutlineInputBorder()),
+                decoration: InputDecoration(labelText: l10n.inscriptionFee, prefixText: '$_selectedCurrency ', border: const OutlineInputBorder()),
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))],
               ),
               const SizedBox(height: 24),
               TextFormField(
                 controller: _examFeeController,
-                decoration: InputDecoration(labelText: 'Precio por Examen', prefixText: '$_selectedCurrency ', border: const OutlineInputBorder()),
+                decoration: InputDecoration(labelText: l10n.examFee, prefixText: '$_selectedCurrency ', border: const OutlineInputBorder()),
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))],
               ),
@@ -157,16 +170,16 @@ class _WizardConfigurePricingScreenState extends State<WizardConfigurePricingScr
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Planes de Cuotas Mensuales', style: Theme.of(context).textTheme.titleLarge),
+                  Text(l10n.monthlyFeePlans, style: Theme.of(context).textTheme.titleLarge),
                   IconButton(
-                    icon: Icon(Icons.add_circle, color: widget.martialArtTheme.primaryColor),
-                    tooltip: 'Añadir nuevo plan',
+                    icon: Icon(Icons.add_circle, color: _primaryColor),
+                    tooltip: l10n.addNewPlan,
                     onPressed: _addPlan,
                   ),
                 ],
               ),
               const SizedBox(height: 8),
-              if (_plans.isEmpty) const Center(child: Text('Añade al menos un plan de pago mensual.')),
+              if (_plans.isEmpty) Center(child: Text(l10n.addAtLeastOnePlan)),
               ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -181,20 +194,20 @@ class _WizardConfigurePricingScreenState extends State<WizardConfigurePricingScr
                           TextFormField(
                             initialValue: _plans[index].title,
                             onChanged: (value) => _plans[index].title = value,
-                            decoration: const InputDecoration(labelText: 'Título del Plan', hintText: 'Ej: Plan Familiar'),
+                            decoration: InputDecoration(labelText: l10n.planTitle, hintText: l10n.planTitleExample),
                           ),
                           const SizedBox(height: 12),
                           TextFormField(
                             initialValue: _plans[index].amount > 0 ? _plans[index].amount.toString() : '',
                             onChanged: (value) => _plans[index].amount = double.tryParse(value) ?? 0.0,
-                            decoration: InputDecoration(labelText: 'Monto Mensual', prefixText: '$_selectedCurrency ', hintText: '0.0'),
+                            decoration: InputDecoration(labelText: l10n.monthlyAmount, prefixText: '$_selectedCurrency ', hintText: '0.0'),
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
                           ),
                           const SizedBox(height: 12),
                           TextFormField(
                             initialValue: _plans[index].description,
                             onChanged: (value) => _plans[index].description = value,
-                            decoration: const InputDecoration(labelText: 'Descripción (opcional)', hintText: 'Ej: Para 2 o más hermanos'),
+                            decoration: InputDecoration(labelText: l10n.planDescriptionOptional, hintText: l10n.planDescriptionExample),
                           ),
                           if (_plans.length > 1)
                             Align(
@@ -215,9 +228,9 @@ class _WizardConfigurePricingScreenState extends State<WizardConfigurePricingScr
                 const Center(child: CircularProgressIndicator())
               else
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16), backgroundColor: widget.martialArtTheme.primaryColor),
+                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16), backgroundColor: _primaryColor),
                   onPressed: _saveAndContinue,
-                  child: const Text('Guardar y Continuar', style: TextStyle(color: Colors.white)),
+                  child: Text(l10n.saveAndContinue, style: const TextStyle(color: Colors.white)),
                 ),
             ],
           ),

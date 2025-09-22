@@ -3,17 +3,16 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:warrior_path/models/level_model.dart';
-import 'package:warrior_path/screens/wizard_configure_techniques_screen.dart';
-import 'package:warrior_path/theme/martial_art_themes.dart';
+import '../l10n/app_localizations.dart';
 
 class WizardConfigureLevelsScreen extends StatefulWidget {
   final String schoolId;
-  final MartialArtTheme martialArtTheme;
+  final DocumentSnapshot disciplineDoc;
 
   const WizardConfigureLevelsScreen({
     Key? key,
     required this.schoolId,
-    required this.martialArtTheme,
+    required this.disciplineDoc,
   }) : super(key: key);
 
   @override
@@ -21,15 +20,63 @@ class WizardConfigureLevelsScreen extends StatefulWidget {
 }
 
 class _WizardConfigureLevelsScreenState extends State<WizardConfigureLevelsScreen> {
+  late AppLocalizations l10n;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    l10n = AppLocalizations.of(context);
+  }
+
   final _systemNameController = TextEditingController();
   final List<LevelModel> _levels = [];
-  bool _isLoading = false;
+  bool _isLoading = true;
+  Color _primaryColor = Colors.blue;
+  String _disciplineName = '';
 
   @override
   void initState() {
     super.initState();
-    // Añadimos un nivel inicial para que el usuario no empiece desde cero
-    _addLevel();
+    _loadInitialData();
+  }
+
+  Future<void> _loadInitialData() async {
+    final disciplineData = widget.disciplineDoc.data() as Map<String, dynamic>? ?? {};
+    _disciplineName = disciplineData['name'] ?? '';
+    _systemNameController.text = disciplineData['progressionSystemName'] ?? '';
+
+    final themeData = disciplineData['theme'] as Map<String, dynamic>? ?? {};
+    _primaryColor = themeData.containsKey('primaryColor')
+        ? Color(int.parse('FF${themeData['primaryColor']}', radix: 16))
+        : Colors.blue;
+
+    try {
+      final levelsSnapshot = await widget.disciplineDoc.reference
+          .collection('levels')
+          .orderBy('order')
+          .get();
+
+      if (levelsSnapshot.docs.isNotEmpty) {
+        _levels.addAll(levelsSnapshot.docs.map((doc) => LevelModel.fromFirestore(doc)));
+      }
+    } catch (e) {
+      print("Error cargando niveles existentes: $e");
+    }
+
+    if (_levels.isEmpty) {
+      _addLevel();
+    }
+
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _systemNameController.dispose();
+    super.dispose();
   }
 
   void _addLevel() {
@@ -46,37 +93,23 @@ class _WizardConfigureLevelsScreenState extends State<WizardConfigureLevelsScree
 
   void _pickColor(int index) {
     Color pickerColor = _levels[index].color;
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Elige un color'),
-        content: SingleChildScrollView(
-          child: ColorPicker(
-            pickerColor: pickerColor,
-            onColorChanged: (color) => pickerColor = color,
-          ),
-        ),
-        actions: <Widget>[
-          ElevatedButton(
-            child: const Text('Seleccionar'),
-            onPressed: () {
-              setState(() => _levels[index].color = pickerColor);
-              Navigator.of(context).pop();
-            },
-          )
-        ],
-      ),
-    );
+    showDialog(context: context, builder: (context) => AlertDialog(
+      title: Text(l10n.pickAColor),
+      content: SingleChildScrollView(child: ColorPicker(pickerColor: pickerColor, onColorChanged: (color) => pickerColor = color)),
+      actions: [ElevatedButton(child: Text(l10n.select), onPressed: () {
+        setState(() => _levels[index].color = pickerColor);
+        Navigator.of(context).pop();
+      })],
+    ));
   }
 
   Future<void> _saveAndContinue() async {
-    // Validación
     if (_systemNameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Por favor, dale un nombre a tu sistema de progresión.')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.progressionSystemNameRequired)));
       return;
     }
-    if (_levels.isEmpty || _levels.any((level) => level.name.trim().isEmpty)) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Asegúrate de que todos los niveles tengan un nombre.')));
+    if (_levels.any((level) => level.name.trim().isEmpty)) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.allLevelsNeedAName)));
       return;
     }
 
@@ -84,56 +117,51 @@ class _WizardConfigureLevelsScreenState extends State<WizardConfigureLevelsScree
 
     try {
       final user = FirebaseAuth.instance.currentUser;
-      if (user == null) throw Exception("Usuario no autenticado.");
+      if (user == null) throw Exception(l10n.notAuthenticatedUser);
 
       final firestore = FirebaseFirestore.instance;
-      final schoolRef = firestore.collection('schools').doc(widget.schoolId);
-
-      // Usamos un 'batch write' para realizar todas las operaciones de una vez
+      final disciplineRef = firestore.collection('schools').doc(widget.schoolId).collection('disciplines').doc(widget.disciplineDoc.id);
       final batch = firestore.batch();
 
-      // 1. Actualizamos el nombre del sistema en el documento de la escuela
-      batch.update(schoolRef, {'progressionSystemName': _systemNameController.text.trim()});
+      batch.update(disciplineRef, {'progressionSystemName': _systemNameController.text.trim()});
 
-      // 2. Añadimos cada nivel a la sub-colección 'levels'
-      for (int i = 0; i < _levels.length; i++) {
-        _levels[i].order = i; // Asignamos el orden según la posición en la lista
-        final levelRef = schoolRef.collection('levels').doc(); // Firestore genera el ID
-        batch.set(levelRef, _levels[i].toJson());
+      final oldLevels = await disciplineRef.collection('levels').get();
+      for (final doc in oldLevels.docs) {
+        batch.delete(doc.reference);
       }
 
-      // 3. Ejecutamos todas las operaciones en el batch
+      for (int i = 0; i < _levels.length; i++) {
+        _levels[i].order = i;
+        final levelRef = disciplineRef.collection('levels').doc();
+        batch.set(levelRef, _levels[i].toJson());
+      }
       await batch.commit();
-
-      // 4. Actualizamos el progreso del wizard del usuario
-      await firestore.collection('users').doc(user.uid).update({'wizardStep': 3});
 
       if (!mounted) return;
 
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => WizardConfigureTechniquesScreen(
-            schoolId: widget.schoolId,
-            martialArtTheme: widget.martialArtTheme,
-          ),
-        ),
-      );
+      // Al guardar, volvemos al panel. El usuario decidirá si configurar otra disciplina o continuar.
+      Navigator.of(context).pop();
 
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al guardar: ${e.toString()}')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.saveError(e.toString()))));
     } finally {
-      if (mounted) {
-        setState(() { _isLoading = false; });
-      }
+      if (mounted) setState(() { _isLoading = false; });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        appBar: AppBar(title: Text(l10n.loading)),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Configurar Niveles (Paso 3)'),
-        backgroundColor: widget.martialArtTheme.primaryColor,
+        title: Text(l10n.levelsFor(_disciplineName)),
+        backgroundColor: _primaryColor,
       ),
       body: AbsorbPointer(
         absorbing: _isLoading,
@@ -144,57 +172,41 @@ class _WizardConfigureLevelsScreenState extends State<WizardConfigureLevelsScree
             children: [
               TextField(
                 controller: _systemNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nombre del Sistema de Progresión *',
-                  hintText: 'Ej: Fajas, Cinturones, Grados',
+                decoration: InputDecoration(
+                  labelText: l10n.progressionSystemName,
+                  hintText: l10n.progressionSystemHint,
                 ),
               ),
               const SizedBox(height: 24),
-              Text(
-                'Niveles (ordena del más bajo al más alto)',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
+              Text(l10n.levelsOrderHint, style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
-              if (_levels.isEmpty)
-                const Text('Añade tu primer nivel abajo.', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
+              if (_levels.isEmpty) Text(l10n.addYourFirstLevel, textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey)),
               ReorderableListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: _levels.length,
                 itemBuilder: (context, index) {
                   return Card(
-                    key: ValueKey(_levels[index]), // Clave única para la reordenación
+                    key: ValueKey(_levels[index]),
                     margin: const EdgeInsets.symmetric(vertical: 6),
                     child: ListTile(
-                      leading: InkWell(
-                        onTap: () => _pickColor(index),
-                        child: CircleAvatar(backgroundColor: _levels[index].color),
-                      ),
+                      leading: InkWell(onTap: () => _pickColor(index), child: CircleAvatar(backgroundColor: _levels[index].color)),
                       title: TextField(
                         controller: TextEditingController(text: _levels[index].name),
-                        onChanged: (value) {
-                          _levels[index].name = value;
-                        },
-                        decoration: const InputDecoration(hintText: 'Nombre del Nivel'),
+                        onChanged: (value) => _levels[index].name = value,
+                        decoration: InputDecoration(hintText: l10n.levelNameHint),
                       ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.delete_outline),
-                            onPressed: () => _removeLevel(index),
-                          ),
-                          const Icon(Icons.drag_handle),
-                        ],
+                      trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                        IconButton(icon: const Icon(Icons.delete_outline), onPressed: () => _removeLevel(index)),
+                        const Icon(Icons.drag_handle),
+                      ],
                       ),
                     ),
                   );
                 },
                 onReorder: (oldIndex, newIndex) {
                   setState(() {
-                    if (newIndex > oldIndex) {
-                      newIndex -= 1;
-                    }
+                    if (newIndex > oldIndex) newIndex -= 1;
                     final item = _levels.removeAt(oldIndex);
                     _levels.insert(newIndex, item);
                   });
@@ -203,7 +215,7 @@ class _WizardConfigureLevelsScreenState extends State<WizardConfigureLevelsScree
               const SizedBox(height: 16),
               ElevatedButton.icon(
                 icon: const Icon(Icons.add),
-                label: const Text('Añadir Nivel'),
+                label: Text(l10n.addLevel),
                 onPressed: _addLevel,
               ),
               const SizedBox(height: 32),
@@ -211,12 +223,9 @@ class _WizardConfigureLevelsScreenState extends State<WizardConfigureLevelsScree
                 const Center(child: CircularProgressIndicator())
               else
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: widget.martialArtTheme.primaryColor,
-                  ),
+                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16), backgroundColor: _primaryColor),
                   onPressed: _saveAndContinue,
-                  child: const Text('Guardar y Continuar', style: TextStyle(color: Colors.white)),
+                  child: const Text('Guardar y Volver al Panel', style: TextStyle(color: Colors.white)), // TODO: Localizar
                 ),
             ],
           ),

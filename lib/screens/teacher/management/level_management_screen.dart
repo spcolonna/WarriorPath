@@ -27,12 +27,8 @@ class _LevelManagementScreenState extends State<LevelManagementScreen> {
     final snapshot = await FirebaseFirestore.instance
         .collection('schools').doc(widget.schoolId).collection('levels').orderBy('order').get();
 
-    _levels = snapshot.docs.map((doc) {
-      final data = doc.data();
-      return LevelModel.fromFirestore(doc.id, data);
-    }).toList();
+    _levels = snapshot.docs.map((doc) => LevelModel.fromFirestore(doc)).toList();
 
-    // Guardamos una copia profunda para la comparación al guardar
     _initialLevels = _levels.map((level) => LevelModel.fromModel(level)).toList();
 
     setState(() => _isLoading = false);

@@ -115,7 +115,7 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
       await FirebaseFirestore.instance.collection('users').doc(user.uid).update(dataToUpdate);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.updateProfileSuccess), backgroundColor: Colors.green));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.profileUpdatedSuccess), backgroundColor: Colors.green));
         Navigator.of(context).pop();
       }
     } catch (e) {

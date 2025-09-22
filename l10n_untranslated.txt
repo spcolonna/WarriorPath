@@ -1,0 +1,26 @@
+{
+  "es": [
+    "profileUpdatedSuccess",
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+    "sunday",
+    "schoolNameLabel"
+  ],
+
+  "pt": [
+    "profileUpdatedSuccess",
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+    "sunday",
+    "schoolNameLabel",
+    "martialArt"
+  ]
+}
