@@ -1404,4 +1404,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get errorLoadingProgress =>
       'An error occurred while loading your progress.';
+
+  @override
+  String get planPayment => 'Plan Payment';
+
+  @override
+  String get specialPayment => 'Special Payment';
 }

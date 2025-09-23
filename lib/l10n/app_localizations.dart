@@ -2619,6 +2619,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'An error occurred while loading your progress.'**
   String get errorLoadingProgress;
+
+  /// No description provided for @planPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan Payment'**
+  String get planPayment;
+
+  /// No description provided for @specialPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Special Payment'**
+  String get specialPayment;
 }
 
 class _AppLocalizationsDelegate

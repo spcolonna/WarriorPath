@@ -410,5 +410,7 @@
     "saveAssignments": "Salvar Designações",
     "techniquesAssignedSuccess": "Técnicas designadas com sucesso.",
     "noDisciplinesEnrolledStudent": "Você ainda не está inscrito em nenhuma disciplina.",
-    "errorLoadingProgress": "Ocorreu um erro ao carregar seu progresso."
+    "errorLoadingProgress": "Ocorreu um erro ao carregar seu progresso.",
+    "planPayment": "Pagamento de Plano",
+    "specialPayment": "Pagamento Especial"
 }

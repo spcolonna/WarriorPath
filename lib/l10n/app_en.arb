@@ -458,5 +458,7 @@
     "saveAssignments": "Save Assignments",
     "techniquesAssignedSuccess": "Techniques assigned successfully.",
     "noDisciplinesEnrolledStudent": "You are not yet enrolled in any disciplines.",
-    "errorLoadingProgress": "An error occurred while loading your progress."
+    "errorLoadingProgress": "An error occurred while loading your progress.",
+    "planPayment": "Plan Payment",
+    "specialPayment": "Special Payment"
 }

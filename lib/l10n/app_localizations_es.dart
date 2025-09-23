@@ -1408,4 +1408,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get errorLoadingProgress => 'Ocurrió un error al cargar tu progreso.';
+
+  @override
+  String get planPayment => 'Pago de Plan';
+
+  @override
+  String get specialPayment => 'Pago Especial';
 }

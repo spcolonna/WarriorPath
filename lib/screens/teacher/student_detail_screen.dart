@@ -173,21 +173,104 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
   }
 
   Widget? _buildFloatingActionButton() {
-    if (_tabController.index == 2) {
-      return FloatingActionButton.extended(
-        onPressed: () => _showRegisterPaymentDialog(),
-        label: Text(l10n.registerPayment),
-        icon: const Icon(Icons.payment),
-      );
+    switch (_tabController.index) {
+      case 1: // Pestaña de Asistencia
+        return FloatingActionButton.extended(
+          onPressed: () => _showAddPastAttendanceDialog(),
+          label: Text(l10n.registerPausedAssistance),
+          icon: const Icon(Icons.playlist_add_check),
+        );
+      case 2: // Pestaña de Pagos
+        return FloatingActionButton.extended(
+          onPressed: () => _showRegisterPaymentDialog(),
+          label: Text(l10n.registerPayment),
+          icon: const Icon(Icons.payment),
+        );
+      default:
+      // Si no hay disciplinas o estamos en una pestaña de progreso
+        if (_enrolledDisciplines.isEmpty || _tabController.index >= _staticTabsCount) {
+          return FloatingActionButton.extended(
+            onPressed: () => _showEnrollInDisciplineDialog(),
+            label: Text(l10n.enrollInDisciplines),
+            icon: const Icon(Icons.add),
+          );
+        }
+        return null;
     }
-    if (_enrolledDisciplines.isEmpty || _tabController.index >= _staticTabsCount) {
-      return FloatingActionButton.extended(
-        onPressed: () => _showEnrollInDisciplineDialog(),
-        label: Text(l10n.enrollInDisciplines),
-        icon: const Icon(Icons.add),
-      );
+  }
+
+  Future<void> _showAddPastAttendanceDialog() async {
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+      locale: const Locale('es', 'ES'),
+    );
+    if (pickedDate == null) return;
+    final int dayOfWeek = pickedDate.weekday;
+    final schedulesSnap = await FirebaseFirestore.instance
+        .collection('schools').doc(widget.schoolId)
+        .collection('classSchedules').where('dayOfWeek', isEqualTo: dayOfWeek).get();
+    if (schedulesSnap.docs.isEmpty && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.noClassForTHisDay)));
+      return;
     }
-    return null;
+    if (mounted) _selectScheduleForDate(schedulesSnap.docs, pickedDate);
+  }
+
+  void _selectScheduleForDate(List<QueryDocumentSnapshot> schedules, DateTime selectedDate) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.classFor(DateFormat.yMd('es_ES').format(selectedDate))),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: schedules.length,
+            itemBuilder: (context, index) {
+              final schedule = schedules[index].data() as Map<String, dynamic>;
+              final scheduleTitle = schedule['title'];
+              final scheduleTime = '${schedule['startTime']} - ${schedule['endTime']}';
+              return ListTile(
+                title: Text(scheduleTitle),
+                subtitle: Text(scheduleTime),
+                onTap: () {
+                  _savePastAttendance(scheduleTitle, selectedDate);
+                  Navigator.of(context).pop();
+                },
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _savePastAttendance(String scheduleTitle, DateTime date) async {
+    final normalizedDate = Timestamp.fromDate(DateTime(date.year, date.month, date.day));
+    final firestore = FirebaseFirestore.instance;
+    final recordsRef = firestore.collection('schools').doc(widget.schoolId).collection('attendanceRecords');
+    try {
+      final query = await recordsRef.where('date', isEqualTo: normalizedDate).where('scheduleTitle', isEqualTo: scheduleTitle).limit(1).get();
+      if (query.docs.isEmpty) {
+        await recordsRef.add({
+          'date': normalizedDate,
+          'scheduleTitle': scheduleTitle,
+          'schoolId': widget.schoolId,
+          'presentStudentIds': [widget.studentId],
+          'recordedBy': FirebaseAuth.instance.currentUser?.uid,
+        });
+      } else {
+        await recordsRef.doc(query.docs.first.id).update({
+          'presentStudentIds': FieldValue.arrayUnion([widget.studentId])
+        });
+      }
+      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.successAssistance)));
+    } catch (e) {
+      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.saveError(e.toString()))));
+    }
   }
 
   Widget _buildGeneralInfoTab(AppLocalizations l10n) {

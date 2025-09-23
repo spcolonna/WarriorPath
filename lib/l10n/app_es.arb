@@ -412,5 +412,7 @@
     "saveAssignments": "Guardar Asignaciones",
     "techniquesAssignedSuccess": "Técnicas asignadas con éxito.",
     "noDisciplinesEnrolledStudent": "Aún no estás inscrito en ninguna disciplina.",
-    "errorLoadingProgress": "Ocurrió un error al cargar tu progreso."
+    "errorLoadingProgress": "Ocurrió un error al cargar tu progreso.",
+    "planPayment": "Pago de Plan",
+    "specialPayment": "Pago Especial"
 }

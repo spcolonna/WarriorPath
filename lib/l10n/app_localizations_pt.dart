@@ -1413,4 +1413,10 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get errorLoadingProgress =>
       'Ocorreu um erro ao carregar seu progresso.';
+
+  @override
+  String get planPayment => 'Pagamento de Plano';
+
+  @override
+  String get specialPayment => 'Pagamento Especial';
 }
