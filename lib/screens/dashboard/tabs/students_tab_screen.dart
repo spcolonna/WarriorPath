@@ -210,6 +210,7 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
 
       batch.update(memberRef, {
         'status': 'active',
+        'role': 'alumno',
         'progress': {
           disciplineId: {
             'currentLevelId': initialLevelId,

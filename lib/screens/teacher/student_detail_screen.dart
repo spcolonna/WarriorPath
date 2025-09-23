@@ -46,6 +46,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
   final int _staticTabsCount = 3;
 
   String? _assignedPaymentPlanId;
+  bool _isOwnerViewing = false;
 
   @override
   void initState() {
@@ -56,7 +57,20 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
   }
 
   Future<void> _loadAllData() async {
-    final userDoc = await FirebaseFirestore.instance.collection('users').doc(widget.studentId).get();
+    final firestore = FirebaseFirestore.instance;
+    final currentUser = FirebaseAuth.instance.currentUser;
+
+    final schoolDoc = await firestore.collection('schools').doc(widget.schoolId).get();
+    if (schoolDoc.exists) {
+      final schoolOwnerId = schoolDoc.data()?['ownerId'];
+      if (mounted) {
+        setState(() {
+          _isOwnerViewing = (currentUser?.uid == schoolOwnerId);
+        });
+      }
+    }
+
+    final userDoc = await firestore.collection('users').doc(widget.studentId).get();
     if (userDoc.exists && mounted) {
       setState(() {
         _studentName = userDoc.data()?['displayName'] ?? '';
@@ -93,7 +107,15 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
       }
 
       if (mounted) {
-        final totalTabs = _staticTabsCount + _enrolledDisciplines.length;
+        int staticTabs = 1;
+        if (_isOwnerViewing) {
+          staticTabs += 2;
+        }
+        int totalTabs = staticTabs + _enrolledDisciplines.length;
+        if (_enrolledDisciplines.isEmpty) {
+          totalTabs++;
+        }
+
         final currentTabIndex = _tabController.index;
         _tabController.dispose();
         _tabController = TabController(length: totalTabs, vsync: this, initialIndex: currentTabIndex.clamp(0, totalTabs > 0 ? totalTabs - 1 : 0));
@@ -119,21 +141,22 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
 
     final List<Tab> tabs = [
       Tab(text: l10n.general),
-      Tab(text: l10n.assistance),
-      Tab(text: l10n.payments),
+      if (_isOwnerViewing) Tab(text: l10n.assistance),
+      if (_isOwnerViewing) Tab(text: l10n.payments),
       ..._enrolledDisciplines.map((d) => Tab(text: l10n.progressFor(d.name))),
     ];
 
     final List<Widget> tabViews = [
-      _buildGeneralInfoTab(l10n),
-      _buildAttendanceHistoryTab(l10n),
-      _buildPaymentsHistoryTab(l10n),
+      _buildGeneralInfoTab(),
+      if (_isOwnerViewing) _buildAttendanceHistoryTab(),
+      if (_isOwnerViewing) _buildPaymentsHistoryTab(),
       ..._enrolledDisciplines.map((d) => ProgressDisciplineTab(
         schoolId: widget.schoolId,
         studentId: widget.studentId,
         discipline: d,
         studentProgress: _memberProgress[d.id] as Map<String, dynamic>? ?? {},
         confettiController: _confettiController,
+        isOwnerViewing: _isOwnerViewing,
       )),
     ];
 
@@ -173,6 +196,10 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
   }
 
   Widget? _buildFloatingActionButton() {
+    if (!_isOwnerViewing) {
+      return null;
+    }
+
     switch (_tabController.index) {
       case 1: // Pestaña de Asistencia
         return FloatingActionButton.extended(
@@ -273,7 +300,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
     }
   }
 
-  Widget _buildGeneralInfoTab(AppLocalizations l10n) {
+  Widget _buildGeneralInfoTab() {
     return StreamBuilder<DocumentSnapshot>(
       stream: FirebaseFirestore.instance.collection('users').doc(widget.studentId).snapshots(),
       builder: (context, userSnapshot) {
@@ -285,67 +312,71 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
         return SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
           child: Column(children: [
-            _buildInfoCard(
-              title: l10n.facturation,
-              icon: Icons.receipt_long,
-              iconColor: Colors.blueAccent,
-              children: [
-                FutureBuilder<DocumentSnapshot>(
-                  future: _assignedPaymentPlanId == null
-                      ? null
-                      : FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('paymentPlans').doc(_assignedPaymentPlanId).get(),
-                  builder: (context, planSnapshot) {
-                    String planDetailsText = l10n.notassignedPaymentPlan;
-                    if (planSnapshot.connectionState == ConnectionState.waiting) {
-                      planDetailsText = l10n.loading;
-                    } else if (planSnapshot.hasData && planSnapshot.data!.exists) {
-                      final plan = PaymentPlanModel.fromFirestore(planSnapshot.data!);
-                      planDetailsText = '${plan.title} (${plan.amount} ${plan.currency})';
-                    } else if (_assignedPaymentPlanId != null) {
-                      planDetailsText = l10n.paymentPlanNotFoud(_assignedPaymentPlanId!);
-                    }
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(planDetailsText, style: const TextStyle(fontSize: 16)),
-                        const SizedBox(height: 16),
-                        Center(
-                          child: ElevatedButton(
-                            child: Text(l10n.changeAssignedPlan),
-                            onPressed: () => _showAssignPlanDialog(l10n),
-                          ),
-                        )
-                      ],
-                    );
-                  },
-                ),
-              ],
-            ),
+            if (_isOwnerViewing) ...[
+              _buildInfoCard(
+                title: l10n.facturation,
+                icon: Icons.receipt_long,
+                iconColor: Colors.blueAccent,
+                children: [
+                  FutureBuilder<DocumentSnapshot>(
+                    future: _assignedPaymentPlanId == null
+                        ? null
+                        : FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('paymentPlans').doc(_assignedPaymentPlanId).get(),
+                    builder: (context, planSnapshot) {
+                      String planDetailsText = l10n.notassignedPaymentPlan;
+                      if (planSnapshot.connectionState == ConnectionState.waiting) {
+                        planDetailsText = l10n.loading;
+                      } else if (planSnapshot.hasData && planSnapshot.data!.exists) {
+                        final plan = PaymentPlanModel.fromFirestore(planSnapshot.data!);
+                        planDetailsText = '${plan.title} (${plan.amount} ${plan.currency})';
+                      } else if (_assignedPaymentPlanId != null) {
+                        planDetailsText = l10n.paymentPlanNotFoud(_assignedPaymentPlanId!);
+                      }
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(planDetailsText, style: const TextStyle(fontSize: 16)),
+                          const SizedBox(height: 16),
+                          Center(
+                            child: ElevatedButton(
+                              child: Text(l10n.changeAssignedPlan),
+                              onPressed: () => _showAssignPlanDialog(),
+                            ),
+                          )
+                        ],
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: 16),
             _buildInfoCard(title: l10n.personalData, icon: Icons.badge_outlined, iconColor: Colors.teal, children: [
               _buildInfoRow("${l10n.birdthDate}:", '$formattedDob${_calculateAge(dateOfBirth)}'),
               _buildInfoRow("${l10n.gender}:", _formatGender(gender)),
             ]),
-            const SizedBox(height: 16),
-            _buildInfoCard(title: l10n.contactData, icon: Icons.contact_page, children: [
-              _buildInfoRow('Email:', userData['email'] ?? l10n.noSpecify),
-              _buildInfoRow('${l10n.phone}:', userData['phoneNumber'] ?? l10n.noSpecify),
-            ]),
-            const SizedBox(height: 16),
-            _buildInfoCard(title: l10n.emergencyInfo, icon: Icons.emergency, iconColor: Colors.red, children: [
-              _buildInfoRow('${l10n.contact}:', userData['emergencyContactName'] ?? l10n.noSpecify),
-              _buildInfoRow('${l10n.phone}:', userData['emergencyContactPhone'] ?? l10n.noSpecify),
-              _buildInfoRow('${l10n.medService}:', userData['medicalEmergencyService'] ?? l10n.noSpecify),
-              const Divider(),
-              _buildInfoRow('${l10n.medInfo}:', userData['medicalInfo'] ?? l10n.noSpecify),
-            ]),
+            if (_isOwnerViewing) ...[
+              const SizedBox(height: 16),
+              _buildInfoCard(title: l10n.contactData, icon: Icons.contact_page, children: [
+                _buildInfoRow('Email:', userData['email'] ?? l10n.noSpecify),
+                _buildInfoRow('${l10n.phone}:', userData['phoneNumber'] ?? l10n.noSpecify),
+              ]),
+              const SizedBox(height: 16),
+              _buildInfoCard(title: l10n.emergencyInfo, icon: Icons.emergency, iconColor: Colors.red, children: [
+                _buildInfoRow('${l10n.contact}:', userData['emergencyContactName'] ?? l10n.noSpecify),
+                _buildInfoRow('${l10n.phone}:', userData['emergencyContactPhone'] ?? l10n.noSpecify),
+                _buildInfoRow('${l10n.medService}:', userData['medicalEmergencyService'] ?? l10n.noSpecify),
+                const Divider(),
+                _buildInfoRow('${l10n.medInfo}:', userData['medicalInfo'] ?? l10n.noSpecify),
+              ])
+            ],
           ]),
         );
       },
     );
   }
 
-  Future<void> _showAssignPlanDialog(AppLocalizations l10n) async {
+  Future<void> _showAssignPlanDialog() async {
     final firestore = FirebaseFirestore.instance;
     final plansSnapshot = await firestore.collection('schools').doc(widget.schoolId).collection('paymentPlans').get();
     final allPlans = plansSnapshot.docs.map((doc) => PaymentPlanModel.fromFirestore(doc)).toList();
@@ -396,7 +427,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
     );
   }
 
-  Widget _buildAttendanceHistoryTab(AppLocalizations l10n) {
+  Widget _buildAttendanceHistoryTab() {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('attendanceRecords').where('presentStudentIds', arrayContains: widget.studentId).orderBy('date', descending: true).snapshots(),
       builder: (context, snapshot) {
@@ -417,7 +448,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
     );
   }
 
-  Widget _buildPaymentsHistoryTab(AppLocalizations l10n) {
+  Widget _buildPaymentsHistoryTab() {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId).collection('payments').orderBy('paymentDate', descending: true).snapshots(),
       builder: (context, snapshot) {

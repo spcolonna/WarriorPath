@@ -16,6 +16,7 @@ class ProgressDisciplineTab extends StatefulWidget {
   final DisciplineModel discipline;
   final Map<String, dynamic> studentProgress;
   final ConfettiController confettiController;
+  final bool isOwnerViewing;
 
   const ProgressDisciplineTab({
     super.key,
@@ -24,6 +25,7 @@ class ProgressDisciplineTab extends StatefulWidget {
     required this.discipline,
     required this.studentProgress,
     required this.confettiController,
+    required this.isOwnerViewing,
   });
 
   @override
@@ -121,11 +123,15 @@ class _ProgressDisciplineTabState extends State<ProgressDisciplineTab> {
 
       await batch.commit();
       widget.confettiController.play();
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l10n.studentSuccessPromotion)));
+      }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l10n.promotionError(e.toString()))));
+      }
     }
   }
 
@@ -148,10 +154,12 @@ class _ProgressDisciplineTabState extends State<ProgressDisciplineTab> {
         FutureBuilder<List<QueryDocumentSnapshot>>(
           future: _fetchLevelsForDiscipline(),
           builder: (context, levelsSnapshot) {
-            if (!levelsSnapshot.hasData)
+            if (!levelsSnapshot.hasData) {
               return const Center(child: CircularProgressIndicator());
-            if (levelsSnapshot.data!.isEmpty)
+            }
+            if (levelsSnapshot.data!.isEmpty) {
               return Center(child: Text(l10n.noProgressSystemForDiscipline));
+            }
 
             final allLevels = levelsSnapshot.data!;
             if (currentLevelId == null)
@@ -194,13 +202,14 @@ class _ProgressDisciplineTabState extends State<ProgressDisciplineTab> {
                   },
                 ),
                 const SizedBox(height: 16),
-                ElevatedButton.icon(
-                  onPressed: () =>
-                      _showPromotionDialog(
-                          currentLevelId, currentLevelOrder, allLevels),
-                  icon: const Icon(Icons.arrow_upward),
-                  label: Text(l10n.levelPromotion),
-                ),
+                if (widget.isOwnerViewing)
+                  ElevatedButton.icon(
+                    onPressed: () =>
+                        _showPromotionDialog(
+                            currentLevelId, currentLevelOrder, allLevels),
+                    icon: const Icon(Icons.arrow_upward),
+                    label: Text(l10n.levelPromotion),
+                  )
               ],
             );
           },
@@ -223,8 +232,9 @@ class _ProgressDisciplineTabState extends State<ProgressDisciplineTab> {
                 .where(FieldPath.documentId, whereIn: assignedTechniqueIds)
                 .snapshots(),
             builder: (context, techSnapshot) {
-              if (!techSnapshot.hasData)
+              if (!techSnapshot.hasData) {
                 return const Center(child: CircularProgressIndicator());
+              }
               return Column(
                 children: techSnapshot.data!.docs.map((doc) {
                   final tech = TechniqueModel.fromFirestore(doc);
@@ -241,26 +251,27 @@ class _ProgressDisciplineTabState extends State<ProgressDisciplineTab> {
           ),
 
         const SizedBox(height: 16),
-        Center(
-          child: ElevatedButton.icon(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) =>
-                      AssignTechniquesScreen(
-                        schoolId: widget.schoolId,
-                        studentId: widget.studentId,
-                        disciplineId: widget.discipline.id!,
-                        disciplineName: widget.discipline.name,
-                        alreadyAssignedIds: assignedTechniqueIds,
-                      ),
-                ),
-              );
-            },
-            icon: const Icon(Icons.add_task),
-            label: Text(l10n.assignTechnic),
+        if (widget.isOwnerViewing)
+          Center(
+            child: ElevatedButton.icon(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        AssignTechniquesScreen(
+                          schoolId: widget.schoolId,
+                          studentId: widget.studentId,
+                          disciplineId: widget.discipline.id!,
+                          disciplineName: widget.discipline.name,
+                          alreadyAssignedIds: assignedTechniqueIds,
+                        ),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.add_task),
+              label: Text(l10n.assignTechnic),
+            ),
           ),
-        ),
       ],
     );
   }

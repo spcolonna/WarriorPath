@@ -17,7 +17,7 @@ class SessionProvider with ChangeNotifier {
   }
 
   /// Cambia solo el perfil activo (ej: un padre seleccionando a un hijo).
-  void setActiveProfileId(String profileId) {
+  void setActiveProfileId(String? profileId) {
     activeProfileId = profileId;
     // No borramos la escuela o el rol, porque el siguiente paso será elegir uno para este nuevo perfil
     notifyListeners();

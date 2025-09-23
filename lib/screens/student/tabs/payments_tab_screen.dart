@@ -57,7 +57,7 @@ class PaymentsTabScreen extends StatelessWidget {
             itemBuilder: (context, index) {
               final payment = paymentDocs[index].data() as Map<String, dynamic>;
               final date = (payment['paymentDate'] as Timestamp).toDate();
-              final formattedDate = DateFormat('dd de MMMM de yyyy', 'es_ES').format(date);
+              final formattedDate = DateFormat.yMMMMd(l10n.localeName).format(date);
 
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

@@ -136,6 +136,16 @@ class _WizardCreateSchoolScreenState extends State<WizardCreateSchoolScreen> {
         });
       }
 
+      final memberRef = schoolDocRef.collection('members').doc(user.uid);
+      batch.set(memberRef, {
+        'userId': user.uid,
+        'displayName': user.displayName ?? 'Maestro',
+        'status': 'active', // El maestro siempre está activo
+        'role': 'maestro',
+        'joinDate': FieldValue.serverTimestamp(),
+        'progress': {}, // Mapa de progreso vacío inicialmente
+      });
+
       final userRef = firestore.collection('users').doc(user.uid);
       batch.set(userRef, {'activeMemberships': { schoolDocRef.id: 'maestro' }}, SetOptions(merge: true));
       batch.update(userRef, {'wizardStep': 2});
