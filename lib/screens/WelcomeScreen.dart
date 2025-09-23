@@ -2,12 +2,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:warrior_path/screens/parent/add_child_screen.dart';
 import 'package:warrior_path/screens/parent/guardian_dashboard_screen.dart';
 import 'package:warrior_path/screens/role_selector_screen.dart';
 import 'package:warrior_path/screens/student/application_sent_screen.dart';
 import 'package:warrior_path/screens/student/school_search_screen.dart';
 import 'package:warrior_path/screens/student/student_dashboard_screen.dart';
 import 'package:warrior_path/screens/teacher_dashboard_screen.dart';
+import 'package:warrior_path/screens/wizard_create_school_screen.dart';
+import 'package:warrior_path/screens/wizard_discipline_hub_screen.dart';
 import 'package:warrior_path/screens/wizard_profile_screen.dart';
 import 'package:warrior_path/services/auth_service.dart';
 import 'package:warrior_path/theme/AppColors.dart';
@@ -35,9 +38,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   final AuthService _authService = AuthService();
 
   Future<void> _navigateAfterAuth(User user) async {
-    final l10n = AppLocalizations.of(context)!;
     final userProfileDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+
     if (!mounted) return;
+
     if (!userProfileDoc.exists) {
       final newUserProfile = {
         'uid': user.uid, 'email': user.email, 'wizardStep': 0, 'createdAt': FieldValue.serverTimestamp(), 'displayName': user.displayName ?? '', 'photoUrl': user.photoURL ?? '',
@@ -46,43 +50,74 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const WizardProfileScreen()));
       return;
     }
+
     final userData = userProfileDoc.data()!;
     final int wizardStep = userData['wizardStep'] ?? 0;
+    final String? userRole = userData['role']; // Leemos el rol del usuario
+
+    // --- LÓGICA DE NAVEGACIÓN CORREGIDA ---
     if (wizardStep < 99) {
-      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const WizardProfileScreen()));
+      // Si el wizard no está completo, redirigimos al paso correcto
+      switch (wizardStep) {
+        case 0: // Aún no ha completado el perfil inicial
+          Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const WizardProfileScreen()));
+          break;
+        case 1: // Ya completó el perfil, ahora decidimos a dónde va según su ROL
+          switch (userRole) {
+            case 'student':
+              Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const SchoolSearchScreen(isFromWizard: true)));
+              break;
+            case 'parent':
+              Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const AddChildScreen()));
+              break;
+            case 'teacher':
+            case 'both':
+              Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const WizardCreateSchoolScreen()));
+              break;
+            default: // Si no tiene rol (caso raro), lo mandamos a completar el perfil de nuevo
+              Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const WizardProfileScreen()));
+          }
+          break;
+
+      // Los pasos 2, 3, 4 y 5 son para maestros que crean su escuela
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+          final memberships = userData['activeMemberships'] as Map<String, dynamic>? ?? {};
+          if (memberships.isNotEmpty) {
+            final schoolId = memberships.keys.first;
+            Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => WizardDisciplineHubScreen(schoolId: schoolId)));
+          } else {
+            Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const WizardCreateSchoolScreen()));
+          }
+          break;
+
+        default:
+        // Si es un paso desconocido, por seguridad lo mandamos al principio del wizard
+          Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const WizardProfileScreen()));
+      }
     } else {
+      // Si el wizard está completo (wizardStep == 99), aplicamos la lógica de usuario activo
       final memberships = userData['activeMemberships'] as Map<String, dynamic>? ?? {};
-      // Leemos el rol principal que el usuario eligió en el wizard
-      final mainRole = userData['role'] as String?;
 
-      // Caso 1: El usuario es principalmente un tutor
-      if (mainRole == 'parent') {
-        // Si su rol es 'parent', SIEMPRE va a su panel de tutor.
-        // Aquí es donde verá la lista de sus hijos (o una lista vacía si aún no ha añadido ninguno).
+      if (userRole == 'parent' && memberships.isEmpty) {
         Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const GuardianDashboardScreen()));
-
-        // Caso 2: El usuario es alumno/maestro y ya tiene membresías activas
       } else if (memberships.isNotEmpty) {
-        if (memberships.length == 1) {
-          // Entra directo a su único rol
+        if (memberships.length == 1 && (userRole == 'student' || userRole == 'teacher')) {
           final schoolId = memberships.keys.first;
           final role = memberships.values.first;
           Provider.of<SessionProvider>(context, listen: false).setFullActiveSession(schoolId, role, user.uid);
           Widget destination = (role == 'maestro') ? const TeacherDashboardScreen() : const StudentDashboardScreen();
           Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => destination));
         } else {
-          // Tiene múltiples roles, va al selector
           Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const RoleSelectorScreen()));
         }
-
-        // Caso 3: El usuario es alumno/maestro pero AÚN NO tiene membresías
       } else {
         final pendingApplication = userData['pendingApplications'] as Map<String, dynamic>?;
         if (pendingApplication != null) {
-          // Tiene una postulación pendiente
           Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => ApplicationSentScreen(schoolName: pendingApplication['schoolName'] ?? '')));
         } else {
-          // Es un alumno/maestro sin escuela, lo mandamos a buscar una
           Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SchoolSearchScreen()));
         }
       }

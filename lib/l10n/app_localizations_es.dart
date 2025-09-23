@@ -1333,4 +1333,79 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get curriculumSaveSuccess => 'Currículo guardado con éxito.';
+
+  @override
+  String get manageDisciplines => 'Gestionar Disciplinas';
+
+  @override
+  String get active => 'Activa';
+
+  @override
+  String get inactive => 'Inactiva';
+
+  @override
+  String get newDiscipline => 'Nueva Disciplina';
+
+  @override
+  String get schoolDataUpdated => 'Datos de la escuela actualizados.';
+
+  @override
+  String get enrollInDiscipline => 'Inscribir en Disciplina';
+
+  @override
+  String get selectDisciplineForStudent =>
+      'Selecciona la disciplina principal en la que se inscribirá este alumno.';
+
+  @override
+  String get noDisciplinesAvailable =>
+      'No hay disciplinas activas en tu escuela. Ve a Gestión -> Currículo para crearlas.';
+
+  @override
+  String progressFor(String disciplineName) {
+    return 'Progreso ($disciplineName)';
+  }
+
+  @override
+  String get enrollInDisciplines => 'Inscribir en Disciplinas';
+
+  @override
+  String get noDisciplinesEnrolled =>
+      'Este alumno aún no está inscrito en ninguna disciplina.';
+
+  @override
+  String get enroll => 'Inscribir';
+
+  @override
+  String get unenroll => 'Quitar Inscripción';
+
+  @override
+  String confirmUnenroll(String studentName, String disciplineName) {
+    return '¿Estás seguro de que quieres quitar la inscripción de $studentName de la disciplina $disciplineName?';
+  }
+
+  @override
+  String get noProgressSystemForDiscipline =>
+      'Esta disciplina aún no tiene un sistema de progresión definido.';
+
+  @override
+  String get noTechniquesForDiscipline =>
+      'Esta disciplina aún no tiene técnicas definidas.';
+
+  @override
+  String assignTechniquesFor(String disciplineName) {
+    return 'Asignar Técnicas para $disciplineName';
+  }
+
+  @override
+  String get saveAssignments => 'Guardar Asignaciones';
+
+  @override
+  String get techniquesAssignedSuccess => 'Técnicas asignadas con éxito.';
+
+  @override
+  String get noDisciplinesEnrolledStudent =>
+      'Aún no estás inscrito en ninguna disciplina.';
+
+  @override
+  String get errorLoadingProgress => 'Ocurrió un error al cargar tu progreso.';
 }

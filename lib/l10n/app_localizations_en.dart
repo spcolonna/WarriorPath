@@ -1328,4 +1328,80 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get curriculumSaveSuccess => 'Curriculum saved successfully.';
+
+  @override
+  String get manageDisciplines => 'Manage Disciplines';
+
+  @override
+  String get active => 'Active';
+
+  @override
+  String get inactive => 'Inactive';
+
+  @override
+  String get newDiscipline => 'New Discipline';
+
+  @override
+  String get schoolDataUpdated => 'School data updated.';
+
+  @override
+  String get enrollInDiscipline => 'Enroll in Discipline';
+
+  @override
+  String get selectDisciplineForStudent =>
+      'Select the primary discipline this student will be enrolled in.';
+
+  @override
+  String get noDisciplinesAvailable =>
+      'There are no active disciplines in your school. Go to Management -> Curriculum to create them.';
+
+  @override
+  String progressFor(String disciplineName) {
+    return 'Progress ($disciplineName)';
+  }
+
+  @override
+  String get enrollInDisciplines => 'Enroll in Disciplines';
+
+  @override
+  String get noDisciplinesEnrolled =>
+      'This student is not yet enrolled in any disciplines.';
+
+  @override
+  String get enroll => 'Enroll';
+
+  @override
+  String get unenroll => 'Unenroll';
+
+  @override
+  String confirmUnenroll(String studentName, String disciplineName) {
+    return 'Are you sure you want to unenroll $studentName from the $disciplineName discipline?';
+  }
+
+  @override
+  String get noProgressSystemForDiscipline =>
+      'This discipline does not have a progression system defined yet.';
+
+  @override
+  String get noTechniquesForDiscipline =>
+      'This discipline does not have any techniques defined yet.';
+
+  @override
+  String assignTechniquesFor(String disciplineName) {
+    return 'Assign Techniques for $disciplineName';
+  }
+
+  @override
+  String get saveAssignments => 'Save Assignments';
+
+  @override
+  String get techniquesAssignedSuccess => 'Techniques assigned successfully.';
+
+  @override
+  String get noDisciplinesEnrolledStudent =>
+      'You are not yet enrolled in any disciplines.';
+
+  @override
+  String get errorLoadingProgress =>
+      'An error occurred while loading your progress.';
 }

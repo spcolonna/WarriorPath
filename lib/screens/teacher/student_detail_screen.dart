@@ -4,10 +4,10 @@ import 'package:confetti/confetti.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:warrior_path/models/payment_plan_model.dart';
-import 'package:warrior_path/screens/teacher/techniques/assign_techniques_screen.dart';
+import 'package:warrior_path/models/discipline_model.dart';
+import 'package:warrior_path/screens/teacher/progress_discipline_tab.dart';
 import '../../l10n/app_localizations.dart';
-import '../../models/technique_model.dart';
+import '../../models/payment_plan_model.dart';
 import '../../widgets/register_payment_dialog.dart';
 
 class StudentDetailScreen extends StatefulWidget {
@@ -15,16 +15,16 @@ class StudentDetailScreen extends StatefulWidget {
   final String studentId;
 
   const StudentDetailScreen({
-    Key? key,
+    super.key,
     required this.schoolId,
     required this.studentId,
-  }) : super(key: key);
+  });
 
   @override
   _StudentDetailScreenState createState() => _StudentDetailScreenState();
 }
 
-class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTickerProviderStateMixin {
+class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerProviderStateMixin {
   late AppLocalizations l10n;
   @override
   void didChangeDependencies() {
@@ -33,188 +33,360 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
   }
 
   late TabController _tabController;
-  late Stream<QuerySnapshot> _attendanceStream;
   late ConfettiController _confettiController;
-
   StreamSubscription? _memberSubscription;
-  bool _isHeaderLoading = true;
+
+  bool _isLoading = true;
   String _studentName = '';
   String? _photoUrl;
-  Map<String, dynamic>? _currentLevelData;
-  String _currentRole = 'alumno';
-  List<String> _assignedTechniqueIds = [];
+  String _currentRole = '';
+
+  Map<String, dynamic> _memberProgress = {};
+  List<DisciplineModel> _enrolledDisciplines = [];
+  final int _staticTabsCount = 3;
+
+  String? _assignedPaymentPlanId;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
-    _confettiController = ConfettiController(duration: const Duration(seconds: 3));
-
-    _tabController.addListener(() {
-      if (mounted) setState(() {});
-    });
-
-    _listenToMemberData();
-
-    _attendanceStream = FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('attendanceRecords').where('presentStudentIds', arrayContains: widget.studentId).orderBy('date', descending: true).snapshots();
+    _confettiController = ConfettiController(duration: const Duration(seconds: 4));
+    _tabController = TabController(length: _staticTabsCount, vsync: this);
+    _loadAllData();
   }
 
-  void _listenToMemberData() {
-    final memberStream = FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId).snapshots();
-    _memberSubscription = memberStream.listen((memberSnapshot) async {
-      if (!memberSnapshot.exists) {
-        if (!memberSnapshot.exists) {
-          if (mounted) setState(() => _isHeaderLoading = false);
-          return;
-        }
-      }
-      final memberData = memberSnapshot.data()!;
-      final currentLevelId = memberData['currentLevelId'] ?? memberData['initialLevelId'];
-      final results = await Future.wait([_fetchLevelDetails(currentLevelId), _fetchUserPhotoUrl()]);
-      if (mounted) {
-        setState(() {
-          _assignedTechniqueIds = List<String>.from(memberData['assignedTechniqueIds'] ?? []);
-          _studentName = memberData['displayName'] ?? '';
-          _currentRole = memberData['role'] ?? 'alumno';
-          _currentLevelData = results[0] as Map<String, dynamic>?;
-          _photoUrl = results[1] as String?;
-          _isHeaderLoading = false;
-        });
-      }
-    });
-  }
-
-  Future<String?> _fetchUserPhotoUrl() async {
+  Future<void> _loadAllData() async {
     final userDoc = await FirebaseFirestore.instance.collection('users').doc(widget.studentId).get();
-    return (userDoc.data() as Map<String, dynamic>?)?['photoUrl'] as String?;
+    if (userDoc.exists && mounted) {
+      setState(() {
+        _studentName = userDoc.data()?['displayName'] ?? '';
+        _photoUrl = userDoc.data()?['photoUrl'];
+      });
+    }
+
+    _memberSubscription?.cancel();
+    _memberSubscription = FirebaseFirestore.instance
+        .collection('schools').doc(widget.schoolId)
+        .collection('members').doc(widget.studentId)
+        .snapshots()
+        .listen((memberSnapshot) async {
+      if (!memberSnapshot.exists || !mounted) {
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      final memberData = memberSnapshot.data()!;
+      _currentRole = memberData['role'] ?? 'alumno';
+      _memberProgress = memberData['progress'] as Map<String, dynamic>? ?? {};
+      _assignedPaymentPlanId = memberData['assignedPaymentPlanId'] as String?;
+      final enrolledDisciplineIds = _memberProgress.keys.toList();
+
+      if (enrolledDisciplineIds.isNotEmpty) {
+        final disciplinesSnapshot = await FirebaseFirestore.instance
+            .collection('schools').doc(widget.schoolId)
+            .collection('disciplines')
+            .where(FieldPath.documentId, whereIn: enrolledDisciplineIds)
+            .get();
+        _enrolledDisciplines = disciplinesSnapshot.docs.map((doc) => DisciplineModel.fromFirestore(doc)).toList();
+      } else {
+        _enrolledDisciplines = [];
+      }
+
+      if (mounted) {
+        final totalTabs = _staticTabsCount + _enrolledDisciplines.length;
+        final currentTabIndex = _tabController.index;
+        _tabController.dispose();
+        _tabController = TabController(length: totalTabs, vsync: this, initialIndex: currentTabIndex.clamp(0, totalTabs > 0 ? totalTabs - 1 : 0));
+        _tabController.addListener(() => setState(() {}));
+        setState(() { _isLoading = false; });
+      }
+    });
   }
 
   @override
   void dispose() {
-    _tabController.removeListener(() {});
     _tabController.dispose();
     _confettiController.dispose();
     _memberSubscription?.cancel();
     super.dispose();
   }
 
-  Future<Map<String, dynamic>?> _fetchLevelDetails(String? levelId) async {
-    if (levelId == null) return null;
-    final levelDoc = await FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('levels').doc(levelId).get();
-    if (!levelDoc.exists) return {'name': l10n.deleteLevel, 'colorValue': Colors.grey.value, 'order': -1, 'id': levelId};
-    return {...levelDoc.data()!, 'id': levelDoc.id};
-  }
-
-  Future<void> _showPromotionDialog(String currentLevelId, int currentLevelOrder) async {
-    final levelsSnapshot = await FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('levels').orderBy('order').get();
-    final List<DocumentSnapshot> availableLevels = levelsSnapshot.docs;
-    DocumentSnapshot? selectedNextLevel;
-    final notesController = TextEditingController();
-
-    showDialog(context: context, builder: (context) => StatefulBuilder(builder: (context, setDialogState) {
-      return AlertDialog(
-        title: Text(l10n.promotionOrChangeLevel),
-        content: Column(mainAxisSize: MainAxisSize.min, children: [
-          DropdownButtonFormField<DocumentSnapshot>(
-            hint: Text(l10n.choseNewLevel), value: selectedNextLevel,
-            items: availableLevels.map((levelDoc) => DropdownMenuItem<DocumentSnapshot>(value: levelDoc, child: Text(levelDoc['name']))).toList(),
-            onChanged: (value) => setDialogState(() => selectedNextLevel = value),
-          ),
-          const SizedBox(height: 16),
-          TextField(controller: notesController, decoration: InputDecoration(labelText: ('${l10n.notesLabel} (${l10n.optional})')), maxLines: 3),
-        ]),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.cancel)),
-          ElevatedButton(
-            onPressed: selectedNextLevel == null ? null : () {
-              _promoteStudent(currentLevelId: currentLevelId, newLevelSnapshot: selectedNextLevel!, notes: notesController.text);
-              Navigator.of(context).pop();
-            },
-            child: Text(l10n.confirm),
-          ),
-        ],
-      );
-    }));
-  }
-
-  Future<void> _promoteStudent({required String currentLevelId, required DocumentSnapshot newLevelSnapshot, required String notes}) async {
-    try {
-      final firestore = FirebaseFirestore.instance;
-      final memberRef = firestore.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId);
-      final newLevelId = newLevelSnapshot.id;
-      final batch = firestore.batch();
-      batch.update(memberRef, {'currentLevelId': newLevelId, 'hasUnseenPromotion': true});
-      final historyRef = memberRef.collection('progressionHistory').doc();
-      batch.set(historyRef, {'date': Timestamp.now(), 'previousLevelId': currentLevelId, 'newLevelId': newLevelId, 'type': 'level_promotion', 'notes': notes.trim(), 'promotedBy': FirebaseAuth.instance.currentUser?.uid});
-      await batch.commit();
-      _confettiController.play();
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.studentSuccessPromotion)));
-    } catch (e) {
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.promotionError(e.toString()))));
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(appBar: AppBar(), body: Center(child: Text(l10n.loading)));
     }
-  }
 
-  Future<void> _showChangeRoleDialog(String currentRole) async {
-    String? newRole = currentRole;
-    showDialog(context: context, builder: (context) => StatefulBuilder(builder: (context, setDialogState) {
-      return AlertDialog(
-        title: Text(l10n.changeRolMember),
-        content: Column(mainAxisSize: MainAxisSize.min, children: [l10n.studentLower, l10n.instructor, l10n.teacherLower].map((role) {
-          return RadioListTile<String>(title: Text(role[0].toUpperCase() + role.substring(1)), value: role, groupValue: newRole, onChanged: (value) => setDialogState(() => newRole = value));
-        }).toList()),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.cancel)),
-          ElevatedButton(
-            onPressed: newRole == null || newRole == currentRole ? null : () {
-              _changeStudentRole(newRole!);
-              Navigator.of(context).pop();
-            },
-            child: Text(l10n.save),
-          ),
-        ],
-      );
-    }));
-  }
+    final List<Tab> tabs = [
+      Tab(text: l10n.general),
+      Tab(text: l10n.assistance),
+      Tab(text: l10n.payments),
+      ..._enrolledDisciplines.map((d) => Tab(text: l10n.progressFor(d.name))),
+    ];
 
-  Future<void> _changeStudentRole(String newRole) async {
-    try {
-      final firestore = FirebaseFirestore.instance;
-      final batch = firestore.batch();
-      final memberRef = firestore.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId);
-      batch.update(memberRef, {'role': newRole});
-      final userRef = firestore.collection('users').doc(widget.studentId);
-      batch.set(userRef, {'activeMemberships': { widget.schoolId: newRole }}, SetOptions(merge: true));
-      final historyRef = memberRef.collection('progressionHistory').doc();
-      batch.set(historyRef, {'date': Timestamp.now(), 'type': 'role_change', 'newRole': newRole, 'promotedBy': FirebaseAuth.instance.currentUser?.uid});
-      await batch.commit();
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.updateRolSuccess)));
-    } catch (e) {
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.updateRolError(e.toString()))));
+    final List<Widget> tabViews = [
+      _buildGeneralInfoTab(l10n),
+      _buildAttendanceHistoryTab(l10n),
+      _buildPaymentsHistoryTab(l10n),
+      ..._enrolledDisciplines.map((d) => ProgressDisciplineTab(
+        schoolId: widget.schoolId,
+        studentId: widget.studentId,
+        discipline: d,
+        studentProgress: _memberProgress[d.id] as Map<String, dynamic>? ?? {},
+        confettiController: _confettiController,
+      )),
+    ];
+
+    if (_enrolledDisciplines.isEmpty) {
+      tabs.add(Tab(text: l10n.progress));
+      tabViews.add(Center(child: Padding(padding: const EdgeInsets.all(24.0), child: Text(l10n.noDisciplinesEnrolled, textAlign: TextAlign.center))));
     }
+
+    return Stack(
+      alignment: Alignment.topCenter,
+      children: [
+        Scaffold(
+          appBar: AppBar(title: Text(_studentName)),
+          body: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(children: [
+                  CircleAvatar(radius: 40, backgroundImage: (_photoUrl != null && _photoUrl!.isNotEmpty) ? NetworkImage(_photoUrl!) : null, child: (_photoUrl == null || _photoUrl!.isEmpty) ? const Icon(Icons.person, size: 40) : null),
+                  const SizedBox(width: 16),
+                  Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(_studentName, style: Theme.of(context).textTheme.headlineSmall),
+                    const SizedBox(height: 4),
+                    Text(_currentRole.toUpperCase(), style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600)),
+                  ]),
+                ]),
+              ),
+              TabBar(controller: _tabController, isScrollable: true, tabs: tabs),
+              Expanded(child: TabBarView(controller: _tabController, children: tabViews)),
+            ],
+          ),
+          floatingActionButton: _buildFloatingActionButton(),
+        ),
+        ConfettiWidget(confettiController: _confettiController, blastDirectionality: BlastDirectionality.explosive),
+      ],
+    );
+  }
+
+  Widget? _buildFloatingActionButton() {
+    if (_tabController.index == 2) {
+      return FloatingActionButton.extended(
+        onPressed: () => _showRegisterPaymentDialog(),
+        label: Text(l10n.registerPayment),
+        icon: const Icon(Icons.payment),
+      );
+    }
+    if (_enrolledDisciplines.isEmpty || _tabController.index >= _staticTabsCount) {
+      return FloatingActionButton.extended(
+        onPressed: () => _showEnrollInDisciplineDialog(),
+        label: Text(l10n.enrollInDisciplines),
+        icon: const Icon(Icons.add),
+      );
+    }
+    return null;
+  }
+
+  Widget _buildGeneralInfoTab(AppLocalizations l10n) {
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance.collection('users').doc(widget.studentId).snapshots(),
+      builder: (context, userSnapshot) {
+        if (!userSnapshot.hasData) return const Center(child: CircularProgressIndicator());
+        final userData = userSnapshot.data?.data() as Map<String, dynamic>? ?? {};
+        final String? gender = userData['gender'];
+        final DateTime? dateOfBirth = (userData['dateOfBirth'] as Timestamp?)?.toDate();
+        final String formattedDob = dateOfBirth != null ? DateFormat('dd/MM/yyyy', 'es_ES').format(dateOfBirth) : l10n.noSpecify;
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(children: [
+            _buildInfoCard(
+              title: l10n.facturation,
+              icon: Icons.receipt_long,
+              iconColor: Colors.blueAccent,
+              children: [
+                FutureBuilder<DocumentSnapshot>(
+                  future: _assignedPaymentPlanId == null
+                      ? null
+                      : FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('paymentPlans').doc(_assignedPaymentPlanId).get(),
+                  builder: (context, planSnapshot) {
+                    String planDetailsText = l10n.notassignedPaymentPlan;
+                    if (planSnapshot.connectionState == ConnectionState.waiting) {
+                      planDetailsText = l10n.loading;
+                    } else if (planSnapshot.hasData && planSnapshot.data!.exists) {
+                      final plan = PaymentPlanModel.fromFirestore(planSnapshot.data!);
+                      planDetailsText = '${plan.title} (${plan.amount} ${plan.currency})';
+                    } else if (_assignedPaymentPlanId != null) {
+                      planDetailsText = l10n.paymentPlanNotFoud(_assignedPaymentPlanId!);
+                    }
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(planDetailsText, style: const TextStyle(fontSize: 16)),
+                        const SizedBox(height: 16),
+                        Center(
+                          child: ElevatedButton(
+                            child: Text(l10n.changeAssignedPlan),
+                            onPressed: () => _showAssignPlanDialog(l10n),
+                          ),
+                        )
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _buildInfoCard(title: l10n.personalData, icon: Icons.badge_outlined, iconColor: Colors.teal, children: [
+              _buildInfoRow("${l10n.birdthDate}:", '$formattedDob${_calculateAge(dateOfBirth)}'),
+              _buildInfoRow("${l10n.gender}:", _formatGender(gender)),
+            ]),
+            const SizedBox(height: 16),
+            _buildInfoCard(title: l10n.contactData, icon: Icons.contact_page, children: [
+              _buildInfoRow('Email:', userData['email'] ?? l10n.noSpecify),
+              _buildInfoRow('${l10n.phone}:', userData['phoneNumber'] ?? l10n.noSpecify),
+            ]),
+            const SizedBox(height: 16),
+            _buildInfoCard(title: l10n.emergencyInfo, icon: Icons.emergency, iconColor: Colors.red, children: [
+              _buildInfoRow('${l10n.contact}:', userData['emergencyContactName'] ?? l10n.noSpecify),
+              _buildInfoRow('${l10n.phone}:', userData['emergencyContactPhone'] ?? l10n.noSpecify),
+              _buildInfoRow('${l10n.medService}:', userData['medicalEmergencyService'] ?? l10n.noSpecify),
+              const Divider(),
+              _buildInfoRow('${l10n.medInfo}:', userData['medicalInfo'] ?? l10n.noSpecify),
+            ]),
+          ]),
+        );
+      },
+    );
+  }
+
+  Future<void> _showAssignPlanDialog(AppLocalizations l10n) async {
+    final firestore = FirebaseFirestore.instance;
+    final plansSnapshot = await firestore.collection('schools').doc(widget.schoolId).collection('paymentPlans').get();
+    final allPlans = plansSnapshot.docs.map((doc) => PaymentPlanModel.fromFirestore(doc)).toList();
+
+    PaymentPlanModel? selectedPlan;
+    if (_assignedPaymentPlanId != null && allPlans.any((p) => p.id == _assignedPaymentPlanId)) {
+      selectedPlan = allPlans.firstWhere((p) => p.id == _assignedPaymentPlanId);
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: Text(l10n.assignPlan),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DropdownButtonFormField<PaymentPlanModel>(
+                  value: selectedPlan,
+                  hint: Text(l10n.selectPlan),
+                  items: allPlans.map((plan) => DropdownMenuItem(value: plan, child: Text('${plan.title} (${plan.amount} ${plan.currency})'))).toList(),
+                  onChanged: (plan) => setDialogState(() => selectedPlan = plan),
+                ),
+                const SizedBox(height: 16),
+                TextButton(
+                  child: Text(l10n.removeAssignedPlan, style: const TextStyle(color: Colors.red)),
+                  onPressed: () {
+                    firestore.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId).update({'assignedPaymentPlanId': null});
+                    Navigator.of(context).pop();
+                  },
+                )
+              ],
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.cancel)),
+              ElevatedButton(
+                onPressed: selectedPlan == null ? null : () {
+                  firestore.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId).update({'assignedPaymentPlanId': selectedPlan!.id});
+                  Navigator.of(context).pop();
+                },
+                child: Text(l10n.save),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildAttendanceHistoryTab(AppLocalizations l10n) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('attendanceRecords').where('presentStudentIds', arrayContains: widget.studentId).orderBy('date', descending: true).snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return Center(child: Text(l10n.noRegisterAssitance));
+        return ListView.builder(itemCount: snapshot.data!.docs.length, itemBuilder: (context, index) {
+          final doc = snapshot.data!.docs[index];
+          final record = doc.data() as Map<String, dynamic>;
+          final date = (record['date'] as Timestamp).toDate();
+          final formattedDate = DateFormat('dd/MM/yyyy', 'es_ES').format(date);
+          return ListTile(
+            leading: const Icon(Icons.check_circle, color: Colors.green),
+            title: Text(record['scheduleTitle'] ?? l10n.classRoom),
+            subtitle: Text(formattedDate),
+          );
+        });
+      },
+    );
+  }
+
+  Widget _buildPaymentsHistoryTab(AppLocalizations l10n) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId).collection('payments').orderBy('paymentDate', descending: true).snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return Center(child: Text(l10n.noPayment));
+        return ListView.builder(itemCount: snapshot.data!.docs.length, itemBuilder: (context, index) {
+          final payment = snapshot.data!.docs[index].data() as Map<String, dynamic>;
+          final date = (payment['paymentDate'] as Timestamp).toDate();
+          final formattedDate = DateFormat('dd/MM/yyyy').format(date);
+          return ListTile(leading: const Icon(Icons.receipt_long, color: Colors.green), title: Text(payment['concept'] ?? l10n.payment), subtitle: Text(formattedDate), trailing: Text('${payment['amount']} ${payment['currency']}', style: const TextStyle(fontWeight: FontWeight.bold)));
+        });
+      },
+    );
   }
 
   Future<void> _showRegisterPaymentDialog() async {
     final firestore = FirebaseFirestore.instance;
-    final memberDoc = await firestore.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId).get();
-    final plansSnapshot = await firestore.collection('schools').doc(widget.schoolId).collection('paymentPlans').get();
-    final List<PaymentPlanModel> allPlans = plansSnapshot.docs.map((doc) => PaymentPlanModel.fromFirestore(doc)).toList();
+    final results = await Future.wait([
+      firestore.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId).get(),
+      firestore.collection('schools').doc(widget.schoolId).collection('paymentPlans').get(),
+      firestore.collection('schools').doc(widget.schoolId).get(),
+    ]);
+
+    final memberDoc = results[0] as DocumentSnapshot<Map<String, dynamic>>;
+    final plansSnapshot = results[1] as QuerySnapshot<Map<String, dynamic>>;
+    final schoolDoc = results[2] as DocumentSnapshot<Map<String, dynamic>>;
+
+    final allPlans = plansSnapshot.docs.map((doc) => PaymentPlanModel.fromFirestore(doc)).toList();
     final assignedPlanId = memberDoc.data()?['paymentPlanId'] as String?;
-    final schoolDoc = await firestore.collection('schools').doc(widget.schoolId).get();
     final currency = (schoolDoc.data()?['financials'] as Map<String, dynamic>?)?['currency'] ?? 'USD';
 
-    showDialog(
-      context: context,
-      builder: (context) {
-        return RegisterPaymentDialog(
-          allPlans: allPlans,
-          assignedPlanId: assignedPlanId,
-          currency: currency,
-          onSave: (String concept, double amount, String? planId) {
-            _savePayment(concept: concept, amount: amount, currency: currency, planId: planId);
-          },
-        );
-      },
-    );
+    if (mounted) {
+      showDialog(
+        context: context,
+        builder: (context) {
+          return RegisterPaymentDialog(
+            allPlans: allPlans,
+            assignedPlanId: assignedPlanId,
+            currency: currency,
+            onSave: (String concept, double amount, String? planId) {
+              _savePayment(
+                concept: concept,
+                amount: amount,
+                currency: currency,
+                planId: planId,
+                l10n: l10n,
+              );
+            },
+          );
+        },
+      );
+    }
   }
 
   Future<void> _savePayment({
@@ -222,6 +394,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
     required double amount,
     required String currency,
     String? planId,
+    required AppLocalizations l10n,
   }) async {
     try {
       await FirebaseFirestore.instance
@@ -239,374 +412,116 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
         'studentName': _studentName,
       });
 
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.successPayment)));
+      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.successPayment), backgroundColor: Colors.green));
 
     } catch (e) {
       if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.paymentError(e.toString()))));
     }
   }
 
-  Future<void> _showAssignPlanDialog(String? currentPlanId) async {
+  Future<void> _showEnrollInDisciplineDialog() async {
     final firestore = FirebaseFirestore.instance;
 
-    // 1. Obtener todos los planes disponibles en la escuela
-    final plansSnapshot = await firestore
+    // 1. Buscamos TODAS las disciplinas activas de la escuela
+    final allDisciplinesSnap = await firestore
         .collection('schools').doc(widget.schoolId)
-        .collection('paymentPlans').get();
+        .collection('disciplines').where('isActive', isEqualTo: true).get();
 
-    final List<PaymentPlanModel> allPlans = plansSnapshot.docs
-        .map((doc) => PaymentPlanModel.fromFirestore(doc)).toList();
+    // 2. Filtramos para quedarnos solo con las que el alumno NO está inscrito
+    final enrolledIds = _memberProgress.keys.toSet();
+    final availableDisciplines = allDisciplinesSnap.docs
+        .where((doc) => !enrolledIds.contains(doc.id))
+        .toList();
 
-    // 2. Encontrar el plan seleccionado actualmente (si existe)
-    PaymentPlanModel? selectedPlan;
-    if (currentPlanId != null && allPlans.any((p) => p.id == currentPlanId)) {
-      selectedPlan = allPlans.firstWhere((p) => p.id == currentPlanId);
+    if (availableDisciplines.isEmpty && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Este alumno ya está inscrito en todas las disciplinas disponibles.'))
+      );
+      return;
     }
 
-    // 3. Mostrar el diálogo
-    showDialog(
+    // 3. Mostramos el diálogo con las disciplinas disponibles
+    final selectedDiscipline = await showDialog<DocumentSnapshot>(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) {
-          return AlertDialog(
-            title: Text(l10n.assignPlan),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                DropdownButtonFormField<PaymentPlanModel>(
-                  value: selectedPlan,
-                  hint: Text(l10n.selectPlan),
-                  items: allPlans.map((plan) {
-                    return DropdownMenuItem(
-                      value: plan,
-                      child: Text('${plan.title} (${plan.amount} ${plan.currency})'),
-                    );
-                  }).toList(),
-                  onChanged: (plan) {
-                    setDialogState(() => selectedPlan = plan);
-                  },
-                ),
-                const SizedBox(height: 16),
-                // Opción para quitar el plan
-                TextButton(
-                  child: Text(l10n.removeAssignedPlan, style: TextStyle(color: Colors.red)),
-                  onPressed: () {
-                    // Actualiza Firestore poniendo el campo en null
-                    firestore
-                        .collection('schools').doc(widget.schoolId)
-                        .collection('members').doc(widget.studentId)
-                        .update({'assignedPaymentPlanId': null});
-                    Navigator.of(context).pop();
-                  },
-                )
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(l10n.cancel),
-              ),
-              ElevatedButton(
-                onPressed: selectedPlan == null
-                    ? null
-                    : () {
-                  firestore
-                      .collection('schools').doc(widget.schoolId)
-                      .collection('members').doc(widget.studentId)
-                      .update({'assignedPaymentPlanId': selectedPlan!.id});
-                  Navigator.of(context).pop();
-                },
-                child: Text(l10n.save),
-              ),
-            ],
-          );
-        },
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.enrollInDiscipline),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: availableDisciplines.length,
+            itemBuilder: (context, index) {
+              final doc = availableDisciplines[index];
+              return ListTile(
+                title: Text(doc['name']),
+                onTap: () => Navigator.of(ctx).pop(doc),
+              );
+            },
+          ),
+        ),
       ),
     );
-  }
 
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      alignment: Alignment.topCenter,
-      children: [
-        Scaffold(
-          appBar: AppBar(
-            title: Text(_studentName.isEmpty ? l10n.loading : _studentName),
-            actions: [
-              PopupMenuButton<String>(
-                onSelected: (value) { if (value == 'change_role') _showChangeRoleDialog(_currentRole.isEmpty ? l10n.studentLower : _currentRole); },
-                itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                  PopupMenuItem<String>(value: 'change_role', child: Text(l10n.changeRol)),
-                ],
-              ),
-            ],
-          ),
-          body: _isHeaderLoading ? const Center(child: CircularProgressIndicator()) : Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(children: [
-                  CircleAvatar(
-                    radius: 40,
-                    backgroundImage: (_photoUrl != null && _photoUrl!.isNotEmpty) ? NetworkImage(_photoUrl!) : null,
-                    child: (_photoUrl == null || _photoUrl!.isEmpty) ? const Icon(Icons.person, size: 40) : null,
-                  ),
-                  const SizedBox(width: 16),
-                  Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(_studentName.isEmpty ? l10n.student : _studentName, style: Theme.of(context).textTheme.headlineSmall),
-                    const SizedBox(height: 4),
-                    Text((_currentRole.isEmpty ? l10n.studentLower : _currentRole).toUpperCase(), style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600)),
-                    const SizedBox(height: 8),
-                    Chip(
-                      label: Text(_currentLevelData?['name'] ?? l10n.withPutLevel, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                      backgroundColor: _currentLevelData != null ? Color(_currentLevelData!['colorValue']) : Colors.grey,
-                    ),
-                  ]),
-                ]),
-              ),
-              TabBar(controller: _tabController, isScrollable: true, tabs: [
-                Tab(text: l10n.general),
-                Tab(text: l10n.assistance),
-                Tab(text: l10n.payments),
-                Tab(text: l10n.progress),
-                Tab(text: l10n.technics),
-              ]),
-              Expanded(
-                child: TabBarView(controller: _tabController, children: [
-                  _buildGeneralInfoTab(),
-                  _buildAttendanceHistoryTab(),
-                  _buildPaymentsHistoryTab(),
-                  _buildProgressionHistoryTab(),
-                  _buildAssignedTechniquesTab(),
-                ]),
-              ),
-            ],
-          ),
-          floatingActionButton: _buildFloatingActionButton(),
-        ),
-        ConfettiWidget(
-          confettiController: _confettiController,
-          blastDirectionality: BlastDirectionality.explosive,
-          shouldLoop: false, numberOfParticles: 30, emissionFrequency: 0.05, maxBlastForce: 20, minBlastForce: 8, gravity: 0.3,
-          colors: const [Colors.green, Colors.blue, Colors.pink, Colors.orange, Colors.purple],
-        ),
-      ],
-    );
-  }
+    if (selectedDiscipline != null && mounted) {
+      // 4. Si se seleccionó una, procedemos a inscribir al alumno
+      try {
+        final levelsQuery = await selectedDiscipline.reference
+            .collection('levels').orderBy('order').limit(1).get();
 
-  Widget? _buildFloatingActionButton() {
-    switch (_tabController.index) {
-      case 1:
-        return FloatingActionButton.extended(
-          onPressed: _showAddPastAttendanceDialog,
-          label: Text(l10n.registerPausedAssistance),
-          icon: const Icon(Icons.playlist_add_check),
-        );
-      case 2: return FloatingActionButton.extended(onPressed: _showRegisterPaymentDialog, label: Text(l10n.registerPayment), icon: const Icon(Icons.payment));
-      case 3: return FloatingActionButton.extended(
-        onPressed: () {
-          if (_currentLevelData != null) {
-            _showPromotionDialog(_currentLevelData!['id'], _currentLevelData!['order']);
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.errorLevelLoad)));
+        if (levelsQuery.docs.isEmpty) {
+          throw Exception('La disciplina seleccionada no tiene niveles configurados.');
+        }
+        final initialLevelId = levelsQuery.docs.first.id;
+
+        // Usamos notación de punto para añadir un nuevo campo al mapa 'progress'
+        await firestore.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId).update({
+          'progress.${selectedDiscipline.id}': {
+            'currentLevelId': initialLevelId,
+            'enrollmentDate': FieldValue.serverTimestamp(),
+            'assignedTechniqueIds': [],
           }
-        },
-        label: Text(l10n.levelPromotion),
-        icon: const Icon(Icons.arrow_upward),
-      );
-      case 4:
-        return FloatingActionButton.extended(
-          onPressed: () {
-            Navigator.of(context).push(MaterialPageRoute(
-              builder: (context) => AssignTechniquesScreen(
-                schoolId: widget.schoolId,
-                studentId: widget.studentId,
-                alreadyAssignedIds: _assignedTechniqueIds,
-              ),
-            ));
-          },
-          label: Text(l10n.assignTechnic),
-          icon: const Icon(Icons.add_task),
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Alumno inscrito en ${selectedDiscipline['name']} con éxito.'), backgroundColor: Colors.green),
         );
-      default: return null;
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error al inscribir: ${e.toString()}'))
+        );
+        }
+      }
     }
   }
 
-  Widget _buildAssignedTechniquesTab() {
-    if (_assignedTechniqueIds.isEmpty) {
-      return Center(child: Text(l10n.studentNotAssignedTechnics));
+  String _formatGender(String? genderValue) {
+    if (genderValue == null || genderValue.isEmpty) return l10n.noSpecify;
+    switch (genderValue) {
+      case 'masculino': return l10n.maleGender;
+      case 'femenino': return l10n.femaleGender;
+      case 'otro': return l10n.otherGender;
+      case 'prefiero_no_decirlo': return l10n.noSpecifyGender;
+      default: return genderValue;
     }
-    // Hacemos una consulta para obtener los detalles de las técnicas asignadas
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('schools').doc(widget.schoolId)
-          .collection('techniques')
-          .where(FieldPath.documentId, whereIn: _assignedTechniqueIds)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-        final techniques = snapshot.data!.docs;
-
-        return ListView.builder(
-          itemCount: techniques.length,
-          itemBuilder: (context, index) {
-            final tech = TechniqueModel.fromFirestore(techniques[index]);
-            return ListTile(
-              title: Text(tech.name),
-              subtitle: Text(tech.category),
-              trailing: IconButton(
-                icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
-                onPressed: () async {
-                  // Lógica para eliminar la asignación
-                  await FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId).update({
-                    'assignedTechniqueIds': FieldValue.arrayRemove([tech.id])
-                  });
-                },
-              ),
-            );
-          },
-        );
-      },
-    );
   }
 
-  Widget _buildGeneralInfoTab() {
-    return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('schools').doc(widget.schoolId)
-          .collection('members').doc(widget.studentId)
-          .snapshots(),
-      builder: (context, memberSnapshot) {
-        if (!memberSnapshot.hasData) return const Center(child: CircularProgressIndicator());
-
-        final memberData = memberSnapshot.data?.data() as Map<String, dynamic>? ?? {};
-        final String? assignedPlanId = memberData['assignedPaymentPlanId'] as String?;
-
-        return StreamBuilder<DocumentSnapshot>(
-          stream: FirebaseFirestore.instance.collection('users').doc(widget.studentId).snapshots(),
-          builder: (context, userSnapshot) {
-            if (!userSnapshot.hasData) return const Center(child: CircularProgressIndicator());
-            final userData = userSnapshot.data?.data() as Map<String, dynamic>? ?? {};
-
-            final String? gender = userData['gender'];
-            final DateTime? dateOfBirth = (userData['dateOfBirth'] as Timestamp?)?.toDate();
-            final String formattedDob = dateOfBirth != null
-                ? DateFormat('dd/MM/yyyy', 'es_ES').format(dateOfBirth)
-                : l10n.noSpecify;
-
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(children: [
-                _buildInfoCard(
-                  title: l10n.facturation,
-                  icon: Icons.receipt_long,
-                  iconColor: Colors.blueAccent,
-                  children: [
-                    FutureBuilder<DocumentSnapshot>(
-                      future: assignedPlanId == null
-                          ? null
-                          : FirebaseFirestore.instance
-                          .collection('schools').doc(widget.schoolId)
-                          .collection('paymentPlans').doc(assignedPlanId)
-                          .get(),
-                      builder: (context, planSnapshot) {
-                        String planDetailsText = l10n.notassignedPaymentPlan;
-                        if (planSnapshot.connectionState == ConnectionState.waiting) {
-                          planDetailsText = l10n.loading;
-                        } else if (planSnapshot.hasData && planSnapshot.data!.exists) {
-                          final plan = PaymentPlanModel.fromFirestore(planSnapshot.data!);
-                          planDetailsText = '${plan.title} (${plan.amount} ${plan.currency})';
-                        } else if (assignedPlanId != null) {
-                          planDetailsText = l10n.paymentPlanNotFoud(assignedPlanId);
-                        }
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(planDetailsText, style: const TextStyle(fontSize: 16)),
-                            const SizedBox(height: 16),
-                            Center(
-                              child: ElevatedButton(
-                                child: Text(l10n.changeAssignedPlan),
-                                onPressed: () => _showAssignPlanDialog(assignedPlanId),
-                              ),
-                            )
-                          ],
-                        );
-                      },
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 16),
-
-                _buildInfoCard(
-                  title: l10n.personalData,
-                  icon: Icons.badge_outlined,
-                  iconColor: Colors.teal,
-                  children: [
-                    _buildInfoRow("${l10n.birdthDate}:", '$formattedDob${_calculateAge(dateOfBirth)}'),
-                    _buildInfoRow("${l10n.gender}:", _formatGender(gender)),
-                  ],
-                ),
-
-                const SizedBox(height: 16),
-
-                _buildInfoCard(
-                  title: l10n.contactData,
-                  icon: Icons.contact_page,
-                  children: [
-                    _buildInfoRow('Email:', userData['email'] ?? l10n.noSpecify),
-                    _buildInfoRow('${l10n.phone}:', userData['phoneNumber'] ?? l10n.noSpecify),
-                  ],
-                ),
-
-                const SizedBox(height: 16),
-
-                _buildInfoCard(
-                  title: l10n.emergencyInfo,
-                  icon: Icons.emergency,
-                  iconColor: Colors.red,
-                  children: [
-                    _buildInfoRow('${l10n.contact}:', userData['emergencyContactName'] ?? l10n.noSpecify),
-                    _buildInfoRow('${l10n.phone}:', userData['emergencyContactPhone'] ?? l10n.noSpecify),
-                    _buildInfoRow('${l10n.medService}:', userData['medicalEmergencyService'] ?? l10n.noSpecify),
-                    const Divider(),
-                    _buildInfoRow('${l10n.medInfo}:', userData['medicalInfo'] ?? l10n.noSpecify),
-                  ],
-                ),
-              ]),
-            );
-          },
-        );
-      },
-    );
+  String _calculateAge(DateTime? birthDate) {
+    if (birthDate == null) return '';
+    final today = DateTime.now();
+    int age = today.year - birthDate.year;
+    if (today.month < birthDate.month || (today.month == birthDate.month && today.day < birthDate.day)) {
+      age--;
+    }
+    return ' ($age ${l10n.years})';
   }
 
   Widget _buildInfoCard({required String title, required IconData icon, Color? iconColor, required List<Widget> children}) {
-    return Card(
-        child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(icon, color: iconColor ?? Theme.of(context).primaryColor),
-                      const SizedBox(width: 8),
-
-                      Expanded(
-                        child: Text(
-                            title,
-                            style: Theme.of(context).textTheme.titleLarge,
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 2
-                        ),
-                      ),
-                    ],
-                  ),
-      const Divider(height: 20), ...children,
-    ])));
+    return Card(child: Padding(padding: const EdgeInsets.all(16.0), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [ Icon(icon, color: iconColor ?? Theme.of(context).primaryColor), const SizedBox(width: 8), Expanded(child: Text(title, style: Theme.of(context).textTheme.titleLarge, overflow: TextOverflow.ellipsis, maxLines: 2))]),
+      const Divider(height: 20), ...children])));
   }
 
   Widget _buildInfoRow(String label, String value) {
@@ -614,361 +529,5 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with SingleTi
       Text(label, style: const TextStyle(fontWeight: FontWeight.bold)), const SizedBox(width: 8),
       Expanded(child: Text(value.isEmpty ? l10n.noSpecify : value)),
     ]));
-  }
-
-  Widget _buildPaymentsHistoryTab() {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId).collection('payments').orderBy('paymentDate', descending: true).snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return Center(child: Text(l10n.noPayment));
-        return ListView.builder(itemCount: snapshot.data!.docs.length, itemBuilder: (context, index) {
-          final payment = snapshot.data!.docs[index].data() as Map<String, dynamic>;
-          final date = (payment['paymentDate'] as Timestamp).toDate();
-          final formattedDate = DateFormat('dd/MM/yyyy').format(date);
-          return ListTile(leading: const Icon(Icons.receipt_long, color: Colors.green), title: Text(payment['concept'] ?? l10n.payment), subtitle: Text(formattedDate), trailing: Text('${payment['amount']} ${payment['currency']}', style: const TextStyle(fontWeight: FontWeight.bold)));
-        });
-      },
-    );
-  }
-
-  Widget _buildAttendanceHistoryTab() {
-    return StreamBuilder<QuerySnapshot>(
-      stream: _attendanceStream,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError) return Center(child: Text(l10n.errorLoadHistory));
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return Center(child: Text(l10n.noRegisterAssitance));
-        }
-
-        return ListView.builder(
-          itemCount: snapshot.data!.docs.length,
-          itemBuilder: (context, index) {
-            final doc = snapshot.data!.docs[index];
-            final record = doc.data() as Map<String, dynamic>;
-            final date = (record['date'] as Timestamp).toDate();
-            final formattedDate = DateFormat('dd/MM/yyyy', 'es_ES').format(date);
-
-            return ListTile(
-              leading: const Icon(Icons.check_circle, color: Colors.green),
-              title: Text(record['scheduleTitle'] ?? l10n.classRoom),
-              subtitle: Text(formattedDate),
-
-              trailing: IconButton(
-                icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                tooltip: l10n.removeAssistance,
-                onPressed: () async {
-                  final confirm = await showDialog<bool>(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                      title: Text(l10n.confirm),
-                      content: Text(l10n.removeAssistanceCOnfirmation),
-                      actions: [
-                        TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.cancel)),
-                        TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.eliminate)),
-                      ],
-                    ),
-                  );
-
-                  if (confirm ?? false) {
-                    try {
-                      await FirebaseFirestore.instance
-                          .collection('schools').doc(widget.schoolId)
-                          .collection('attendanceRecords').doc(doc.id)
-                          .update({
-                        'presentStudentIds': FieldValue.arrayRemove([widget.studentId])
-                      });
-
-                      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.assistanceDelete)));
-
-                    } catch (e) {
-                      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.deleteError(e.toString()))));
-                    }
-                  }
-                },
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildProgressionHistoryTab() {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('schools').doc(widget.schoolId)
-          .collection('members').doc(widget.studentId)
-          .collection('progressionHistory')
-          .orderBy('date', descending: true)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-        if (snapshot.hasError) { print('ERROR DEL STREAM DE PROGRESO: ${snapshot.error}'); return Center(child: Text(l10n.loadProgressError)); }
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return Center(child: Text(l10n.noHistPromotion));
-
-        return ListView.builder(
-          itemCount: snapshot.data!.docs.length,
-          itemBuilder: (context, index) {
-            final doc = snapshot.data!.docs[index];
-            final historyData = doc.data() as Map<String, dynamic>;
-            final eventType = historyData['type'] ?? 'level_promotion';
-
-            if (eventType == 'role_change') {
-              return _buildRoleChangeEventTile(historyData);
-            }
-            return _buildLevelPromotionEventTile(historyData: historyData, historyDocId: doc.id);
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildRoleChangeEventTile(Map<String, dynamic> history) {
-    final date = (history['date'] as Timestamp).toDate();
-    final formattedDate = DateFormat('dd/MM/yyyy').format(date);
-    final newRole = history['newRole'] ?? '';
-    final roleText = l10n.rolUpdatedTo(newRole[0].toUpperCase() + newRole.substring(1));
-    return Card(margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6), child: ListTile(leading: const Icon(Icons.admin_panel_settings), title: Text(roleText), trailing: Text(formattedDate)));
-  }
-
-  Widget _buildLevelPromotionEventTile({
-    required Map<String, dynamic> historyData,
-    required String historyDocId,
-  }) {
-    final date = (historyData['date'] as Timestamp).toDate();
-    final formattedDate = DateFormat('dd/MM/yyyy').format(date);
-    final notes = historyData['notes'] as String?;
-    final levelId = historyData['newLevelId'];
-
-    if (levelId == null) {
-      return Card(margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6), child: ListTile(leading: const Icon(Icons.error, color: Colors.red), title: Text(l10n.invalidRegisterPromotion), trailing: Text(formattedDate)));
-    }
-
-    return FutureBuilder<DocumentSnapshot>(
-      future: FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('levels').doc(levelId).get(),
-      builder: (context, levelSnapshot) {
-        String levelName = l10n.loading;
-        Color levelColor = Colors.grey;
-        if (levelSnapshot.connectionState == ConnectionState.done) {
-          if (levelSnapshot.hasData && levelSnapshot.data!.exists) {
-            final levelData = levelSnapshot.data!.data() as Map<String, dynamic>;
-            levelName = levelData['name'] ?? l10n.deleteLevel;
-            levelColor = Color(levelData['colorValue']);
-          } else {
-            levelName = l10n.deleteLevel;
-            levelColor = Colors.grey.shade400;
-          }
-        }
-
-        return Card(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          child: ListTile(
-            leading: Icon(Icons.military_tech, color: levelColor),
-            title: Text(l10n.promotionTo(levelName)),
-            subtitle: (notes != null && notes.isNotEmpty) ? Text(l10n.notesValue(notes)) : null,
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(formattedDate),
-
-                IconButton(
-                  icon: const Icon(Icons.delete_forever_outlined),
-                  color: Colors.grey[600],
-                  tooltip: l10n.revertThisPromotion,
-                  onPressed: () => _showDeletePromotionDialog(historyDocId),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  String _formatGender(String? genderValue) {
-    if (genderValue == null || genderValue.isEmpty) return l10n.noSpecify;
-    switch (genderValue) {
-      case 'masculino':
-        return l10n.maleGender;
-      case 'femenino':
-        return l10n.femaleGender;
-      case 'otro':
-        return l10n.otherGender;
-      case 'prefiero_no_decirlo':
-        return l10n.noSpecifyGender;
-      default:
-        return genderValue;
-    }
-  }
-
-  /// Calcula la edad a partir de la fecha de nacimiento.
-  String _calculateAge(DateTime? birthDate) {
-    if (birthDate == null) return '';
-    final today = DateTime.now();
-    int age = today.year - birthDate.year;
-    if (today.month < birthDate.month ||
-        (today.month == birthDate.month && today.day < birthDate.day)) {
-      age--;
-    }
-    return ' ($age ${l10n.years})';
-  }
-
-  /// Muestra el selector de calendario para elegir una fecha pasada.
-  Future<void> _showAddPastAttendanceDialog() async {
-    final DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2020), // Desde qué año permites registrar
-      lastDate: DateTime.now(), // No puedes registrar asistencias futuras
-      locale: const Locale('es', 'ES'), // Asegúrate de tener intl configurado para español
-    );
-
-    if (pickedDate == null) return; // El usuario canceló
-
-    final int dayOfWeek = pickedDate.weekday;
-
-    final schedulesSnap = await FirebaseFirestore.instance
-        .collection('schools').doc(widget.schoolId)
-        .collection('classSchedules')
-        .where('dayOfWeek', isEqualTo: dayOfWeek)
-        .get();
-
-    if (schedulesSnap.docs.isEmpty) {
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.noClassForTHisDay)));
-      return;
-    }
-
-    if (mounted) {
-      _selectScheduleForDate(schedulesSnap.docs, pickedDate);
-    }
-  }
-
-  void _selectScheduleForDate(List<QueryDocumentSnapshot> schedules, DateTime selectedDate) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(l10n.classFor(DateFormat.yMd('es_ES').format(selectedDate))),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: schedules.length,
-              itemBuilder: (context, index) {
-                final schedule = schedules[index].data() as Map<String, dynamic>;
-                final scheduleTitle = schedule['title'];
-                final scheduleTime = '${schedule['startTime']} - ${schedule['endTime']}';
-
-                return ListTile(
-                  title: Text(scheduleTitle),
-                  subtitle: Text(scheduleTime),
-                  onTap: () {
-                    _savePastAttendance(scheduleTitle, selectedDate);
-                    Navigator.of(context).pop();
-                  },
-                );
-              },
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  /// Guarda la asistencia (Paso final)
-  Future<void> _savePastAttendance(String scheduleTitle, DateTime date) async {
-    final normalizedDate = Timestamp.fromDate(DateTime(date.year, date.month, date.day));
-
-    final firestore = FirebaseFirestore.instance;
-    final recordsRef = firestore.collection('schools').doc(widget.schoolId).collection('attendanceRecords');
-
-    try {
-      final query = await recordsRef
-          .where('date', isEqualTo: normalizedDate)
-          .where('scheduleTitle', isEqualTo: scheduleTitle)
-          .limit(1)
-          .get();
-
-      String attendanceDocId;
-
-      if (query.docs.isEmpty) {
-        final newDocRef = await recordsRef.add({
-          'date': normalizedDate,
-          'scheduleTitle': scheduleTitle,
-          'schoolId': widget.schoolId,
-          'presentStudentIds': [widget.studentId],
-          'recordedBy': FirebaseAuth.instance.currentUser?.uid,
-        });
-        attendanceDocId = newDocRef.id;
-      } else {
-        attendanceDocId = query.docs.first.id;
-        await recordsRef.doc(attendanceDocId).update({
-          'presentStudentIds': FieldValue.arrayUnion([widget.studentId])
-        });
-      }
-
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.successAssistance)));
-
-    } catch (e) {
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.saveError(e.toString()))));
-    }
-  }
-
-  Future<void> _showDeletePromotionDialog(String historyDocId) async {
-    // 1. Mostrar diálogo de confirmación CRÍTICO
-    final bool? confirmDelete = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.revertPromotion),
-        content: Text(
-          l10n.confirmReverPromotion,
-          style: TextStyle(height: 1.5),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.cancel)),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.yesRevert),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmDelete != true) return;
-
-    final firestore = FirebaseFirestore.instance;
-    final memberRef = firestore.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId);
-    final historyDocRef = memberRef.collection('progressionHistory').doc(historyDocId);
-
-    try {
-      await historyDocRef.delete();
-
-      final newLatestPromoSnap = await memberRef.collection('progressionHistory')
-          .where('type', isEqualTo: 'level_promotion')
-          .orderBy('date', descending: true)
-          .limit(1)
-          .get();
-
-      String? newCurrentLevelId;
-
-      if (newLatestPromoSnap.docs.isNotEmpty) {
-        newCurrentLevelId = newLatestPromoSnap.docs.first.data()['newLevelId'];
-      } else {
-        final memberDoc = await memberRef.get();
-        newCurrentLevelId = memberDoc.data()?['initialLevelId'];
-      }
-
-      await memberRef.update({'currentLevelId': newCurrentLevelId});
-
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.successRevertPromotion)));
-
-    } catch (e) {
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.errorToRevert(e.toString()))));
-    }
   }
 }

@@ -188,7 +188,7 @@ class _SchoolSearchScreenState extends State<SchoolSearchScreen> {
                       margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
                       child: ListTile(
                         title: Text(schoolData['name'] ?? l10n.noName),
-                        subtitle: Text('${schoolData['martialArt']} - ${schoolData['city'] ?? l10n.noCity}'),
+                        subtitle: Text(schoolData['city'] ?? l10n.noCity),
                         trailing: ElevatedButton(
                             child: Text(l10n.apply),
                             onPressed: () => _postulateToSchool(schoolDoc.id, schoolData['name'])

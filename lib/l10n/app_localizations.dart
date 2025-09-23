@@ -2493,6 +2493,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Curriculum saved successfully.'**
   String get curriculumSaveSuccess;
+
+  /// No description provided for @manageDisciplines.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Disciplines'**
+  String get manageDisciplines;
+
+  /// No description provided for @active.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get active;
+
+  /// No description provided for @inactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive'**
+  String get inactive;
+
+  /// No description provided for @newDiscipline.
+  ///
+  /// In en, this message translates to:
+  /// **'New Discipline'**
+  String get newDiscipline;
+
+  /// No description provided for @schoolDataUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'School data updated.'**
+  String get schoolDataUpdated;
+
+  /// No description provided for @enrollInDiscipline.
+  ///
+  /// In en, this message translates to:
+  /// **'Enroll in Discipline'**
+  String get enrollInDiscipline;
+
+  /// No description provided for @selectDisciplineForStudent.
+  ///
+  /// In en, this message translates to:
+  /// **'Select the primary discipline this student will be enrolled in.'**
+  String get selectDisciplineForStudent;
+
+  /// No description provided for @noDisciplinesAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no active disciplines in your school. Go to Management -> Curriculum to create them.'**
+  String get noDisciplinesAvailable;
+
+  /// No description provided for @progressFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress ({disciplineName})'**
+  String progressFor(String disciplineName);
+
+  /// No description provided for @enrollInDisciplines.
+  ///
+  /// In en, this message translates to:
+  /// **'Enroll in Disciplines'**
+  String get enrollInDisciplines;
+
+  /// No description provided for @noDisciplinesEnrolled.
+  ///
+  /// In en, this message translates to:
+  /// **'This student is not yet enrolled in any disciplines.'**
+  String get noDisciplinesEnrolled;
+
+  /// No description provided for @enroll.
+  ///
+  /// In en, this message translates to:
+  /// **'Enroll'**
+  String get enroll;
+
+  /// No description provided for @unenroll.
+  ///
+  /// In en, this message translates to:
+  /// **'Unenroll'**
+  String get unenroll;
+
+  /// No description provided for @confirmUnenroll.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to unenroll {studentName} from the {disciplineName} discipline?'**
+  String confirmUnenroll(String studentName, String disciplineName);
+
+  /// No description provided for @noProgressSystemForDiscipline.
+  ///
+  /// In en, this message translates to:
+  /// **'This discipline does not have a progression system defined yet.'**
+  String get noProgressSystemForDiscipline;
+
+  /// No description provided for @noTechniquesForDiscipline.
+  ///
+  /// In en, this message translates to:
+  /// **'This discipline does not have any techniques defined yet.'**
+  String get noTechniquesForDiscipline;
+
+  /// No description provided for @assignTechniquesFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign Techniques for {disciplineName}'**
+  String assignTechniquesFor(String disciplineName);
+
+  /// No description provided for @saveAssignments.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Assignments'**
+  String get saveAssignments;
+
+  /// No description provided for @techniquesAssignedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Techniques assigned successfully.'**
+  String get techniquesAssignedSuccess;
+
+  /// No description provided for @noDisciplinesEnrolledStudent.
+  ///
+  /// In en, this message translates to:
+  /// **'You are not yet enrolled in any disciplines.'**
+  String get noDisciplinesEnrolledStudent;
+
+  /// No description provided for @errorLoadingProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'An error occurred while loading your progress.'**
+  String get errorLoadingProgress;
 }
 
 class _AppLocalizationsDelegate

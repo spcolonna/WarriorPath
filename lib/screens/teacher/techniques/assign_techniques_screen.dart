@@ -2,23 +2,36 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:warrior_path/models/technique_model.dart';
 
+import '../../../l10n/app_localizations.dart';
+
 class AssignTechniquesScreen extends StatefulWidget {
   final String schoolId;
   final String studentId;
+  final String disciplineId;
+  final String disciplineName;
   final List<String> alreadyAssignedIds;
 
   const AssignTechniquesScreen({
-    Key? key,
+    super.key,
     required this.schoolId,
     required this.studentId,
+    required this.disciplineId,
+    required this.disciplineName,
     required this.alreadyAssignedIds,
-  }) : super(key: key);
+  });
 
   @override
   _AssignTechniquesScreenState createState() => _AssignTechniquesScreenState();
 }
 
 class _AssignTechniquesScreenState extends State<AssignTechniquesScreen> {
+  late AppLocalizations l10n;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    l10n = AppLocalizations.of(context);
+  }
+
   late Future<Map<String, List<TechniqueModel>>> _techniquesFuture;
   late Set<String> _selectedIds;
   bool _isLoading = false;
@@ -31,7 +44,11 @@ class _AssignTechniquesScreenState extends State<AssignTechniquesScreen> {
   }
 
   Future<Map<String, List<TechniqueModel>>> _fetchAndGroupTechniques() async {
-    final snapshot = await FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('techniques').get();
+    final snapshot = await FirebaseFirestore.instance
+        .collection('schools').doc(widget.schoolId)
+        .collection('disciplines').doc(widget.disciplineId) // <-- Ruta actualizada
+        .collection('techniques').get();
+
     final Map<String, List<TechniqueModel>> grouped = {};
     for (var doc in snapshot.docs) {
       final tech = TechniqueModel.fromFirestore(doc);
@@ -44,15 +61,23 @@ class _AssignTechniquesScreenState extends State<AssignTechniquesScreen> {
   Future<void> _saveAssignments() async {
     setState(() => _isLoading = true);
     try {
-      await FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId).update({
-        'assignedTechniqueIds': _selectedIds.toList(),
+      final fieldToUpdate = 'progress.${widget.disciplineId}.assignedTechniqueIds';
+
+      await FirebaseFirestore.instance
+          .collection('schools').doc(widget.schoolId)
+          .collection('members').doc(widget.studentId)
+          .update({
+        fieldToUpdate: _selectedIds.toList(),
       });
+
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Técnicas asignadas con éxito.'), backgroundColor: Colors.green));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.techniquesAssignedSuccess), backgroundColor: Colors.green));
         Navigator.of(context).pop();
       }
     } catch(e) {
-      // ... (manejo de error)
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.saveError(e.toString()))));
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -61,12 +86,17 @@ class _AssignTechniquesScreenState extends State<AssignTechniquesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Asignar Técnicas')),
+      appBar: AppBar(
+        title: Text(l10n.assignTechniquesFor(widget.disciplineName)),
+      ),
       body: FutureBuilder<Map<String, List<TechniqueModel>>>(
         future: _techniquesFuture,
         builder: (context, snapshot) {
           if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
           final groupedTechniques = snapshot.data!;
+          if (groupedTechniques.isEmpty) {
+            return Center(child: Text(l10n.noTechniquesForDiscipline));
+          }
           return ListView(
             children: groupedTechniques.entries.map((entry) {
               return ExpansionTile(
@@ -94,7 +124,7 @@ class _AssignTechniquesScreenState extends State<AssignTechniquesScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _isLoading ? null : _saveAssignments,
-        label: const Text('Guardar Asignaciones'),
+        label: Text(l10n.saveAssignments),
         icon: const Icon(Icons.save),
       ),
     );

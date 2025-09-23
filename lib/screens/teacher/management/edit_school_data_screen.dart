@@ -1,57 +1,58 @@
 import 'dart:io';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:warrior_path/models/discipline_model.dart';
+import 'package:warrior_path/theme/martial_art_themes.dart';
+
+import '../../../l10n/app_localizations.dart';
 
 class EditSchoolDataScreen extends StatefulWidget {
   final String schoolId;
-  const EditSchoolDataScreen({Key? key, required this.schoolId}) : super(key: key);
+  const EditSchoolDataScreen({super.key, required this.schoolId});
 
   @override
   State<EditSchoolDataScreen> createState() => _EditSchoolDataScreenState();
 }
 
 class _EditSchoolDataScreenState extends State<EditSchoolDataScreen> {
-  // Controladores de texto
+  late AppLocalizations l10n;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    l10n = AppLocalizations.of(context);
+  }
+
   final _nameController = TextEditingController();
   final _addressController = TextEditingController();
   final _cityController = TextEditingController();
   final _phoneController = TextEditingController();
   final _descriptionController = TextEditingController();
-  final _searchController = TextEditingController(); // <-- AÑADIDO
 
-  // Variables de estado para la UI
   String? _currentLogoUrl;
   File? _newLogoImageFile;
   bool _isLoading = true;
   bool _isSaving = false;
 
-  // --- NUEVAS VARIABLES PARA GESTIÓN DE SUB-ESCUELA ---
-  bool _isSubSchool = false;
-  Map<String, dynamic>? _selectedParentSchool;
-  List<Map<String, dynamic>> _searchResults = [];
-  bool _isSearching = false;
+  List<DisciplineModel> _disciplines = [];
 
   @override
   void initState() {
     super.initState();
     _fetchSchoolData();
-    _searchController.addListener(() {
-      if (_searchController.text.length > 2) {
-        _searchSchools(_searchController.text);
-      } else {
-        setState(() => _searchResults = []);
-      }
-    });
   }
 
   Future<void> _fetchSchoolData() async {
     setState(() => _isLoading = true);
     try {
-      final schoolDoc = await FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).get();
-      if (schoolDoc.exists && mounted) {
+      final schoolDocFuture = FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).get();
+      final disciplinesFuture = FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('disciplines').get();
+
+      final results = await Future.wait([schoolDocFuture, disciplinesFuture]);
+
+      final schoolDoc = results[0] as DocumentSnapshot<Map<String, dynamic>>;
+      if (schoolDoc.exists) {
         final data = schoolDoc.data()!;
         _nameController.text = data['name'] ?? '';
         _addressController.text = data['address'] ?? '';
@@ -59,15 +60,11 @@ class _EditSchoolDataScreenState extends State<EditSchoolDataScreen> {
         _phoneController.text = data['phone'] ?? '';
         _descriptionController.text = data['description'] ?? '';
         _currentLogoUrl = data['logoUrl'];
-        // --- CARGAMOS LOS DATOS DE SUB-ESCUELA ---
-        _isSubSchool = data['isSubSchool'] ?? false;
-        if (_isSubSchool && data['parentSchoolId'] != null) {
-          _selectedParentSchool = {
-            'id': data['parentSchoolId'],
-            'name': data['parentSchoolName']
-          };
-        }
       }
+
+      final disciplinesSnapshot = results[1] as QuerySnapshot;
+      _disciplines = disciplinesSnapshot.docs.map((doc) => DisciplineModel.fromFirestore(doc)).toList();
+
     } catch (e) {
       if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al cargar datos: ${e.toString()}')));
     } finally {
@@ -82,49 +79,59 @@ class _EditSchoolDataScreenState extends State<EditSchoolDataScreen> {
     _cityController.dispose();
     _phoneController.dispose();
     _descriptionController.dispose();
-    _searchController.dispose(); // <-- AÑADIDO
     super.dispose();
   }
 
   Future<void> _pickLogoImage() async {
     final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 80);
-    if (pickedFile != null) {
-      setState(() {
-        _newLogoImageFile = File(pickedFile.path);
-      });
-    }
+    if (pickedFile != null) setState(() => _newLogoImageFile = File(pickedFile.path));
   }
 
-  // --- MÉTODO DE BÚSQUEDA AÑADIDO ---
-  Future<void> _searchSchools(String query) async {
-    if (!mounted) return;
-    setState(() { _isSearching = true; });
-    try {
-      final result = await FirebaseFirestore.instance.collection('schools')
-          .where('name_lowercase', isGreaterThanOrEqualTo: query.toLowerCase())
-          .where('name_lowercase', isLessThanOrEqualTo: '${query.toLowerCase()}\uf8ff')
-          .limit(5).get();
-      if (mounted) {
-        setState(() {
-          _searchResults = result.docs
-              .where((doc) => doc.id != widget.schoolId) // Excluye la propia escuela
-              .map((doc) => {'id': doc.id, 'name': doc.data()['name'] as String}).toList();
-          _isSearching = false;
-        });
-      }
-    } catch (e) {
-      print("Error al buscar escuelas: $e");
-      if (mounted) setState(() { _isSearching = false; });
-    }
-  }
+  void _showAddDisciplineDialog() {
+    final disciplineNameController = TextEditingController();
+    MartialArtTheme? selectedTheme;
 
-  void _onParentSchoolSelected(Map<String, dynamic> school) {
-    setState(() {
-      _selectedParentSchool = school;
-      _searchResults = [];
-      _searchController.clear();
-      FocusScope.of(context).unfocus();
-    });
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.newDiscipline),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: disciplineNameController, decoration: InputDecoration(labelText: l10n.disciplineName)),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<MartialArtTheme>(
+              value: selectedTheme,
+              hint: Text(l10n.baseStyle),
+              decoration: const InputDecoration(border: OutlineInputBorder()),
+              items: MartialArtTheme.allThemes.map((theme) => DropdownMenuItem(value: theme, child: Text(theme.name))).toList(),
+              onChanged: (theme) => selectedTheme = theme,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(l10n.cancel)),
+          ElevatedButton(
+            onPressed: () {
+              if (disciplineNameController.text.trim().isNotEmpty && selectedTheme != null) {
+                setState(() {
+                  _disciplines.add(DisciplineModel(
+                    name: disciplineNameController.text.trim(),
+                    theme: {
+                      'primaryColor': selectedTheme!.primaryColor.value.toRadixString(16),
+                      'accentColor': selectedTheme!.accentColor.value.toRadixString(16),
+                    },
+                    isActive: true,
+                  ));
+                });
+                Navigator.of(ctx).pop();
+              }
+            },
+            child: Text(l10n.addDiscipline),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _saveChanges() async {
@@ -137,40 +144,40 @@ class _EditSchoolDataScreenState extends State<EditSchoolDataScreen> {
         newLogoUrl = await ref.getDownloadURL();
       }
 
-      // 1. Empezamos con los datos que siempre se actualizan
       final schoolName = _nameController.text.trim();
       final Map<String, dynamic> dataToUpdate = {
-        'name': schoolName,
-        'name_lowercase': schoolName.toLowerCase(),
-        'address': _addressController.text.trim(),
-        'city': _cityController.text.trim(),
-        'phone': _phoneController.text.trim(),
-        'description': _descriptionController.text.trim(),
-        'isSubSchool': _isSubSchool,
+        'name': schoolName, 'name_lowercase': schoolName.toLowerCase(), 'address': _addressController.text.trim(),
+        'city': _cityController.text.trim(), 'phone': _phoneController.text.trim(), 'description': _descriptionController.text.trim(),
       };
 
-      // 2. Añadimos los campos de la escuela padre condicionalmente
-      if (_isSubSchool) {
-        dataToUpdate['parentSchoolId'] = _selectedParentSchool?['id'];
-        dataToUpdate['parentSchoolName'] = _selectedParentSchool?['name'];
-      } else {
-        dataToUpdate['parentSchoolId'] = null;
-        dataToUpdate['parentSchoolName'] = null;
-      }
-
-      // 3. Añadimos la URL del nuevo logo si existe
       if (newLogoUrl != null) {
         dataToUpdate['logoUrl'] = newLogoUrl;
       }
 
-      await FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).update(dataToUpdate);
+      final firestore = FirebaseFirestore.instance;
+      final schoolRef = firestore.collection('schools').doc(widget.schoolId);
+      final batch = firestore.batch();
+
+      // 1. Actualizamos los datos de la escuela
+      batch.update(schoolRef, dataToUpdate);
+
+      // 2. Actualizamos/Creamos las disciplinas
+      for (final discipline in _disciplines) {
+        if (discipline.id == null) { // Nueva disciplina
+          batch.set(schoolRef.collection('disciplines').doc(), discipline.toJson());
+        } else { // Disciplina existente
+          batch.update(schoolRef.collection('disciplines').doc(discipline.id), discipline.toJson());
+        }
+      }
+
+      await batch.commit();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Datos de la escuela actualizados.'), backgroundColor: Colors.green));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.schoolDataUpdated), backgroundColor: Colors.green));
         Navigator.of(context).pop();
       }
     } catch (e) {
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al guardar: ${e.toString()}')));
+      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.saveError(e.toString()))));
     } finally {
       if(mounted) setState(() { _isSaving = false; });
     }
@@ -179,7 +186,7 @@ class _EditSchoolDataScreenState extends State<EditSchoolDataScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Editar Datos de la Escuela')),
+      appBar: AppBar(title: Text(l10n.editSchoolData)),
       body: _isLoading ? const Center(child: CircularProgressIndicator()) : AbsorbPointer(
         absorbing: _isSaving,
         child: SingleChildScrollView(
@@ -196,47 +203,53 @@ class _EditSchoolDataScreenState extends State<EditSchoolDataScreen> {
                 Positioned(bottom: 0, right: 0, child: CircleAvatar(child: IconButton(icon: const Icon(Icons.camera_alt, color: Colors.white), onPressed: _pickLogoImage))),
               ])),
               const SizedBox(height: 24),
-              TextFormField(controller: _nameController, decoration: const InputDecoration(labelText: 'Nombre de la Escuela', border: OutlineInputBorder())),
+              TextFormField(controller: _nameController, decoration: InputDecoration(labelText: l10n.schoolNameLabel, border: const OutlineInputBorder())),
               const SizedBox(height: 16),
-              TextFormField(controller: _addressController, decoration: const InputDecoration(labelText: 'Dirección', border: OutlineInputBorder())),
+              TextFormField(controller: _addressController, decoration: InputDecoration(labelText: l10n.address, border: const OutlineInputBorder())),
               const SizedBox(height: 16),
-              TextFormField(controller: _cityController, decoration: const InputDecoration(labelText: 'Ciudad', border: OutlineInputBorder())),
+              TextFormField(controller: _cityController, decoration: InputDecoration(labelText: l10n.city, border: const OutlineInputBorder())),
               const SizedBox(height: 16),
-              TextFormField(controller: _phoneController, decoration: const InputDecoration(labelText: 'Teléfono de Contacto', border: OutlineInputBorder()), keyboardType: TextInputType.phone),
+              TextFormField(controller: _phoneController, decoration: InputDecoration(labelText: l10n.phone, border: const OutlineInputBorder()), keyboardType: TextInputType.phone),
               const SizedBox(height: 16),
-              TextFormField(controller: _descriptionController, decoration: const InputDecoration(labelText: 'Descripción breve', border: OutlineInputBorder()), maxLines: 4),
-              const SizedBox(height: 24),
-              const Divider(),
+              TextFormField(controller: _descriptionController, decoration: InputDecoration(labelText: l10n.description, border: const OutlineInputBorder()), maxLines: 4),
 
-              // --- SECCIÓN DE SUB-ESCUELA AÑADIDA ---
-              SwitchListTile(
-                title: const Text('Es una Sub-Escuela'),
-                value: _isSubSchool,
-                onChanged: (bool value) {
-                  setState(() {
-                    _isSubSchool = value;
-                    if (!value) _selectedParentSchool = null;
-                  });
-                },
+              const Divider(height: 40),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(l10n.manageDisciplines, style: Theme.of(context).textTheme.titleLarge),
+                  IconButton(
+                    icon: const Icon(Icons.add_circle_outline),
+                    onPressed: _showAddDisciplineDialog,
+                    tooltip: l10n.addDiscipline,
+                  ),
+                ],
               ),
-              if (_isSubSchool)
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  const SizedBox(height: 8),
-                  if (_selectedParentSchool != null)
-                    Chip(
-                      label: Text('Asociada a: ${_selectedParentSchool!['name']}'),
-                      onDeleted: () => setState(() { _selectedParentSchool = null; }),
-                    )
-                  else
-                    Column(children: [
-                      TextField(controller: _searchController, decoration: InputDecoration(labelText: 'Buscar escuela principal', suffixIcon: _isSearching ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.search))),
-                      if (_searchResults.isNotEmpty)
-                        SizedBox(height: 150, child: ListView.builder(itemCount: _searchResults.length, itemBuilder: (context, index) {
-                          final school = _searchResults[index];
-                          return ListTile(title: Text(school['name']), onTap: () => _onParentSchoolSelected(school));
-                        })),
-                    ]),
-                ]),
+              const SizedBox(height: 8),
+              if (_disciplines.isEmpty)
+                Center(child: Text(l10n.noDisciplinesAdded))
+              else
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _disciplines.length,
+                  itemBuilder: (context, index) {
+                    final discipline = _disciplines[index];
+                    return Card(
+                      child: SwitchListTile(
+                        title: Text(discipline.name),
+                        value: discipline.isActive,
+                        onChanged: (bool value) {
+                          setState(() {
+                            _disciplines[index].isActive = value;
+                          });
+                        },
+                        subtitle: Text(discipline.isActive ? l10n.active : l10n.inactive, style: TextStyle(color: discipline.isActive ? Colors.green : Colors.red)),
+                      ),
+                    );
+                  },
+                ),
 
               const SizedBox(height: 32),
               if (_isSaving)
@@ -244,7 +257,7 @@ class _EditSchoolDataScreenState extends State<EditSchoolDataScreen> {
               else
                 ElevatedButton.icon(
                   icon: const Icon(Icons.save),
-                  label: const Text('Guardar Cambios'),
+                  label: Text(l10n.saveChanges),
                   style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
                   onPressed: _saveChanges,
                 ),
