@@ -414,5 +414,18 @@
     "noDisciplinesEnrolledStudent": "Aún no estás inscrito en ninguna disciplina.",
     "errorLoadingProgress": "Ocurrió un error al cargar tu progreso.",
     "planPayment": "Pago de Plan",
-    "specialPayment": "Pago Especial"
+    "specialPayment": "Pago Especial",
+    "selectSchoolDisciplines": "Selecciona las disciplinas que ofrece tu escuela",
+    "editEvent": "Editar Evento",
+    "createNewEvent": "Crear Nuevo Evento",
+    "eventTitle": "Título del Evento *",
+    "pleaseCompleteDateTime": "Por favor, completa la fecha y las horas.",
+    "eventUpdated": "Evento actualizado.",
+    "eventCreatedInviteStudents": "¡Evento creado! Ahora puedes invitar a los alumnos.",
+    "eventCreationError": "Error al crear el evento: {e}",
+    "selectDate": "Seleccionar Fecha *",
+    "locationOptional": "Ubicación (Opcional)",
+    "costOptional": "Costo (Opcional)",
+    "involvedDisciplines": "Disciplinas Involucradas",
+    "selectAtLeastOneDiscipline": "Debes seleccionar al menos una disciplina."
 }

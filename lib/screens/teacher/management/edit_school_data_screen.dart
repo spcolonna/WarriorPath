@@ -1,12 +1,12 @@
 import 'dart:io';
+
+import '../../../l10n/app_localizations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:warrior_path/models/discipline_model.dart';
 import 'package:warrior_path/theme/martial_art_themes.dart';
-
-import '../../../l10n/app_localizations.dart';
 
 class EditSchoolDataScreen extends StatefulWidget {
   final String schoolId;
@@ -30,12 +30,15 @@ class _EditSchoolDataScreenState extends State<EditSchoolDataScreen> {
   final _phoneController = TextEditingController();
   final _descriptionController = TextEditingController();
 
+  // Variables de estado
   String? _currentLogoUrl;
   File? _newLogoImageFile;
   bool _isLoading = true;
   bool _isSaving = false;
 
+  // Estado para Disciplinas
   List<DisciplineModel> _disciplines = [];
+  List<DisciplineModel> _initialDisciplines = []; // Para comparar al guardar
 
   @override
   void initState() {
@@ -64,6 +67,7 @@ class _EditSchoolDataScreenState extends State<EditSchoolDataScreen> {
 
       final disciplinesSnapshot = results[1] as QuerySnapshot;
       _disciplines = disciplinesSnapshot.docs.map((doc) => DisciplineModel.fromFirestore(doc)).toList();
+      _initialDisciplines = _disciplines.map((d) => DisciplineModel.fromModel(d)).toList();
 
     } catch (e) {
       if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error al cargar datos: ${e.toString()}')));
@@ -88,47 +92,46 @@ class _EditSchoolDataScreenState extends State<EditSchoolDataScreen> {
   }
 
   void _showAddDisciplineDialog() {
-    final disciplineNameController = TextEditingController();
-    MartialArtTheme? selectedTheme;
+    final existingDisciplineNames = _disciplines.map((d) => d.name).toSet();
+    final availableThemes = MartialArtTheme.allThemes.where((theme) => !existingDisciplineNames.contains(theme.name)).toList();
+
+    if (availableThemes.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ya has añadido todas las disciplinas base disponibles.')));
+      return;
+    }
 
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(l10n.newDiscipline),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(controller: disciplineNameController, decoration: InputDecoration(labelText: l10n.disciplineName)),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<MartialArtTheme>(
-              value: selectedTheme,
-              hint: Text(l10n.baseStyle),
-              decoration: const InputDecoration(border: OutlineInputBorder()),
-              items: MartialArtTheme.allThemes.map((theme) => DropdownMenuItem(value: theme, child: Text(theme.name))).toList(),
-              onChanged: (theme) => selectedTheme = theme,
-            ),
-          ],
+        title: Text(l10n.addDiscipline),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: availableThemes.length,
+            itemBuilder: (context, index) {
+              final theme = availableThemes[index];
+              return ListTile(
+                title: Text(theme.name),
+                onTap: () {
+                  setState(() {
+                    _disciplines.add(DisciplineModel(
+                      name: theme.name,
+                      theme: {
+                        'primaryColor': theme.primaryColor.value.toRadixString(16),
+                        'accentColor': theme.accentColor.value.toRadixString(16),
+                      },
+                      isActive: true,
+                    ));
+                  });
+                  Navigator.of(ctx).pop();
+                },
+              );
+            },
+          ),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(l10n.cancel)),
-          ElevatedButton(
-            onPressed: () {
-              if (disciplineNameController.text.trim().isNotEmpty && selectedTheme != null) {
-                setState(() {
-                  _disciplines.add(DisciplineModel(
-                    name: disciplineNameController.text.trim(),
-                    theme: {
-                      'primaryColor': selectedTheme!.primaryColor.value.toRadixString(16),
-                      'accentColor': selectedTheme!.accentColor.value.toRadixString(16),
-                    },
-                    isActive: true,
-                  ));
-                });
-                Navigator.of(ctx).pop();
-              }
-            },
-            child: Text(l10n.addDiscipline),
-          ),
         ],
       ),
     );
@@ -149,23 +152,18 @@ class _EditSchoolDataScreenState extends State<EditSchoolDataScreen> {
         'name': schoolName, 'name_lowercase': schoolName.toLowerCase(), 'address': _addressController.text.trim(),
         'city': _cityController.text.trim(), 'phone': _phoneController.text.trim(), 'description': _descriptionController.text.trim(),
       };
-
-      if (newLogoUrl != null) {
-        dataToUpdate['logoUrl'] = newLogoUrl;
-      }
+      if (newLogoUrl != null) dataToUpdate['logoUrl'] = newLogoUrl;
 
       final firestore = FirebaseFirestore.instance;
       final schoolRef = firestore.collection('schools').doc(widget.schoolId);
       final batch = firestore.batch();
 
-      // 1. Actualizamos los datos de la escuela
       batch.update(schoolRef, dataToUpdate);
 
-      // 2. Actualizamos/Creamos las disciplinas
       for (final discipline in _disciplines) {
-        if (discipline.id == null) { // Nueva disciplina
+        if (discipline.id == null) {
           batch.set(schoolRef.collection('disciplines').doc(), discipline.toJson());
-        } else { // Disciplina existente
+        } else {
           batch.update(schoolRef.collection('disciplines').doc(discipline.id), discipline.toJson());
         }
       }
@@ -212,9 +210,7 @@ class _EditSchoolDataScreenState extends State<EditSchoolDataScreen> {
               TextFormField(controller: _phoneController, decoration: InputDecoration(labelText: l10n.phone, border: const OutlineInputBorder()), keyboardType: TextInputType.phone),
               const SizedBox(height: 16),
               TextFormField(controller: _descriptionController, decoration: InputDecoration(labelText: l10n.description, border: const OutlineInputBorder()), maxLines: 4),
-
               const Divider(height: 40),
-
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -250,7 +246,6 @@ class _EditSchoolDataScreenState extends State<EditSchoolDataScreen> {
                     );
                   },
                 ),
-
               const SizedBox(height: 32),
               if (_isSaving)
                 const Center(child: CircularProgressIndicator())

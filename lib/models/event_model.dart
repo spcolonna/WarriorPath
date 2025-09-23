@@ -14,6 +14,7 @@ class EventModel {
   String createdBy;
   List<String> invitedStudentIds;
   Map<String, String> attendeeStatus;
+  List<String> disciplineIds;
 
   EventModel({
     this.id,
@@ -28,6 +29,7 @@ class EventModel {
     required this.createdBy,
     this.invitedStudentIds = const [],
     this.attendeeStatus = const {},
+    required this.disciplineIds,
   });
 
   factory EventModel.fromFirestore(DocumentSnapshot doc) {
@@ -47,6 +49,7 @@ class EventModel {
       createdBy: data['createdBy'] ?? '',
       invitedStudentIds: List<String>.from(data['invitedStudentIds'] ?? []),
       attendeeStatus: Map<String, String>.from(data['attendeeStatus'] ?? {}),
+      disciplineIds: List<String>.from(data['disciplineIds'] ?? []),
     );
   }
 
@@ -64,6 +67,7 @@ class EventModel {
       'createdAt': FieldValue.serverTimestamp(),
       'invitedStudentIds': invitedStudentIds,
       'attendeeStatus': attendeeStatus,
+      'disciplineIds': disciplineIds,
     };
   }
 }

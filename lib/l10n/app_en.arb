@@ -460,5 +460,19 @@
     "noDisciplinesEnrolledStudent": "You are not yet enrolled in any disciplines.",
     "errorLoadingProgress": "An error occurred while loading your progress.",
     "planPayment": "Plan Payment",
-    "specialPayment": "Special Payment"
+    "specialPayment": "Special Payment",
+    "selectSchoolDisciplines": "Select the disciplines your school offers",
+    "editEvent": "Edit Event",
+    "createNewEvent": "Create New Event",
+    "eventTitle": "Event Title *",
+    "pleaseCompleteDateTime": "Please complete the date and times.",
+    "eventUpdated": "Event updated.",
+    "eventCreatedInviteStudents": "Event created! Now you can invite students.",
+    "eventCreationError": "Error creating event: {e}",
+    "@eventCreationError": { "placeholders": { "e": { "type": "String" } } },
+    "selectDate": "Select Date *",
+    "locationOptional": "Location (Optional)",
+    "costOptional": "Cost (Optional)",
+    "involvedDisciplines": "Involved Disciplines",
+    "selectAtLeastOneDiscipline": "You must select at least one discipline."
 }

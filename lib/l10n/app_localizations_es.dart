@@ -1414,4 +1414,49 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get specialPayment => 'Pago Especial';
+
+  @override
+  String get selectSchoolDisciplines =>
+      'Selecciona las disciplinas que ofrece tu escuela';
+
+  @override
+  String get editEvent => 'Editar Evento';
+
+  @override
+  String get createNewEvent => 'Crear Nuevo Evento';
+
+  @override
+  String get eventTitle => 'Título del Evento *';
+
+  @override
+  String get pleaseCompleteDateTime =>
+      'Por favor, completa la fecha y las horas.';
+
+  @override
+  String get eventUpdated => 'Evento actualizado.';
+
+  @override
+  String get eventCreatedInviteStudents =>
+      '¡Evento creado! Ahora puedes invitar a los alumnos.';
+
+  @override
+  String eventCreationError(String e) {
+    return 'Error al crear el evento: $e';
+  }
+
+  @override
+  String get selectDate => 'Seleccionar Fecha *';
+
+  @override
+  String get locationOptional => 'Ubicación (Opcional)';
+
+  @override
+  String get costOptional => 'Costo (Opcional)';
+
+  @override
+  String get involvedDisciplines => 'Disciplinas Involucradas';
+
+  @override
+  String get selectAtLeastOneDiscipline =>
+      'Debes seleccionar al menos una disciplina.';
 }

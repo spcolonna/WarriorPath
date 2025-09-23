@@ -2631,6 +2631,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Special Payment'**
   String get specialPayment;
+
+  /// No description provided for @selectSchoolDisciplines.
+  ///
+  /// In en, this message translates to:
+  /// **'Select the disciplines your school offers'**
+  String get selectSchoolDisciplines;
+
+  /// No description provided for @editEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Event'**
+  String get editEvent;
+
+  /// No description provided for @createNewEvent.
+  ///
+  /// In en, this message translates to:
+  /// **'Create New Event'**
+  String get createNewEvent;
+
+  /// No description provided for @eventTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Event Title *'**
+  String get eventTitle;
+
+  /// No description provided for @pleaseCompleteDateTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Please complete the date and times.'**
+  String get pleaseCompleteDateTime;
+
+  /// No description provided for @eventUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Event updated.'**
+  String get eventUpdated;
+
+  /// No description provided for @eventCreatedInviteStudents.
+  ///
+  /// In en, this message translates to:
+  /// **'Event created! Now you can invite students.'**
+  String get eventCreatedInviteStudents;
+
+  /// No description provided for @eventCreationError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error creating event: {e}'**
+  String eventCreationError(String e);
+
+  /// No description provided for @selectDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Date *'**
+  String get selectDate;
+
+  /// No description provided for @locationOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Location (Optional)'**
+  String get locationOptional;
+
+  /// No description provided for @costOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Cost (Optional)'**
+  String get costOptional;
+
+  /// No description provided for @involvedDisciplines.
+  ///
+  /// In en, this message translates to:
+  /// **'Involved Disciplines'**
+  String get involvedDisciplines;
+
+  /// No description provided for @selectAtLeastOneDiscipline.
+  ///
+  /// In en, this message translates to:
+  /// **'You must select at least one discipline.'**
+  String get selectAtLeastOneDiscipline;
 }
 
 class _AppLocalizationsDelegate
