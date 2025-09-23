@@ -117,6 +117,9 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
     setState(() { _isLoading = true; });
 
     try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) throw Exception(l10n.notAuthenticatedUser);
+
       String? photoUrl;
       if (_imageFile != null) {
         final ref = FirebaseStorage.instance.ref().child('profile_pics').child('$_uid.jpg');
@@ -131,6 +134,7 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
         'wizardStep': 1,
         'gender': _selectedSex,
         'dateOfBirth': _selectedDateOfBirth,
+        'email': user.email,
       };
       if (photoUrl != null) {
         dataToUpdate['photoUrl'] = photoUrl;

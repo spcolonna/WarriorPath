@@ -140,16 +140,28 @@ class _ProgressDisciplineTabState extends State<ProgressDisciplineTab> {
     final currentLevelId = widget.studentProgress['currentLevelId'] as String?;
     final assignedTechniqueIds = List<String>.from(
         widget.studentProgress['assignedTechniqueIds'] ?? []);
+    final roleInDiscipline = widget.studentProgress['role'] as String? ?? l10n.student;
     final primaryColor = Color(
         int.parse('FF${widget.discipline.theme['primaryColor']}', radix: 16));
 
     return ListView(
       padding: const EdgeInsets.all(16.0),
       children: [
-        Text(l10n.yourPath, style: Theme
-            .of(context)
-            .textTheme
-            .titleLarge),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(l10n.yourPath, style: Theme.of(context).textTheme.titleLarge),
+            Chip(
+              label: Text(
+                roleInDiscipline[0].toUpperCase() + roleInDiscipline.substring(1),
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              backgroundColor: primaryColor.withOpacity(0.1),
+              side: BorderSide(color: primaryColor),
+            )
+          ],
+        ),
         const SizedBox(height: 8),
         FutureBuilder<List<QueryDocumentSnapshot>>(
           future: _fetchLevelsForDiscipline(),

@@ -169,7 +169,25 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
       alignment: Alignment.topCenter,
       children: [
         Scaffold(
-          appBar: AppBar(title: Text(_studentName)),
+          appBar: AppBar(
+            title: Text(_studentName),
+            actions: [
+              if (_isOwnerViewing)
+                PopupMenuButton<String>(
+                  onSelected: (value) {
+                    if (value == 'change_role') {
+                      _showChangeRoleDialog();
+                    }
+                  },
+                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                    PopupMenuItem<String>(
+                      value: 'change_role',
+                      child: Text(l10n.changeRol),
+                    ),
+                  ],
+                ),
+            ],
+          ),
           body: Column(
             children: [
               Padding(
@@ -179,8 +197,6 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
                   const SizedBox(width: 16),
                   Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text(_studentName, style: Theme.of(context).textTheme.headlineSmall),
-                    const SizedBox(height: 4),
-                    Text(_currentRole.toUpperCase(), style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600)),
                   ]),
                 ]),
               ),
@@ -193,6 +209,80 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
         ConfettiWidget(confettiController: _confettiController, blastDirectionality: BlastDirectionality.explosive),
       ],
     );
+  }
+
+  Future<void> _showChangeRoleDialog() async {
+    final DisciplineModel? selectedDiscipline = await showDialog<DisciplineModel>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.selectDiscipline),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: _enrolledDisciplines.length,
+            itemBuilder: (context, index) {
+              final discipline = _enrolledDisciplines[index];
+              return ListTile(
+                title: Text(discipline.name),
+                onTap: () => Navigator.of(ctx).pop(discipline),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+
+    if (selectedDiscipline == null || !mounted) return;
+
+    final currentProgress = _memberProgress[selectedDiscipline.id] as Map<String, dynamic>? ?? {};
+    final currentRole = currentProgress['role'] as String? ?? 'alumno';
+    String? newRole = currentRole;
+
+    await showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(builder: (context, setDialogState) {
+        return AlertDialog(
+          title: Text(l10n.changeRolMember),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [l10n.studentLower, l10n.instructor, l10n.teacherLower].map((roleKey) {
+              return RadioListTile<String>(
+                title: Text(roleKey[0].toUpperCase() + roleKey.substring(1)),
+                value: roleKey,
+                groupValue: newRole,
+                onChanged: (value) => setDialogState(() => newRole = value),
+              );
+            }).toList(),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.cancel)),
+            ElevatedButton(
+              onPressed: newRole == null || newRole == currentRole ? null : () {
+                _changeStudentRole(selectedDiscipline.id!, newRole!);
+                Navigator.of(context).pop();
+              },
+              child: Text(l10n.save),
+            ),
+          ],
+        );
+      }),
+    );
+  }
+
+  Future<void> _changeStudentRole(String disciplineId, String newRole) async {
+    try {
+      final firestore = FirebaseFirestore.instance;
+      final memberRef = firestore.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId);
+
+      await memberRef.update({
+        'progress.$disciplineId.role': newRole,
+      });
+
+      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.updateRolSuccess), backgroundColor: Colors.green));
+    } catch (e) {
+      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.updateRolError(e.toString()))));
+    }
   }
 
   Widget? _buildFloatingActionButton() {

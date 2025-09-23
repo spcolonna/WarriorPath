@@ -210,15 +210,14 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
 
       batch.update(memberRef, {
         'status': 'active',
-        'role': 'alumno',
-        'progress': {
-          disciplineId: {
-            'currentLevelId': initialLevelId,
-            'enrollmentDate': FieldValue.serverTimestamp(),
-            'assignedTechniqueIds': [],
-          }
+        'progress.$disciplineId': {
+          'currentLevelId': initialLevelId,
+          'enrollmentDate': FieldValue.serverTimestamp(),
+          'assignedTechniqueIds': [],
+          'role': 'alumno'
         },
         'joinDate': FieldValue.serverTimestamp(),
+        'role': FieldValue.delete(), // Eliminamos el campo de rol antiguo
       });
 
       batch.set(userRef, {
