@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:collection/collection.dart';
 import 'package:confetti/confetti.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -40,6 +41,10 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
   String _studentName = '';
   String? _photoUrl;
   String _currentRole = '';
+  int _selectedPaymentYear = DateTime.now().year;
+  final List<int> _availablePaymentYears = List.generate(5, (index) => DateTime.now().year - index);
+  int _selectedAttendanceYear = DateTime.now().year;
+  final List<int> _availableAttendanceYears = List.generate(5, (index) => DateTime.now().year - index);
 
   Map<String, dynamic> _memberProgress = {};
   List<DisciplineModel> _enrolledDisciplines = [];
@@ -518,39 +523,213 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
   }
 
   Widget _buildAttendanceHistoryTab() {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('attendanceRecords').where('presentStudentIds', arrayContains: widget.studentId).orderBy('date', descending: true).snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return Center(child: Text(l10n.noRegisterAssitance));
-        return ListView.builder(itemCount: snapshot.data!.docs.length, itemBuilder: (context, index) {
-          final doc = snapshot.data!.docs[index];
-          final record = doc.data() as Map<String, dynamic>;
-          final date = (record['date'] as Timestamp).toDate();
-          final formattedDate = DateFormat('dd/MM/yyyy', 'es_ES').format(date);
-          return ListTile(
-            leading: const Icon(Icons.check_circle, color: Colors.green),
-            title: Text(record['scheduleTitle'] ?? l10n.classRoom),
-            subtitle: Text(formattedDate),
-          );
-        });
-      },
+    final startDate = Timestamp.fromDate(DateTime(_selectedAttendanceYear));
+    final endDate = Timestamp.fromDate(DateTime(_selectedAttendanceYear + 1));
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              const SizedBox(width: 8),
+              DropdownButton<int>(
+                value: _selectedAttendanceYear,
+                isDense: true,
+                underline: Container(),
+                items: _availableAttendanceYears.map((year) {
+                  return DropdownMenuItem(value: year, child: Text(year.toString()));
+                }).toList(),
+                onChanged: (year) {
+                  if (year != null) {
+                    setState(() {
+                      _selectedAttendanceYear = year;
+                    });
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance.collection('schools').doc(widget.schoolId)
+                .collection('attendanceRecords')
+                .where('presentStudentIds', arrayContains: widget.studentId)
+                .where('date', isGreaterThanOrEqualTo: startDate)
+                .where('date', isLessThan: endDate)
+                .orderBy('date', descending: true)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return Center(child: Text(l10n.noRegisterAssitance));
+
+              final groupedAttendances = groupBy<QueryDocumentSnapshot, String>(
+                snapshot.data!.docs,
+                    (doc) => DateFormat('MMMM', l10n.localeName).format((doc['date'] as Timestamp).toDate()),
+              );
+
+              return ListView.builder(
+                itemCount: groupedAttendances.keys.length,
+                itemBuilder: (context, index) {
+                  final month = groupedAttendances.keys.elementAt(index);
+                  final attendancesInMonth = groupedAttendances[month]!;
+
+                  return ExpansionTile(
+                    title: Text(month[0].toUpperCase() + month.substring(1), style: const TextStyle(fontWeight: FontWeight.bold)),
+                    initiallyExpanded: true,
+                    children: attendancesInMonth.map((doc) {
+                      final record = doc.data() as Map<String, dynamic>;
+                      final date = (record['date'] as Timestamp).toDate();
+                      final formattedDate = DateFormat('dd/MM/yyyy').format(date);
+
+                      return Card(
+                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        child: ListTile(
+                          leading: const Icon(Icons.check_circle, color: Colors.green),
+                          title: Text(record['scheduleTitle'] ?? l10n.classRoom),
+                          subtitle: Text(formattedDate),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                            tooltip: l10n.eliminate,
+                            onPressed: () async {
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: Text(l10n.confirmDeletion),
+                                  content: Text(l10n.confirmAttendanceDelete),
+                                  actions: [
+                                    TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.cancel)),
+                                    ElevatedButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.eliminate, style: const TextStyle(color: Colors.red))),
+                                  ],
+                                ),
+                              ) ?? false;
+
+                              if (confirm) {
+                                _deleteAttendance(doc.id);
+                              }
+                            },
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildPaymentsHistoryTab() {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId).collection('payments').orderBy('paymentDate', descending: true).snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return Center(child: Text(l10n.noPayment));
-        return ListView.builder(itemCount: snapshot.data!.docs.length, itemBuilder: (context, index) {
-          final payment = snapshot.data!.docs[index].data() as Map<String, dynamic>;
-          final date = (payment['paymentDate'] as Timestamp).toDate();
-          final formattedDate = DateFormat('dd/MM/yyyy').format(date);
-          return ListTile(leading: const Icon(Icons.receipt_long, color: Colors.green), title: Text(payment['concept'] ?? l10n.payment), subtitle: Text(formattedDate), trailing: Text('${payment['amount']} ${payment['currency']}', style: const TextStyle(fontWeight: FontWeight.bold)));
-        });
-      },
+    final startDate = Timestamp.fromDate(DateTime(_selectedPaymentYear));
+    final endDate = Timestamp.fromDate(DateTime(_selectedPaymentYear + 1));
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              const SizedBox(width: 8),
+              DropdownButton<int>(
+                value: _selectedPaymentYear,
+                isDense: true, // Reduce el espaciado vertical
+                underline: Container(), // Elimina la línea de abajo
+                items: _availablePaymentYears.map((year) {
+                  return DropdownMenuItem(value: year, child: Text(year.toString()));
+                }).toList(),
+                onChanged: (year) {
+                  if (year != null) {
+                    setState(() {
+                      _selectedPaymentYear = year;
+                    });
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+
+        Expanded(
+          child: StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance.collection('schools').doc(widget.schoolId)
+                .collection('members').doc(widget.studentId)
+                .collection('payments')
+                .where('paymentDate', isGreaterThanOrEqualTo: startDate)
+                .where('paymentDate', isLessThan: endDate)
+                .orderBy('paymentDate', descending: true)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return Center(child: Text(l10n.noPayment));
+
+              final groupedPayments = groupBy<QueryDocumentSnapshot, String>(
+                snapshot.data!.docs,
+                    (doc) => DateFormat('MMMM', l10n.localeName).format((doc['paymentDate'] as Timestamp).toDate()),
+              );
+
+              return ListView.builder(
+                itemCount: groupedPayments.keys.length,
+                itemBuilder: (context, index) {
+                  final month = groupedPayments.keys.elementAt(index);
+                  final paymentsInMonth = groupedPayments[month]!;
+
+                  return ExpansionTile(
+                    title: Text(month[0].toUpperCase() + month.substring(1), style: const TextStyle(fontWeight: FontWeight.bold)),
+                    initiallyExpanded: true,
+                    children: paymentsInMonth.map((doc) {
+                      final payment = doc.data() as Map<String, dynamic>;
+                      final date = (payment['paymentDate'] as Timestamp).toDate();
+                      final formattedDate = DateFormat('dd/MM/yyyy').format(date);
+
+                      return Card(
+                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        child: ListTile(
+                          leading: const Icon(Icons.receipt_long, color: Colors.green),
+                          title: Text(payment['concept'] ?? l10n.payment),
+                          subtitle: Text(formattedDate),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text('${payment['amount']} ${payment['currency']}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                              IconButton(
+                                icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                                tooltip: l10n.eliminate,
+                                onPressed: () async {
+                                  final confirm = await showDialog<bool>(
+                                    context: context,
+                                    builder: (ctx) => AlertDialog(
+                                      title: Text(l10n.confirmDeletion),
+                                      content: Text(l10n.confirmPaymentDelete),
+                                      actions: [
+                                        TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.cancel)),
+                                        ElevatedButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.eliminate, style: const TextStyle(color: Colors.red))),
+                                      ],
+                                    ),
+                                  ) ?? false;
+
+                                  if (confirm) {
+                                    _deletePayment(doc.id);
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -733,5 +912,50 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
       Text(label, style: const TextStyle(fontWeight: FontWeight.bold)), const SizedBox(width: 8),
       Expanded(child: Text(value.isEmpty ? l10n.noSpecify : value)),
     ]));
+  }
+
+  Future<void> _deletePayment(String paymentId) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('schools').doc(widget.schoolId)
+          .collection('members').doc(widget.studentId)
+          .collection('payments').doc(paymentId)
+          .delete();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.paymentDeletedSuccess), backgroundColor: Colors.green),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.deleteError(e.toString()))),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteAttendance(String attendanceRecordId) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('schools').doc(widget.schoolId)
+          .collection('attendanceRecords').doc(attendanceRecordId)
+          .update({
+        'presentStudentIds': FieldValue.arrayRemove([widget.studentId])
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.assistanceDelete), backgroundColor: Colors.green),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.deleteError(e.toString()))),
+        );
+      }
+    }
   }
 }

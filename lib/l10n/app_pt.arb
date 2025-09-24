@@ -405,5 +405,10 @@
     "locationOptional": "Localização (Opcional)",
     "costOptional": "Custo (Opcional)",
     "involvedDisciplines": "Disciplinas Envolvidas",
-    "selectAtLeastOneDiscipline": "Você deve selecionar pelo menos uma disciplina."
+    "selectAtLeastOneDiscipline": "Você deve selecionar pelo menos uma disciplina.",
+    "paymentsOf": "Pagamentos de {monthYear}",
+    "confirmPaymentDelete": "Tem certeza de que deseja excluir este pagamento permanentemente?",
+    "paymentDeletedSuccess": "Pagamento excluído com sucesso.",
+    "confirmAttendanceDelete": "Tem certeza de que deseja excluir esta presença? Esta ação remove apenas o aluno deste registro de aula, não exclui a aula em si.",
+    "assistanceDelete": "Presença excluída."
 }

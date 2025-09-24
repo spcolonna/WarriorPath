@@ -1390,4 +1390,23 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get selectAtLeastOneDiscipline =>
       'You must select at least one discipline.';
+
+  @override
+  String paymentsOf(String monthYear) {
+    return 'Payments from $monthYear';
+  }
+
+  @override
+  String get confirmPaymentDelete =>
+      'Are you sure you want to permanently delete this payment?';
+
+  @override
+  String get paymentDeletedSuccess => 'Payment deleted successfully.';
+
+  @override
+  String get confirmAttendanceDelete =>
+      'Are you sure you want to delete this attendance? This action only removes the student from this class record, it does not delete the class itself.';
+
+  @override
+  String get assistanceDelete => 'Attendance deleted.';
 }

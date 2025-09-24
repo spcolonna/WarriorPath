@@ -2589,6 +2589,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You must select at least one discipline.'**
   String get selectAtLeastOneDiscipline;
+
+  /// No description provided for @paymentsOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Payments from {monthYear}'**
+  String paymentsOf(String monthYear);
+
+  /// No description provided for @confirmPaymentDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to permanently delete this payment?'**
+  String get confirmPaymentDelete;
+
+  /// No description provided for @paymentDeletedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment deleted successfully.'**
+  String get paymentDeletedSuccess;
+
+  /// No description provided for @confirmAttendanceDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this attendance? This action only removes the student from this class record, it does not delete the class itself.'**
+  String get confirmAttendanceDelete;
+
+  /// No description provided for @assistanceDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Attendance deleted.'**
+  String get assistanceDelete;
 }
 
 class _AppLocalizationsDelegate

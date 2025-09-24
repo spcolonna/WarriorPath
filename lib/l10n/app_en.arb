@@ -454,5 +454,11 @@
     "locationOptional": "Location (Optional)",
     "costOptional": "Cost (Optional)",
     "involvedDisciplines": "Involved Disciplines",
-    "selectAtLeastOneDiscipline": "You must select at least one discipline."
+    "selectAtLeastOneDiscipline": "You must select at least one discipline.",
+    "paymentsOf": "Payments from {monthYear}",
+    "@paymentsOf": { "placeholders": { "monthYear": { "type": "String" } } },
+    "confirmPaymentDelete": "Are you sure you want to permanently delete this payment?",
+    "paymentDeletedSuccess": "Payment deleted successfully.",
+    "confirmAttendanceDelete": "Are you sure you want to delete this attendance? This action only removes the student from this class record, it does not delete the class itself.",
+    "assistanceDelete": "Attendance deleted."
 }
