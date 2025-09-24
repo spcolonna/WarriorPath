@@ -257,12 +257,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get registerPayment => 'Register Payment';
 
   @override
-  String get payPlan => 'Plan Payment';
-
-  @override
-  String get paySpecial => 'Special Payment';
-
-  @override
   String get selectPlan => 'Select a plan';
 
   @override
@@ -329,17 +323,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get registerPausedAssistance => 'Register Past Attendance';
 
   @override
-  String get errorLevelLoad => 'Could not load the student\'s current level.';
-
-  @override
   String get levelPromotion => 'Promote Level';
 
   @override
   String get assignTechnic => 'Assign Techniques';
-
-  @override
-  String get studentNotAssignedTechnics =>
-      'This student has no assigned techniques.';
 
   @override
   String get notassignedPaymentPlan => 'No payment plan assigned.';
@@ -402,9 +389,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get select => 'Select';
-
-  @override
-  String get configureLevelsStep3 => 'Configure Levels (Step 3)';
 
   @override
   String get addYourFirstLevel => 'Add your first level below.';
@@ -477,13 +461,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get manageSchedules => 'Manage Schedules';
 
   @override
-  String get confirmDeleteEvent =>
-      'Are you sure you want to permanently delete this event? This action cannot be undone.';
-
-  @override
-  String get eventDeleted => 'Event deleted.';
-
-  @override
   String get eventNoLongerExists => 'This event no longer exists.';
 
   @override
@@ -491,9 +468,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get manageGuests => 'Manage Guests';
-
-  @override
-  String get noStudentsInvitedYet => 'You haven\'t invited any students yet.';
 
   @override
   String get endTime => 'End Time';
@@ -584,15 +558,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get manageLevels => 'Manage Levels';
 
   @override
-  String get manageLevelsDescription =>
-      'Edit the names, colors, and order of the sashes/belts.';
-
-  @override
   String get manageTechniques => 'Manage Techniques';
-
-  @override
-  String get manageTechniquesDescription =>
-      'Add or modify your school\'s curriculum.';
 
   @override
   String get manageFinances => 'Manage Finances';
@@ -1409,4 +1375,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get assistanceDelete => 'Attendance deleted.';
+
+  @override
+  String get unassignTechnique => 'Unassign Technique';
+
+  @override
+  String get unassignTechniqueConfirm =>
+      'Are you sure you want to unassign this technique from the student?';
+
+  @override
+  String get techniqueUnassignedSuccess => 'Technique unassigned successfully.';
+
+  @override
+  String get revertPromotionConfirm =>
+      'Are you sure? This will delete the history record and revert the student\'s level to the previous one.';
+
+  @override
+  String get revertPromotion => 'Revert Promotion';
 }

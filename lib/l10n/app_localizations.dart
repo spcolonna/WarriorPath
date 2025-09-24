@@ -550,18 +550,6 @@ abstract class AppLocalizations {
   /// **'Register Payment'**
   String get registerPayment;
 
-  /// No description provided for @payPlan.
-  ///
-  /// In en, this message translates to:
-  /// **'Plan Payment'**
-  String get payPlan;
-
-  /// No description provided for @paySpecial.
-  ///
-  /// In en, this message translates to:
-  /// **'Special Payment'**
-  String get paySpecial;
-
   /// No description provided for @selectPlan.
   ///
   /// In en, this message translates to:
@@ -682,12 +670,6 @@ abstract class AppLocalizations {
   /// **'Register Past Attendance'**
   String get registerPausedAssistance;
 
-  /// No description provided for @errorLevelLoad.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not load the student\'s current level.'**
-  String get errorLevelLoad;
-
   /// No description provided for @levelPromotion.
   ///
   /// In en, this message translates to:
@@ -699,12 +681,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Assign Techniques'**
   String get assignTechnic;
-
-  /// No description provided for @studentNotAssignedTechnics.
-  ///
-  /// In en, this message translates to:
-  /// **'This student has no assigned techniques.'**
-  String get studentNotAssignedTechnics;
 
   /// No description provided for @notassignedPaymentPlan.
   ///
@@ -813,12 +789,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Select'**
   String get select;
-
-  /// No description provided for @configureLevelsStep3.
-  ///
-  /// In en, this message translates to:
-  /// **'Configure Levels (Step 3)'**
-  String get configureLevelsStep3;
 
   /// No description provided for @addYourFirstLevel.
   ///
@@ -958,18 +928,6 @@ abstract class AppLocalizations {
   /// **'Manage Schedules'**
   String get manageSchedules;
 
-  /// No description provided for @confirmDeleteEvent.
-  ///
-  /// In en, this message translates to:
-  /// **'Are you sure you want to permanently delete this event? This action cannot be undone.'**
-  String get confirmDeleteEvent;
-
-  /// No description provided for @eventDeleted.
-  ///
-  /// In en, this message translates to:
-  /// **'Event deleted.'**
-  String get eventDeleted;
-
   /// No description provided for @eventNoLongerExists.
   ///
   /// In en, this message translates to:
@@ -987,12 +945,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Manage Guests'**
   String get manageGuests;
-
-  /// No description provided for @noStudentsInvitedYet.
-  ///
-  /// In en, this message translates to:
-  /// **'You haven\'t invited any students yet.'**
-  String get noStudentsInvitedYet;
 
   /// No description provided for @endTime.
   ///
@@ -1144,23 +1096,11 @@ abstract class AppLocalizations {
   /// **'Manage Levels'**
   String get manageLevels;
 
-  /// No description provided for @manageLevelsDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit the names, colors, and order of the sashes/belts.'**
-  String get manageLevelsDescription;
-
   /// No description provided for @manageTechniques.
   ///
   /// In en, this message translates to:
   /// **'Manage Techniques'**
   String get manageTechniques;
-
-  /// No description provided for @manageTechniquesDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Add or modify your school\'s curriculum.'**
-  String get manageTechniquesDescription;
 
   /// No description provided for @manageFinances.
   ///
@@ -2619,6 +2559,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Attendance deleted.'**
   String get assistanceDelete;
+
+  /// No description provided for @unassignTechnique.
+  ///
+  /// In en, this message translates to:
+  /// **'Unassign Technique'**
+  String get unassignTechnique;
+
+  /// No description provided for @unassignTechniqueConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to unassign this technique from the student?'**
+  String get unassignTechniqueConfirm;
+
+  /// No description provided for @techniqueUnassignedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Technique unassigned successfully.'**
+  String get techniqueUnassignedSuccess;
+
+  /// No description provided for @revertPromotionConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure? This will delete the history record and revert the student\'s level to the previous one.'**
+  String get revertPromotionConfirm;
+
+  /// No description provided for @revertPromotion.
+  ///
+  /// In en, this message translates to:
+  /// **'Revert Promotion'**
+  String get revertPromotion;
 }
 
 class _AppLocalizationsDelegate

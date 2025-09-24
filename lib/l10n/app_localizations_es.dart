@@ -256,12 +256,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get registerPayment => 'Registrar Pago';
 
   @override
-  String get payPlan => 'Pago de Plan';
-
-  @override
-  String get paySpecial => 'Pago Especial';
-
-  @override
   String get selectPlan => 'Selecciona un plan';
 
   @override
@@ -328,17 +322,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get registerPausedAssistance => 'Registrar Asistencia Pasada';
 
   @override
-  String get errorLevelLoad => 'No se pudo cargar el nivel actual del alumno.';
-
-  @override
   String get levelPromotion => 'Promover Nivel';
 
   @override
   String get assignTechnic => 'Asignar Técnicas';
-
-  @override
-  String get studentNotAssignedTechnics =>
-      'Este alumno no tiene técnicas asignadas.';
 
   @override
   String get notassignedPaymentPlan => 'Sin plan de pago asignado.';
@@ -402,9 +389,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get select => 'Seleccionar';
-
-  @override
-  String get configureLevelsStep3 => 'Configurar Niveles (Paso 3)';
 
   @override
   String get addYourFirstLevel => 'Añade tu primer nivel abajo.';
@@ -478,13 +462,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get manageSchedules => 'Gestionar Horarios';
 
   @override
-  String get confirmDeleteEvent =>
-      '¿Estás seguro de que quieres eliminar este evento permanentemente? Esta acción no se puede deshacer.';
-
-  @override
-  String get eventDeleted => 'Evento eliminado.';
-
-  @override
   String get eventNoLongerExists => 'Este evento ya no existe.';
 
   @override
@@ -492,9 +469,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get manageGuests => 'Gestionar Invitados';
-
-  @override
-  String get noStudentsInvitedYet => 'Aún no has invitado a ningún alumno.';
 
   @override
   String get endTime => 'Hora de Fin';
@@ -585,15 +559,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get manageLevels => 'Gestionar Niveles';
 
   @override
-  String get manageLevelsDescription =>
-      'Edita los nombres, colores y orden de las fajas/cinturones.';
-
-  @override
   String get manageTechniques => 'Gestionar Técnicas';
-
-  @override
-  String get manageTechniquesDescription =>
-      'Añade o modifica el currículo de tu escuela.';
 
   @override
   String get manageFinances => 'Gestionar Finanzas';
@@ -1413,4 +1379,21 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get assistanceDelete => 'Asistencia eliminada.';
+
+  @override
+  String get unassignTechnique => 'Quitar Técnica';
+
+  @override
+  String get unassignTechniqueConfirm =>
+      '¿Estás seguro de que quieres quitarle esta técnica al alumno?';
+
+  @override
+  String get techniqueUnassignedSuccess => 'Técnica quitada con éxito.';
+
+  @override
+  String get revertPromotionConfirm =>
+      '¿Estás seguro? Esto eliminará el registro del historial y revertirá el nivel del alumno al anterior.';
+
+  @override
+  String get revertPromotion => 'Revertir Promoción';
 }
