@@ -27,20 +27,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get forgotPasswordLink => 'Esqueceu sua senha?';
 
   @override
-  String get profileErrorTitle => 'Erro de Perfil';
-
-  @override
-  String get profileErrorContent =>
-      'Não foi possível carregar seu perfil. Tente novamente.';
-
-  @override
-  String get accessDeniedTitle => 'Acesso Negado';
-
-  @override
-  String get accessDeniedContent =>
-      'Você não possui um papel ativo em nenhuma escola.';
-
-  @override
   String get loginErrorTitle => 'Erro de Login';
 
   @override
@@ -74,9 +60,6 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get language => 'Idioma';
-
-  @override
   String get ok => 'Ok';
 
   @override
@@ -86,9 +69,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get teacher => 'Mestre';
-
-  @override
-  String get teacherLower => 'mestre';
 
   @override
   String get sessionError => 'Erro: Sessão inválida.';
@@ -124,9 +104,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get student => 'Aluno';
 
   @override
-  String get studentLower => 'aluno';
-
-  @override
   String get managment => 'Gestão';
 
   @override
@@ -155,9 +132,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get progress => 'Progresso';
-
-  @override
-  String get technics => 'Técnicas';
 
   @override
   String get facturation => 'Faturamento';
@@ -202,9 +176,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get noPayment => 'Não há pagamentos registrados para este aluno.';
 
   @override
-  String get errorLoadHistory => 'Erro ao carregar o histórico.';
-
-  @override
   String get noRegisterAssitance =>
       'Não há registros de presença para este aluno.';
 
@@ -212,14 +183,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get classRoom => 'Aula';
 
   @override
-  String get removeAssistance => 'Remover esta presença';
-
-  @override
   String get confirm => 'Confirmar';
-
-  @override
-  String get removeAssistanceCOnfirmation =>
-      'Tem certeza de que deseja remover esta presença do registro do aluno?';
 
   @override
   String get cancel => 'Cancelar';
@@ -228,26 +192,14 @@ class AppLocalizationsPt extends AppLocalizations {
   String get eliminate => 'Excluir';
 
   @override
-  String get assistanceDelete => 'Presença excluída.';
-
-  @override
   String deleteError(String e) {
     return 'Erro ao excluir: $e';
   }
 
   @override
-  String get loadProgressError => 'Erro ao carregar o progresso.';
-
-  @override
-  String get noHistPromotion => 'Este aluno não tem histórico de promoções.';
-
-  @override
   String rolUpdatedTo(String rol) {
     return 'Papel atualizado para $rol';
   }
-
-  @override
-  String get invalidRegisterPromotion => 'Registro de promoção inválido';
 
   @override
   String get deleteLevel => 'Nível Excluído';
@@ -264,19 +216,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get notesLabel => 'Notas';
-
-  @override
-  String get revertPromotion => 'Reverter Promoção';
-
-  @override
-  String get revertThisPromotion => 'Reverter esta promoção';
-
-  @override
-  String get confirmReverPromotion =>
-      'Tem certeza de que deseja excluir este registro de promoção? \n\nIsso reverterá o nível atual do aluno para o nível anterior.';
-
-  @override
-  String get yesRevert => 'Sim, Reverter';
 
   @override
   String get maleGender => 'Masculino';
@@ -1261,9 +1200,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get noDisciplinesFound => 'Nenhuma disciplina encontrada.';
-
-  @override
-  String get levelModel => 'Modelo de Nível';
 
   @override
   String get levelDeletedSuccess => 'Nível excluído com sucesso.';

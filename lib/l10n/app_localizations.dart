@@ -136,30 +136,6 @@ abstract class AppLocalizations {
   /// **'Forgot your password?'**
   String get forgotPasswordLink;
 
-  /// No description provided for @profileErrorTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Profile Error'**
-  String get profileErrorTitle;
-
-  /// No description provided for @profileErrorContent.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not load your profile. Please try again.'**
-  String get profileErrorContent;
-
-  /// No description provided for @accessDeniedTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Access Denied'**
-  String get accessDeniedTitle;
-
-  /// No description provided for @accessDeniedContent.
-  ///
-  /// In en, this message translates to:
-  /// **'You do not have an active role in any school.'**
-  String get accessDeniedContent;
-
   /// No description provided for @loginErrorTitle.
   ///
   /// In en, this message translates to:
@@ -214,12 +190,6 @@ abstract class AppLocalizations {
   /// **'An error occurred: {errorDetails}'**
   String genericErrorContent(String errorDetails);
 
-  /// No description provided for @language.
-  ///
-  /// In en, this message translates to:
-  /// **'Language'**
-  String get language;
-
   /// No description provided for @ok.
   ///
   /// In en, this message translates to:
@@ -237,12 +207,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Teacher'**
   String get teacher;
-
-  /// No description provided for @teacherLower.
-  ///
-  /// In en, this message translates to:
-  /// **'teacher'**
-  String get teacherLower;
 
   /// No description provided for @sessionError.
   ///
@@ -310,12 +274,6 @@ abstract class AppLocalizations {
   /// **'Student'**
   String get student;
 
-  /// No description provided for @studentLower.
-  ///
-  /// In en, this message translates to:
-  /// **'student'**
-  String get studentLower;
-
   /// No description provided for @managment.
   ///
   /// In en, this message translates to:
@@ -375,12 +333,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Progress'**
   String get progress;
-
-  /// No description provided for @technics.
-  ///
-  /// In en, this message translates to:
-  /// **'Techniques'**
-  String get technics;
 
   /// No description provided for @facturation.
   ///
@@ -466,12 +418,6 @@ abstract class AppLocalizations {
   /// **'There are no payments registered for this student.'**
   String get noPayment;
 
-  /// No description provided for @errorLoadHistory.
-  ///
-  /// In en, this message translates to:
-  /// **'Error loading history.'**
-  String get errorLoadHistory;
-
   /// No description provided for @noRegisterAssitance.
   ///
   /// In en, this message translates to:
@@ -484,23 +430,11 @@ abstract class AppLocalizations {
   /// **'Class'**
   String get classRoom;
 
-  /// No description provided for @removeAssistance.
-  ///
-  /// In en, this message translates to:
-  /// **'Remove this attendance'**
-  String get removeAssistance;
-
   /// No description provided for @confirm.
   ///
   /// In en, this message translates to:
   /// **'Confirm'**
   String get confirm;
-
-  /// No description provided for @removeAssistanceCOnfirmation.
-  ///
-  /// In en, this message translates to:
-  /// **'Are you sure you want to remove this attendance from the student\'s record?'**
-  String get removeAssistanceCOnfirmation;
 
   /// No description provided for @cancel.
   ///
@@ -514,41 +448,17 @@ abstract class AppLocalizations {
   /// **'Delete'**
   String get eliminate;
 
-  /// No description provided for @assistanceDelete.
-  ///
-  /// In en, this message translates to:
-  /// **'Attendance deleted.'**
-  String get assistanceDelete;
-
   /// No description provided for @deleteError.
   ///
   /// In en, this message translates to:
   /// **'Error deleting: {e}'**
   String deleteError(String e);
 
-  /// No description provided for @loadProgressError.
-  ///
-  /// In en, this message translates to:
-  /// **'Error loading progress.'**
-  String get loadProgressError;
-
-  /// No description provided for @noHistPromotion.
-  ///
-  /// In en, this message translates to:
-  /// **'This student has no promotion history.'**
-  String get noHistPromotion;
-
   /// No description provided for @rolUpdatedTo.
   ///
   /// In en, this message translates to:
   /// **'Role updated to {rol}'**
   String rolUpdatedTo(String rol);
-
-  /// No description provided for @invalidRegisterPromotion.
-  ///
-  /// In en, this message translates to:
-  /// **'Invalid promotion record'**
-  String get invalidRegisterPromotion;
 
   /// No description provided for @deleteLevel.
   ///
@@ -573,30 +483,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Notes'**
   String get notesLabel;
-
-  /// No description provided for @revertPromotion.
-  ///
-  /// In en, this message translates to:
-  /// **'Revert Promotion'**
-  String get revertPromotion;
-
-  /// No description provided for @revertThisPromotion.
-  ///
-  /// In en, this message translates to:
-  /// **'Revert this promotion'**
-  String get revertThisPromotion;
-
-  /// No description provided for @confirmReverPromotion.
-  ///
-  /// In en, this message translates to:
-  /// **'Are you sure you want to delete this promotion record? \n\nThis will revert the student\'s current level to their previous one.'**
-  String get confirmReverPromotion;
-
-  /// No description provided for @yesRevert.
-  ///
-  /// In en, this message translates to:
-  /// **'Yes, Revert'**
-  String get yesRevert;
 
   /// No description provided for @maleGender.
   ///
@@ -2355,12 +2241,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No disciplines found.'**
   String get noDisciplinesFound;
-
-  /// No description provided for @levelModel.
-  ///
-  /// In en, this message translates to:
-  /// **'Level Model'**
-  String get levelModel;
 
   /// No description provided for @levelDeletedSuccess.
   ///

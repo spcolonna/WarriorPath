@@ -246,7 +246,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
           title: Text(l10n.changeRolMember),
           content: Column(
             mainAxisSize: MainAxisSize.min,
-            children: [l10n.studentLower, l10n.instructor, l10n.teacherLower].map((roleKey) {
+            children: [l10n.student.toLowerCase(), l10n.instructor, l10n.teacher.toLowerCase()].map((roleKey) {
               return RadioListTile<String>(
                 title: Text(roleKey[0].toUpperCase() + roleKey.substring(1)),
                 value: roleKey,
