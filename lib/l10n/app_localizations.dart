@@ -1126,30 +1126,6 @@ abstract class AppLocalizations {
   /// **'Modify the address, phone, description, etc.'**
   String get editSchoolDataDescription;
 
-  /// No description provided for @upcoming.
-  ///
-  /// In en, this message translates to:
-  /// **'Upcoming'**
-  String get upcoming;
-
-  /// No description provided for @past.
-  ///
-  /// In en, this message translates to:
-  /// **'Past'**
-  String get past;
-
-  /// No description provided for @noUpcomingEvents.
-  ///
-  /// In en, this message translates to:
-  /// **'No upcoming events.'**
-  String get noUpcomingEvents;
-
-  /// No description provided for @noPastEvents.
-  ///
-  /// In en, this message translates to:
-  /// **'No past events.'**
-  String get noPastEvents;
-
   /// No description provided for @errorNoActiveSession.
   ///
   /// In en, this message translates to:
@@ -1270,12 +1246,6 @@ abstract class AppLocalizations {
   /// **'Application date: {message}'**
   String applicationDate(String message);
 
-  /// No description provided for @noLevelsConfiguredError.
-  ///
-  /// In en, this message translates to:
-  /// **'Your school has no levels configured. Go to Management -> Levels to add them.'**
-  String get noLevelsConfiguredError;
-
   /// No description provided for @studentAcceptedSuccess.
   ///
   /// In en, this message translates to:
@@ -1342,12 +1312,6 @@ abstract class AppLocalizations {
   /// **'School Community'**
   String get schoolCommunity;
 
-  /// No description provided for @errorLoadingLevels.
-  ///
-  /// In en, this message translates to:
-  /// **'Error loading school levels.'**
-  String get errorLoadingLevels;
-
   /// No description provided for @errorLoadingMembers.
   ///
   /// In en, this message translates to:
@@ -1389,12 +1353,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'My Progress'**
   String get myProgress;
-
-  /// No description provided for @couldNotLoadProgress.
-  ///
-  /// In en, this message translates to:
-  /// **'Could not load your progress.'**
-  String get couldNotLoadProgress;
 
   /// No description provided for @yourPath.
   ///
@@ -1552,12 +1510,6 @@ abstract class AppLocalizations {
   /// **'Add Child'**
   String get addChild;
 
-  /// No description provided for @childProfile.
-  ///
-  /// In en, this message translates to:
-  /// **'Child\'s Profile'**
-  String get childProfile;
-
   /// No description provided for @childFullName.
   ///
   /// In en, this message translates to:
@@ -1690,12 +1642,6 @@ abstract class AppLocalizations {
   /// **'Error sending application: {e}'**
   String applicationSentError(String e);
 
-  /// No description provided for @errorLoadingSchools.
-  ///
-  /// In en, this message translates to:
-  /// **'Error loading schools.'**
-  String get errorLoadingSchools;
-
   /// No description provided for @noNewSchoolsFound.
   ///
   /// In en, this message translates to:
@@ -1756,12 +1702,6 @@ abstract class AppLocalizations {
   /// **'You must add at least one discipline to your school.'**
   String get addAtLeastOneDiscipline;
 
-  /// No description provided for @disciplineName.
-  ///
-  /// In en, this message translates to:
-  /// **'Discipline Name'**
-  String get disciplineName;
-
   /// No description provided for @addDiscipline.
   ///
   /// In en, this message translates to:
@@ -1773,30 +1713,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No disciplines added yet.'**
   String get noDisciplinesAdded;
-
-  /// No description provided for @baseStyle.
-  ///
-  /// In en, this message translates to:
-  /// **'Base Style'**
-  String get baseStyle;
-
-  /// No description provided for @selectDisciplineToConfigure.
-  ///
-  /// In en, this message translates to:
-  /// **'Select a discipline to configure its levels'**
-  String get selectDisciplineToConfigure;
-
-  /// No description provided for @selectDisciplineToConfigureTechniques.
-  ///
-  /// In en, this message translates to:
-  /// **'Select a discipline to configure its techniques'**
-  String get selectDisciplineToConfigureTechniques;
-
-  /// No description provided for @configureTechniquesStep4.
-  ///
-  /// In en, this message translates to:
-  /// **'Add Techniques (Step 4)'**
-  String get configureTechniquesStep4;
 
   /// No description provided for @defineYourCategories.
   ///
@@ -1906,18 +1822,6 @@ abstract class AppLocalizations {
   /// **'Techniques for \"{disciplineName}\"'**
   String techniquesFor(String disciplineName);
 
-  /// No description provided for @editTechnique.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit Technique'**
-  String get editTechnique;
-
-  /// No description provided for @curriculumUpdated.
-  ///
-  /// In en, this message translates to:
-  /// **'Curriculum updated.'**
-  String get curriculumUpdated;
-
   /// No description provided for @configurePricingStep5.
   ///
   /// In en, this message translates to:
@@ -2025,12 +1929,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Progression System'**
   String get progressionSystem;
-
-  /// No description provided for @initialCurriculum.
-  ///
-  /// In en, this message translates to:
-  /// **'Initial Curriculum'**
-  String get initialCurriculum;
 
   /// No description provided for @pricingAndPlans.
   ///
@@ -2158,12 +2056,6 @@ abstract class AppLocalizations {
   /// **'Levels (order from lowest to highest)'**
   String get levelsOrderHint;
 
-  /// No description provided for @levelName.
-  ///
-  /// In en, this message translates to:
-  /// **'Level Name'**
-  String get levelName;
-
   /// No description provided for @progressionSystemNameRequired.
   ///
   /// In en, this message translates to:
@@ -2182,29 +2074,11 @@ abstract class AppLocalizations {
   /// **'No disciplines found.'**
   String get noDisciplinesFound;
 
-  /// No description provided for @levelDeletedSuccess.
-  ///
-  /// In en, this message translates to:
-  /// **'Level deleted successfully.'**
-  String get levelDeletedSuccess;
-
   /// No description provided for @levelNameHint.
   ///
   /// In en, this message translates to:
   /// **'Level Name'**
   String get levelNameHint;
-
-  /// No description provided for @confirmDeleteLevelMessage.
-  ///
-  /// In en, this message translates to:
-  /// **'Are you sure you want to delete this level?'**
-  String get confirmDeleteLevelMessage;
-
-  /// No description provided for @noLevelsConfigured.
-  ///
-  /// In en, this message translates to:
-  /// **'No levels configured for this discipline'**
-  String get noLevelsConfigured;
 
   /// No description provided for @configureDiscipline.
   ///
@@ -2332,12 +2206,6 @@ abstract class AppLocalizations {
   /// **'Inactive'**
   String get inactive;
 
-  /// No description provided for @newDiscipline.
-  ///
-  /// In en, this message translates to:
-  /// **'New Discipline'**
-  String get newDiscipline;
-
   /// No description provided for @schoolDataUpdated.
   ///
   /// In en, this message translates to:
@@ -2380,24 +2248,6 @@ abstract class AppLocalizations {
   /// **'This student is not yet enrolled in any disciplines.'**
   String get noDisciplinesEnrolled;
 
-  /// No description provided for @enroll.
-  ///
-  /// In en, this message translates to:
-  /// **'Enroll'**
-  String get enroll;
-
-  /// No description provided for @unenroll.
-  ///
-  /// In en, this message translates to:
-  /// **'Unenroll'**
-  String get unenroll;
-
-  /// No description provided for @confirmUnenroll.
-  ///
-  /// In en, this message translates to:
-  /// **'Are you sure you want to unenroll {studentName} from the {disciplineName} discipline?'**
-  String confirmUnenroll(String studentName, String disciplineName);
-
   /// No description provided for @noProgressSystemForDiscipline.
   ///
   /// In en, this message translates to:
@@ -2434,12 +2284,6 @@ abstract class AppLocalizations {
   /// **'You are not yet enrolled in any disciplines.'**
   String get noDisciplinesEnrolledStudent;
 
-  /// No description provided for @errorLoadingProgress.
-  ///
-  /// In en, this message translates to:
-  /// **'An error occurred while loading your progress.'**
-  String get errorLoadingProgress;
-
   /// No description provided for @planPayment.
   ///
   /// In en, this message translates to:
@@ -2451,12 +2295,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Special Payment'**
   String get specialPayment;
-
-  /// No description provided for @selectSchoolDisciplines.
-  ///
-  /// In en, this message translates to:
-  /// **'Select the disciplines your school offers'**
-  String get selectSchoolDisciplines;
 
   /// No description provided for @editEvent.
   ///
@@ -2529,12 +2367,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You must select at least one discipline.'**
   String get selectAtLeastOneDiscipline;
-
-  /// No description provided for @paymentsOf.
-  ///
-  /// In en, this message translates to:
-  /// **'Payments from {monthYear}'**
-  String paymentsOf(String monthYear);
 
   /// No description provided for @confirmPaymentDelete.
   ///

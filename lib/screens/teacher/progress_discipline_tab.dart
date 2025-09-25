@@ -280,14 +280,12 @@ class _ProgressDisciplineTabState extends State<ProgressDisciplineTab> {
                                         ) ?? false;
 
                                         if (confirm) {
-                                          // Llamamos a la función que revierte la promoción
                                           _deletePromotionHistory(doc.id);
                                         }
                                       },
                                     ),
                                 ],
                               ),
-                              // --- FIN DE LA CORRECCIÓN ---
                             );
                           },
                         );

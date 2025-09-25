@@ -574,18 +574,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Modify the address, phone, description, etc.';
 
   @override
-  String get upcoming => 'Upcoming';
-
-  @override
-  String get past => 'Past';
-
-  @override
-  String get noUpcomingEvents => 'No upcoming events.';
-
-  @override
-  String get noPastEvents => 'No past events.';
-
-  @override
   String get errorNoActiveSession => 'Error: No active session.';
 
   @override
@@ -653,10 +641,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get noLevelsConfiguredError =>
-      'Your school has no levels configured. Go to Management -> Levels to add them.';
-
-  @override
   String get studentAcceptedSuccess => 'Student accepted successfully.';
 
   @override
@@ -691,9 +675,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get schoolCommunity => 'School Community';
 
   @override
-  String get errorLoadingLevels => 'Error loading school levels.';
-
-  @override
   String get errorLoadingMembers => 'Error loading members.';
 
   @override
@@ -717,9 +698,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get myProgress => 'My Progress';
-
-  @override
-  String get couldNotLoadProgress => 'Could not load your progress.';
 
   @override
   String get yourPath => 'Your Path';
@@ -807,9 +785,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addChild => 'Add Child';
 
   @override
-  String get childProfile => 'Child\'s Profile';
-
-  @override
   String get childFullName => 'Child\'s Full Name';
 
   @override
@@ -889,9 +864,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get errorLoadingSchools => 'Error loading schools.';
-
-  @override
   String get noNewSchoolsFound => 'No new schools found.';
 
   @override
@@ -926,27 +898,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'You must add at least one discipline to your school.';
 
   @override
-  String get disciplineName => 'Discipline Name';
-
-  @override
   String get addDiscipline => 'Add Discipline';
 
   @override
   String get noDisciplinesAdded => 'No disciplines added yet.';
-
-  @override
-  String get baseStyle => 'Base Style';
-
-  @override
-  String get selectDisciplineToConfigure =>
-      'Select a discipline to configure its levels';
-
-  @override
-  String get selectDisciplineToConfigureTechniques =>
-      'Select a discipline to configure its techniques';
-
-  @override
-  String get configureTechniquesStep4 => 'Add Techniques (Step 4)';
 
   @override
   String get defineYourCategories => '1. Define your Categories';
@@ -1011,12 +966,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get editTechnique => 'Edit Technique';
-
-  @override
-  String get curriculumUpdated => 'Curriculum updated.';
-
-  @override
   String get configurePricingStep5 => 'Configure Pricing (Step 5)';
 
   @override
@@ -1071,9 +1020,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get progressionSystem => 'Progression System';
-
-  @override
-  String get initialCurriculum => 'Initial Curriculum';
 
   @override
   String get pricingAndPlans => 'Pricing and Plans';
@@ -1147,9 +1093,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get levelsOrderHint => 'Levels (order from lowest to highest)';
 
   @override
-  String get levelName => 'Level Name';
-
-  @override
   String get progressionSystemNameRequired =>
       'Please give your progression system a name.';
 
@@ -1160,17 +1103,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noDisciplinesFound => 'No disciplines found.';
 
   @override
-  String get levelDeletedSuccess => 'Level deleted successfully.';
-
-  @override
   String get levelNameHint => 'Level Name';
-
-  @override
-  String get confirmDeleteLevelMessage =>
-      'Are you sure you want to delete this level?';
-
-  @override
-  String get noLevelsConfigured => 'No levels configured for this discipline';
 
   @override
   String get configureDiscipline => 'Configure Discipline';
@@ -1241,9 +1174,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inactive => 'Inactive';
 
   @override
-  String get newDiscipline => 'New Discipline';
-
-  @override
   String get schoolDataUpdated => 'School data updated.';
 
   @override
@@ -1270,17 +1200,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'This student is not yet enrolled in any disciplines.';
 
   @override
-  String get enroll => 'Enroll';
-
-  @override
-  String get unenroll => 'Unenroll';
-
-  @override
-  String confirmUnenroll(String studentName, String disciplineName) {
-    return 'Are you sure you want to unenroll $studentName from the $disciplineName discipline?';
-  }
-
-  @override
   String get noProgressSystemForDiscipline =>
       'This discipline does not have a progression system defined yet.';
 
@@ -1304,18 +1223,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'You are not yet enrolled in any disciplines.';
 
   @override
-  String get errorLoadingProgress =>
-      'An error occurred while loading your progress.';
-
-  @override
   String get planPayment => 'Plan Payment';
 
   @override
   String get specialPayment => 'Special Payment';
-
-  @override
-  String get selectSchoolDisciplines =>
-      'Select the disciplines your school offers';
 
   @override
   String get editEvent => 'Edit Event';
@@ -1356,11 +1267,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get selectAtLeastOneDiscipline =>
       'You must select at least one discipline.';
-
-  @override
-  String paymentsOf(String monthYear) {
-    return 'Payments from $monthYear';
-  }
 
   @override
   String get confirmPaymentDelete =>
