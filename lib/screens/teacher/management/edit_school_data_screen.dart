@@ -112,6 +112,15 @@ class _EditSchoolDataScreenState extends State<EditSchoolDataScreen> {
             itemBuilder: (context, index) {
               final theme = availableThemes[index];
               return ListTile(
+                leading: CircleAvatar(
+                  radius: 22,
+                  backgroundColor: theme.primaryColor, // El color del borde
+                  child: CircleAvatar(
+                    radius: 20, // Radio de la imagen (un poco más pequeño)
+                    backgroundImage: AssetImage(theme.icon),
+                    backgroundColor: Colors.white,
+                  ),
+                ),
                 title: Text(theme.name),
                 onTap: () {
                   setState(() {
@@ -232,9 +241,23 @@ class _EditSchoolDataScreenState extends State<EditSchoolDataScreen> {
                   itemCount: _disciplines.length,
                   itemBuilder: (context, index) {
                     final discipline = _disciplines[index];
+                    final theme = MartialArtTheme.allThemes.firstWhere(
+                          (t) => t.name == discipline.name,
+                      orElse: () => MartialArtTheme.karate,
+                    );
+
                     return Card(
                       child: SwitchListTile(
-                        title: Text(discipline.name),
+                        secondary: CircleAvatar(
+                          radius: 22,
+                          backgroundColor: theme.primaryColor, // El color del borde
+                          child: CircleAvatar(
+                            radius: 20, // Radio de la imagen (un poco más pequeño)
+                            backgroundImage: AssetImage(theme.icon),
+                            backgroundColor: Colors.white,
+                          ),
+                        ),
+                        title: Text(discipline.name, style: const TextStyle(fontWeight: FontWeight.bold)),
                         value: discipline.isActive,
                         onChanged: (bool value) {
                           setState(() {

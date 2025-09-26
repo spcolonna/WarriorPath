@@ -3,30 +3,37 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:warrior_path/theme/martial_art_themes.dart';
 
 class ThemeProvider with ChangeNotifier {
-  MartialArtTheme _currentTheme = MartialArtTheme.kungFu; // Un tema por defecto
+  MartialArtTheme _currentTheme = MartialArtTheme.karate;
 
   MartialArtTheme get theme => _currentTheme;
 
   Future<void> loadThemeFromSchool(String schoolId) async {
     try {
-      final schoolDoc = await FirebaseFirestore.instance.collection('schools').doc(schoolId).get();
-      final themeData = schoolDoc.data()?['theme'] as Map<String, dynamic>?;
+      final primaryDisciplineSnapshot = await FirebaseFirestore.instance
+          .collection('schools').doc(schoolId)
+          .collection('disciplines')
+          .where('isPrimary', isEqualTo: true)
+          .limit(1)
+          .get();
 
-      if (themeData != null) {
-        final primaryColor = Color(int.parse(themeData['primaryColor'], radix: 16));
-        final accentColor = Color(int.parse(themeData['accentColor'], radix: 16));
-        final martialArtName = schoolDoc.data()?['martialArt'] ?? 'Custom';
+      if (primaryDisciplineSnapshot.docs.isNotEmpty) {
+        final disciplineDoc = primaryDisciplineSnapshot.docs.first;
+        final disciplineName = disciplineDoc.data()['name'] as String?;
 
-        _currentTheme = MartialArtTheme(
-          name: martialArtName,
-          primaryColor: primaryColor,
-          accentColor: accentColor,
-        );
-        notifyListeners(); // Notifica a los widgets que el tema ha cambiado
+        if (disciplineName != null) {
+          // 2. Buscamos en nuestra lista de temas el que coincida con ese nombre.
+          final foundTheme = MartialArtTheme.allThemes.firstWhere(
+                (theme) => theme.name == disciplineName,
+            orElse: () => MartialArtTheme.karate, // Fallback por si no lo encuentra
+          );
+          _currentTheme = foundTheme;
+        }
       }
+
+      notifyListeners();
+
     } catch (e) {
       print("Error al cargar el tema: $e");
-      // Mantiene el tema por defecto si hay un error
     }
   }
 }

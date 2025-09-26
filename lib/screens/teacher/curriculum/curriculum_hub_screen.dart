@@ -1,8 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:warrior_path/screens/teacher/curriculum/discipline_detail_screen.dart';
+import 'package:warrior_path/theme/martial_art_themes.dart';
 
 import '../../../l10n/app_localizations.dart';
-import 'discipline_detail_screen.dart';
 
 class CurriculumHubScreen extends StatefulWidget {
   final String schoolId;
@@ -20,7 +21,7 @@ class _CurriculumHubScreenState extends State<CurriculumHubScreen> {
     l10n = AppLocalizations.of(context);
   }
 
-  late Future<List<QueryDocumentSnapshot>> _disciplinesFuture;
+  late Future<List<DocumentSnapshot>> _disciplinesFuture;
 
   @override
   void initState() {
@@ -28,7 +29,7 @@ class _CurriculumHubScreenState extends State<CurriculumHubScreen> {
     _disciplinesFuture = _fetchDisciplines();
   }
 
-  Future<List<QueryDocumentSnapshot>> _fetchDisciplines() async {
+  Future<List<DocumentSnapshot>> _fetchDisciplines() async {
     final disciplinesSnapshot = await FirebaseFirestore.instance
         .collection('schools')
         .doc(widget.schoolId)
@@ -46,7 +47,6 @@ class _CurriculumHubScreenState extends State<CurriculumHubScreen> {
         ),
       ),
     );
-
     setState(() {
       _disciplinesFuture = _fetchDisciplines();
     });
@@ -86,24 +86,33 @@ class _CurriculumHubScreenState extends State<CurriculumHubScreen> {
               ),
               ...disciplines.map((doc) {
                 final data = doc.data() as Map<String, dynamic>;
-                final themeData = data['theme'] as Map<String, dynamic>? ?? {};
-                final color = themeData.containsKey('primaryColor')
-                    ? Color(int.parse('FF${themeData['primaryColor']}', radix: 16))
-                    : Theme.of(context).primaryColor;
+                final disciplineName = data['name'] ?? '';
+
+                final theme = MartialArtTheme.allThemes.firstWhere(
+                      (t) => t.name == disciplineName,
+                  orElse: () => MartialArtTheme.karate,
+                );
 
                 return Card(
                   margin: const EdgeInsets.symmetric(vertical: 8),
                   child: ListTile(
                     leading: CircleAvatar(
-                      backgroundColor: color,
-                      child: const Icon(Icons.sports_martial_arts, color: Colors.white),
+                      radius: 22, // Radio del borde (un poco más grande)
+                      backgroundColor: theme.primaryColor, // El color del borde
+                      child: CircleAvatar(
+                        radius: 20, // Radio de la imagen (un poco más pequeño)
+                        // Usamos backgroundImage para que la imagen PNG se recorte automáticamente en círculo
+                        backgroundImage: AssetImage(theme.icon),
+                        // Color de fondo por si la imagen PNG no carga o tiene partes transparentes
+                        backgroundColor: Colors.white,
+                      ),
                     ),
-                    title: Text(data['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                    title: Text(disciplineName, style: const TextStyle(fontWeight: FontWeight.bold)),
                     trailing: const Icon(Icons.arrow_forward_ios),
                     onTap: () => _navigateToDisciplineDetails(doc),
                   ),
                 );
-              }).toList(),
+              }),
             ],
           );
         },

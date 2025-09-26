@@ -1,4 +1,3 @@
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:warrior_path/providers/locale_provider.dart';
 import 'package:warrior_path/providers/session_provider.dart';
@@ -42,7 +41,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final remoteConfigService = RemoteConfigService.instance;
-    final bool showBannerAd = true;//remoteConfigService.getBool('show_banner_ad');
+    final bool showBannerAd = remoteConfigService.getBool('show_banner_ad');
 
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
