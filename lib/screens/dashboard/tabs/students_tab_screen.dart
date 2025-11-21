@@ -154,7 +154,10 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
   }
 
   Future<void> _showDisciplineSelectionDialog(String userId, String schoolId) async {
-    final disciplines = await FirebaseFirestore.instance.collection('schools').doc(schoolId).collection('disciplines').where('isActive', isEqualTo: true).get();
+    final disciplines = await FirebaseFirestore.instance
+        .collection('schools').doc(schoolId)
+        .collection('disciplines')
+        .get();
 
     if (disciplines.docs.isEmpty && mounted) {
       showDialog(context: context, builder: (ctx) => AlertDialog(

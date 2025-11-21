@@ -88,7 +88,22 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
           StreamBuilder<DocumentSnapshot>(
             stream: FirebaseFirestore.instance.collection('users').doc(user.uid).snapshots(),
             builder: (context, snapshot) {
+              // 1. Manejamos el estado de carga
+              if (!snapshot.hasData || snapshot.connectionState == ConnectionState.waiting) {
+                // Mantenemos un mensaje de bienvenida genérico mientras carga
+                return Text(l10n.welcomeTitle(l10n.loading), style: Theme.of(context).textTheme.headlineSmall);
+              }
+
+              // 2. VERIFICACIÓN CRÍTICA: ¿El documento existe?
+              if (!snapshot.data!.exists) {
+                // Si el documento no existe (ej. error en la BD o usuario mal creado), mostramos un fallback
+                return Text(l10n.welcomeTitle(l10n.teacher), style: Theme.of(context).textTheme.headlineSmall);
+              }
+
+              // 3. Si el documento existe, leemos los datos de forma segura
               final userName = snapshot.data?['displayName'] ?? l10n.teacher;
+
+              // El 'displayName' siempre debe ser el nombre, si no existe usamos el rol traducido
               return Text(
                 l10n.welcomeTitle(userName),
                 style: Theme.of(context).textTheme.headlineSmall,
