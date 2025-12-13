@@ -18,7 +18,6 @@ import 'package:warrior_path/widgets/CustomInputField.dart';
 import 'package:warrior_path/widgets/CustomPasswordField.dart';
 import 'package:warrior_path/widgets/PrimaryButton.dart';
 import 'package:warrior_path/widgets/SecondaryButton.dart';
-
 import '../l10n/app_localizations.dart';
 import '../providers/session_provider.dart';
 import '../widgets/language_switcher.dart';
@@ -38,16 +37,29 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   final AuthService _authService = AuthService();
 
   Future<void> _navigateAfterAuth(User user) async {
-    final userProfileDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+    final userProfileDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .get();
 
     if (!mounted) return;
 
     if (!userProfileDoc.exists) {
       final newUserProfile = {
-        'uid': user.uid, 'email': user.email, 'wizardStep': 0, 'createdAt': FieldValue.serverTimestamp(), 'displayName': user.displayName ?? '', 'photoUrl': user.photoURL ?? '',
+        'uid': user.uid,
+        'email': user.email,
+        'wizardStep': 0,
+        'createdAt': FieldValue.serverTimestamp(),
+        'displayName': user.displayName ?? '',
+        'photoUrl': user.photoURL ?? '',
       };
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).set(newUserProfile);
-      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const WizardProfileScreen()));
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .set(newUserProfile);
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const WizardProfileScreen()),
+      );
       return;
     }
 
@@ -60,65 +72,122 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       // Si el wizard no está completo, redirigimos al paso correcto
       switch (wizardStep) {
         case 0: // Aún no ha completado el perfil inicial
-          Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const WizardProfileScreen()));
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => const WizardProfileScreen(),
+            ),
+          );
           break;
         case 1: // Ya completó el perfil, ahora decidimos a dónde va según su ROL
           switch (userRole) {
             case 'student':
-              Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const SchoolSearchScreen(isFromWizard: true)));
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (context) =>
+                      const SchoolSearchScreen(isFromWizard: true),
+                ),
+              );
               break;
             case 'parent':
-              Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const AddChildScreen()));
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (context) => const AddChildScreen()),
+              );
               break;
             case 'teacher':
             case 'both':
-              Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const WizardCreateSchoolScreen()));
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (context) => const WizardCreateSchoolScreen(),
+                ),
+              );
               break;
             default: // Si no tiene rol (caso raro), lo mandamos a completar el perfil de nuevo
-              Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const WizardProfileScreen()));
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (context) => const WizardProfileScreen(),
+                ),
+              );
           }
           break;
 
-      // Los pasos 2, 3, 4 y 5 son para maestros que crean su escuela
+        // Los pasos 2, 3, 4 y 5 son para maestros que crean su escuela
         case 2:
         case 3:
         case 4:
         case 5:
-          final memberships = userData['activeMemberships'] as Map<String, dynamic>? ?? {};
+          final memberships =
+              userData['activeMemberships'] as Map<String, dynamic>? ?? {};
           if (memberships.isNotEmpty) {
             final schoolId = memberships.keys.first;
-            Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => WizardDisciplineHubScreen(schoolId: schoolId)));
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) =>
+                    WizardDisciplineHubScreen(schoolId: schoolId),
+              ),
+            );
           } else {
-            Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const WizardCreateSchoolScreen()));
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => const WizardCreateSchoolScreen(),
+              ),
+            );
           }
           break;
 
         default:
-        // Si es un paso desconocido, por seguridad lo mandamos al principio del wizard
-          Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const WizardProfileScreen()));
+          // Si es un paso desconocido, por seguridad lo mandamos al principio del wizard
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => const WizardProfileScreen(),
+            ),
+          );
       }
     } else {
       // Si el wizard está completo (wizardStep == 99), aplicamos la lógica de usuario activo
-      final memberships = userData['activeMemberships'] as Map<String, dynamic>? ?? {};
+      final memberships =
+          userData['activeMemberships'] as Map<String, dynamic>? ?? {};
 
       if (userRole == 'parent' && memberships.isEmpty) {
-        Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const GuardianDashboardScreen()));
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => const GuardianDashboardScreen(),
+          ),
+        );
       } else if (memberships.isNotEmpty) {
-        if (memberships.length == 1 && (userRole == 'student' || userRole == 'teacher')) {
+        if (memberships.length == 1 &&
+            (userRole == 'student' || userRole == 'teacher')) {
           final schoolId = memberships.keys.first;
           final role = memberships.values.first;
-          Provider.of<SessionProvider>(context, listen: false).setFullActiveSession(schoolId, role, user.uid);
-          Widget destination = (role == 'maestro') ? const TeacherDashboardScreen() : const StudentDashboardScreen();
-          Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => destination));
+          Provider.of<SessionProvider>(
+            context,
+            listen: false,
+          ).setFullActiveSession(schoolId, role, user.uid);
+          Widget destination = (role == 'maestro')
+              ? const TeacherDashboardScreen()
+              : const StudentDashboardScreen();
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => destination),
+          );
         } else {
-          Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const RoleSelectorScreen()));
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const RoleSelectorScreen()),
+          );
         }
       } else {
-        final pendingApplication = userData['pendingApplications'] as Map<String, dynamic>?;
+        final pendingApplication =
+            userData['pendingApplications'] as Map<String, dynamic>?;
         if (pendingApplication != null) {
-          Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => ApplicationSentScreen(schoolName: pendingApplication['schoolName'] ?? '')));
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => ApplicationSentScreen(
+                schoolName: pendingApplication['schoolName'] ?? '',
+              ),
+            ),
+          );
         } else {
-          Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SchoolSearchScreen()));
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => const SchoolSearchScreen()),
+          );
         }
       }
     }
@@ -127,65 +196,98 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   Future<void> _performLogin() async {
     final l10n = AppLocalizations.of(context)!;
     if (_isLoading) return;
-    setState(() { _isLoading = true; });
+    setState(() {
+      _isLoading = true;
+    });
 
     try {
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
-      final userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(email: email, password: password);
+      final userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
       if (userCredential.user != null) {
         await _navigateAfterAuth(userCredential.user!);
       }
     } on FirebaseAuthException catch (e) {
       String errorMessage;
       switch (e.code) {
-        case 'user-not-found': errorMessage = l10n.loginErrorUserNotFound; break;
-        case 'wrong-password': errorMessage = l10n.loginErrorWrongPassword; break;
-        case 'invalid-credential': errorMessage = l10n.loginErrorInvalidCredential; break;
-        default: errorMessage = l10n.unexpectedError;
+        case 'user-not-found':
+          errorMessage = l10n.loginErrorUserNotFound;
+          break;
+        case 'wrong-password':
+          errorMessage = l10n.loginErrorWrongPassword;
+          break;
+        case 'invalid-credential':
+          errorMessage = l10n.loginErrorInvalidCredential;
+          break;
+        default:
+          errorMessage = l10n.unexpectedError;
       }
       _showErrorDialog(l10n.loginErrorTitle, errorMessage);
     } catch (e) {
       _showErrorDialog(l10n.errorTitle, l10n.genericErrorContent(e.toString()));
     } finally {
-      if (mounted && _isLoading) { setState(() { _isLoading = false; }); }
+      if (mounted && _isLoading) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
   Future<void> _performRegistration() async {
     final l10n = AppLocalizations.of(context)!;
     if (_isLoading) return;
-    setState(() { _isLoading = true; });
+    setState(() {
+      _isLoading = true;
+    });
 
     try {
       final email = _emailController.text.trim();
       final password = _passwordController.text.trim();
-      final userModel = await _authService.signUpWithEmailPassword(email, password);
+      final userModel = await _authService.signUpWithEmailPassword(
+        email,
+        password,
+      );
       if (userModel != null) {
         final user = FirebaseAuth.instance.currentUser;
         if (user != null) {
           await _navigateAfterAuth(user);
         }
       } else {
-        _showErrorDialog(l10n.registrationErrorTitle, l10n.registrationErrorContent);
+        _showErrorDialog(
+          l10n.registrationErrorTitle,
+          l10n.registrationErrorContent,
+        );
       }
     } catch (e) {
       _showErrorDialog(l10n.errorTitle, l10n.genericErrorContent(e.toString()));
     } finally {
-      if (mounted && _isLoading) { setState(() { _isLoading = false; }); }
+      if (mounted && _isLoading) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
   void _showErrorDialog(String title, String content) {
     if (!mounted) return;
     final l10n = AppLocalizations.of(context)!;
-    showDialog(context: context, builder: (ctx) => AlertDialog(
-      title: Text(title),
-      content: Text(content),
-      actions: <Widget>[
-        TextButton(child: Text(l10n.ok), onPressed: () { Navigator.of(ctx).pop(); })
-      ],
-    ),
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(title),
+        content: Text(content),
+        actions: <Widget>[
+          TextButton(
+            child: Text(l10n.ok),
+            onPressed: () {
+              Navigator.of(ctx).pop();
+            },
+          ),
+        ],
+      ),
     );
   }
 
@@ -213,7 +315,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               color: AppColors.primaryColor,
               borderRadius: BorderRadius.vertical(bottom: Radius.circular(50)),
             ),
-            child: SafeArea( // 1. Envolvemos el Stack con SafeArea
+            child: SafeArea(
+              // 1. Envolvemos el Stack con SafeArea
               child: Stack(
                 children: [
                   // La columna con el logo y el título no cambia...
@@ -222,14 +325,23 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     children: [
                       Center(
                         child: ClipOval(
-                          child: Image.asset('assets/logo/Logo.png', height: 90, width: 90, fit: BoxFit.cover),
+                          child: Image.asset(
+                            'assets/logo/Logo.png',
+                            height: 90,
+                            width: 90,
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 16),
                       Text(
                         l10n.appName,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 42.0, fontWeight: FontWeight.bold, color: AppColors.textWhite),
+                        style: const TextStyle(
+                          fontSize: 42.0,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textWhite,
+                        ),
                       ),
                     ],
                   ),
@@ -253,7 +365,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     Text(
                       l10n.appSlogan,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 18, color: AppColors.textLight),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        color: AppColors.textLight,
+                      ),
                     ),
                     const SizedBox(height: 32.0),
                     CustomInputField(
@@ -262,25 +377,38 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       icon: Icons.email_outlined,
                     ),
                     const SizedBox(height: 16.0),
-                    CustomPasswordField(
-                      controller: _passwordController,
-                    ),
+                    CustomPasswordField(controller: _passwordController),
                     const SizedBox(height: 32.0),
                     if (_isLoading)
-                      const CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(AppColors.secondaryColor))
+                      const CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          AppColors.secondaryColor,
+                        ),
+                      )
                     else
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          SecondaryButton(text: l10n.loginButton, onPressed: _performLogin),
+                          SecondaryButton(
+                            text: l10n.loginButton,
+                            onPressed: _performLogin,
+                          ),
                           const SizedBox(height: 16.0),
-                          PrimaryButton(text: l10n.createAccountButton, onPressed: _performRegistration),
+                          PrimaryButton(
+                            text: l10n.createAccountButton,
+                            onPressed: _performRegistration,
+                          ),
                           TextButton(
                             onPressed: () {
-                              Navigator.of(context).push(MaterialPageRoute(builder: (context) => const ForgotPasswordScreen()));
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const ForgotPasswordScreen(),
+                                ),
+                              );
                             },
                             child: Text(l10n.forgotPasswordLink),
-                          )
+                          ),
                         ],
                       ),
                   ],
