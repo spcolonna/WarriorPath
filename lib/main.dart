@@ -15,13 +15,23 @@ import 'l10n/app_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  MobileAds.instance.initialize();
-  await NotificationService().initialize();
-  final remoteConfigService = await RemoteConfigService.getInstance();
-  await remoteConfigService.fetchAndActivate();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    MobileAds.instance.initialize();
+    
+    try {
+      await NotificationService().initialize();
+    } catch (e) {
+      print('NotificationService error: $e');
+    }
+    
+    try {
+      final remoteConfigService = await RemoteConfigService.getInstance();
+      await remoteConfigService.fetchAndActivate();
+    } catch (e) {
+      print('RemoteConfig error: $e');
+    }
 
   runApp(
     MultiProvider(

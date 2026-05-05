@@ -7,6 +7,17 @@
 .buildlog/
 .history
 
+# IDE
+.idea/
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Firebase secrets
+**/GoogleService-Info.plist
+**/google-services.json
+
 
 
 # Flutter repo-specific
