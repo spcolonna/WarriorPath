@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Warrior Path — Plataforma Digital para Artes Marciales</title>
+<style>
+/* ─── Reset ─── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+  background:#080808;
+  color:#fff;
+  overflow-x:hidden;
+}
+
+/* ─── Custom scrollbar ─── */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:#111}
+::-webkit-scrollbar-thumb{background:linear-gradient(#C9A84C,#8B6914);border-radius:3px}
+
+/* ─── CSS Variables ─── */
+:root{
+  --gold:#C9A84C;
+  --gold-lt:#E8C96A;
+  --gold-dim:#7A6030;
+  --student:#1976D2;
+  --student-glow:rgba(25,118,210,0.35);
+  --teacher:#2E7D32;
+  --teacher-glow:rgba(46,125,50,0.35);
+  --parent:#7B1FA2;
+  --parent-glow:rgba(123,31,162,0.35);
+  --card-bg:rgba(255,255,255,0.04);
+  --card-border:rgba(255,255,255,0.08);
+}
+
+/* ─── Animated gradient background ─── */
+.bg-mesh{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 20%, rgba(201,168,76,0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 80% 80%, rgba(25,118,210,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 50% at 50% 50%, rgba(46,125,50,0.04) 0%, transparent 70%),
+    #080808;
+  animation:meshMove 12s ease-in-out infinite alternate;
+}
+@keyframes meshMove{
+  0%{background-position:0% 0%, 100% 100%, 50% 50%}
+  100%{background-position:10% 15%, 90% 85%, 55% 45%}
+}
+
+/* ─── Particles canvas ─── */
+#particles{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;pointer-events:none;opacity:0.5}
+
+/* ─── Page wrapper ─── */
+.wrap{position:relative;z-index:2}
+
+/* ══════════ HERO ══════════ */
+.hero{
+  min-height:100vh;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  text-align:center;
+  padding:80px 24px 60px;
+  position:relative;
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  border:1px solid rgba(201,168,76,0.4);
+  background:rgba(201,168,76,0.08);
+  border-radius:40px;
+  padding:6px 18px;
+  font-size:11px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;
+  color:var(--gold);
+  margin-bottom:28px;
+  animation:fadeSlideDown 0.8s ease both;
+}
+.hero-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--gold);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.5)}}
+
+.hero h1{
+  font-size:clamp(52px,10vw,96px);
+  font-weight:900;
+  letter-spacing:-3px;
+  line-height:0.95;
+  margin-bottom:20px;
+  animation:fadeSlideDown 0.9s 0.15s ease both;
+}
+.hero h1 .line1{display:block;color:#fff}
+.hero h1 .line2{
+  display:block;
+  background:linear-gradient(135deg,var(--gold) 0%,var(--gold-lt) 50%,var(--gold) 100%);
+  background-size:200% 200%;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:fadeSlideDown 0.9s 0.15s ease both, shimmer 4s 1s linear infinite;
+}
+@keyframes shimmer{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+
+.hero-sub{
+  font-size:clamp(15px,2.5vw,20px);
+  color:rgba(255,255,255,0.5);
+  max-width:600px;
+  line-height:1.65;
+  margin-bottom:50px;
+  animation:fadeSlideDown 1s 0.3s ease both;
+}
+
+.hero-stats{
+  display:flex;gap:12px;flex-wrap:wrap;justify-content:center;
+  margin-bottom:60px;
+  animation:fadeSlideDown 1s 0.45s ease both;
+}
+.hero-stat{
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:14px;
+  padding:16px 28px;
+  text-align:center;
+  backdrop-filter:blur(10px);
+  transition:transform 0.3s,border-color 0.3s,box-shadow 0.3s;
+}
+.hero-stat:hover{
+  transform:translateY(-4px);
+  border-color:var(--gold-dim);
+  box-shadow:0 8px 32px rgba(201,168,76,0.15);
+}
+.hero-stat .num{font-size:30px;font-weight:800;color:var(--gold);line-height:1}
+.hero-stat .lbl{font-size:10.5px;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:1.5px;margin-top:4px}
+
+.hero-scroll{
+  position:absolute;bottom:36px;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  color:rgba(255,255,255,0.3);font-size:11px;letter-spacing:2px;text-transform:uppercase;
+  animation:fadeIn 1.5s 1s ease both;
+}
+.scroll-line{
+  width:1px;height:50px;
+  background:linear-gradient(to bottom, rgba(255,255,255,0.3), transparent);
+  animation:scrollLine 2s ease-in-out infinite;
+}
+@keyframes scrollLine{0%,100%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}}
+
+/* ─── Horizontal gold line ─── */
+.gold-line{
+  width:100%;height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  margin:0;
+  position:relative;z-index:2;
+}
+
+/* ══════════ ROLE SELECTOR ══════════ */
+.role-nav{
+  display:flex;justify-content:center;gap:12px;flex-wrap:wrap;
+  padding:40px 24px 20px;
+  position:sticky;top:0;z-index:100;
+  background:rgba(8,8,8,0.85);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+.role-btn{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 22px;
+  border-radius:40px;
+  border:1px solid rgba(255,255,255,0.12);
+  background:transparent;
+  color:rgba(255,255,255,0.5);
+  font-size:13px;font-weight:600;
+  cursor:pointer;
+  text-decoration:none;
+  transition:all 0.3s;
+  letter-spacing:0.3px;
+}
+.role-btn:hover{color:#fff;border-color:rgba(255,255,255,0.3);transform:translateY(-2px)}
+.role-btn.student{--col:var(--student)}
+.role-btn.teacher{--col:var(--teacher)}
+.role-btn.parent{--col:var(--parent)}
+.role-btn.active,.role-btn:focus{
+  background:var(--col);
+  border-color:var(--col);
+  color:#fff;
+  box-shadow:0 4px 20px rgba(0,0,0,0.4);
+}
+
+/* ══════════ SECTION ══════════ */
+.section{padding:100px 24px;max-width:1140px;margin:0 auto}
+.section-eyebrow{
+  font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;
+  color:var(--gold);margin-bottom:12px;display:block;
+}
+.section-title{
+  font-size:clamp(32px,5vw,52px);font-weight:800;letter-spacing:-1.5px;
+  line-height:1.05;margin-bottom:16px;
+}
+.section-title span{color:var(--gold)}
+.section-desc{
+  font-size:16px;color:rgba(255,255,255,0.5);max-width:560px;line-height:1.7;margin-bottom:60px;
+}
+
+/* ─── Role hero banner ─── */
+.role-hero{
+  border-radius:20px;
+  padding:42px 48px;
+  margin-bottom:48px;
+  display:flex;align-items:center;gap:28px;
+  position:relative;overflow:hidden;
+}
+.role-hero.student-bg{
+  background:linear-gradient(135deg,rgba(25,118,210,0.25) 0%,rgba(25,118,210,0.08) 100%);
+  border:1px solid rgba(25,118,210,0.3);
+}
+.role-hero.teacher-bg{
+  background:linear-gradient(135deg,rgba(46,125,50,0.25) 0%,rgba(46,125,50,0.08) 100%);
+  border:1px solid rgba(46,125,50,0.3);
+}
+.role-hero.parent-bg{
+  background:linear-gradient(135deg,rgba(123,31,162,0.25) 0%,rgba(123,31,162,0.08) 100%);
+  border:1px solid rgba(123,31,162,0.3);
+}
+.role-hero-glow{
+  position:absolute;top:-60px;right:-60px;
+  width:260px;height:260px;border-radius:50%;
+  opacity:0.18;
+  filter:blur(60px);
+}
+.student-bg .role-hero-glow{background:var(--student)}
+.teacher-bg .role-hero-glow{background:var(--teacher)}
+.parent-bg .role-hero-glow{background:var(--parent)}
+.role-hero-icon{font-size:56px;line-height:1;flex-shrink:0}
+.role-hero-text h2{font-size:28px;font-weight:800;letter-spacing:-0.5px;margin-bottom:6px}
+.role-hero-text p{font-size:15px;color:rgba(255,255,255,0.55);line-height:1.6}
+
+/* ─── Feature grid ─── */
+.feature-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+  gap:20px;
+}
+.feature-grid.three{grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+
+.f-card{
+  background:var(--card-bg);
+  border:1px solid var(--card-border);
+  border-radius:16px;
+  padding:26px 24px;
+  position:relative;overflow:hidden;
+  transition:transform 0.35s cubic-bezier(.22,.68,0,1.2),box-shadow 0.35s,border-color 0.35s;
+  cursor:default;
+}
+.f-card::before{
+  content:'';position:absolute;inset:0;border-radius:16px;
+  background:linear-gradient(135deg,rgba(255,255,255,0.03) 0%,transparent 60%);
+  pointer-events:none;
+}
+.f-card:hover{transform:translateY(-6px) scale(1.01)}
+
+.f-card.s:hover{border-color:rgba(25,118,210,0.5);box-shadow:0 16px 48px rgba(25,118,210,0.2)}
+.f-card.t:hover{border-color:rgba(46,125,50,0.5);box-shadow:0 16px 48px rgba(46,125,50,0.2)}
+.f-card.p:hover{border-color:rgba(123,31,162,0.5);box-shadow:0 16px 48px rgba(123,31,162,0.2)}
+.f-card.g:hover{border-color:rgba(201,168,76,0.5);box-shadow:0 16px 48px rgba(201,168,76,0.15)}
+
+.f-card-top{display:flex;align-items:flex-start;gap:14px;margin-bottom:18px}
+.f-icon{
+  width:44px;height:44px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;flex-shrink:0;
+}
+.f-card.s .f-icon{background:rgba(25,118,210,0.2)}
+.f-card.t .f-icon{background:rgba(46,125,50,0.2)}
+.f-card.p .f-icon{background:rgba(123,31,162,0.2)}
+.f-card.g .f-icon{background:rgba(201,168,76,0.15)}
+
+.f-card h3{font-size:15px;font-weight:700;margin-bottom:3px;line-height:1.3}
+.f-card .f-tag{font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:1px;text-transform:uppercase}
+
+.f-card ul{list-style:none;display:flex;flex-direction:column;gap:7px}
+.f-card li{
+  font-size:12.5px;color:rgba(255,255,255,0.6);
+  padding-left:16px;position:relative;line-height:1.5;
+}
+.f-card li::before{
+  content:'';position:absolute;left:0;top:7px;
+  width:5px;height:5px;border-radius:50%;
+}
+.f-card.s li::before{background:var(--student)}
+.f-card.t li::before{background:var(--teacher)}
+.f-card.p li::before{background:var(--parent)}
+.f-card.g li::before{background:var(--gold)}
+
+.f-card li strong{color:rgba(255,255,255,0.9);font-weight:600}
+
+/* ─── Full width card ─── */
+.f-card.full{grid-column:1/-1}
+
+/* ─── Divider ─── */
+.section-divider{
+  max-width:1140px;margin:0 auto 0;
+  border:none;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent);
+}
+
+/* ══════════ PLATFORM SECTION ══════════ */
+.platform-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:20px;
+}
+@media(max-width:640px){.platform-grid{grid-template-columns:1fr}}
+
+/* ══════════ STATS SHOWCASE ══════════ */
+.stats-section{
+  padding:100px 24px;
+  text-align:center;
+  position:relative;
+}
+.stats-section::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 60% at 50% 50%,rgba(201,168,76,0.05) 0%,transparent 70%);
+}
+.stats-grid{
+  max-width:900px;margin:0 auto;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:16px;
+  position:relative;
+}
+@media(max-width:600px){.stats-grid{grid-template-columns:1fr 1fr}}
+.stat-card{
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:20px;padding:32px 20px;
+  transition:transform 0.3s,box-shadow 0.3s,border-color 0.3s;
+}
+.stat-card:hover{
+  transform:translateY(-6px);
+  border-color:rgba(201,168,76,0.3);
+  box-shadow:0 20px 60px rgba(201,168,76,0.1);
+}
+.stat-card .big{
+  font-size:52px;font-weight:900;letter-spacing:-2px;
+  background:linear-gradient(135deg,var(--gold),var(--gold-lt));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  line-height:1;margin-bottom:8px;
+  display:block;
+}
+.stat-card .lbl{font-size:12px;color:rgba(255,255,255,0.4);letter-spacing:1.5px;text-transform:uppercase}
+
+/* ══════════ FOOTER ══════════ */
+.footer{
+  border-top:1px solid rgba(255,255,255,0.07);
+  padding:40px 24px;
+  text-align:center;
+}
+.footer-logo{
+  font-size:24px;font-weight:900;letter-spacing:-1px;
+  background:linear-gradient(135deg,var(--gold),var(--gold-lt));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:8px;
+}
+.footer p{font-size:12px;color:rgba(255,255,255,0.3);margin-bottom:4px}
+
+/* ══════════ ANIMATIONS ══════════ */
+@keyframes fadeSlideDown{
+  from{opacity:0;transform:translateY(-20px)}
+  to{opacity:1;transform:translateY(0)}
+}
+@keyframes fadeSlideUp{
+  from{opacity:0;transform:translateY(30px)}
+  to{opacity:1;transform:translateY(0)}
+}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes scaleIn{from{opacity:0;transform:scale(0.92)}to{opacity:1;transform:scale(1)}}
+
+/* Scroll reveal — initial state */
+.reveal{opacity:0;transform:translateY(40px);transition:opacity 0.7s cubic-bezier(.22,.68,0,1.2),transform 0.7s cubic-bezier(.22,.68,0,1.2)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.reveal-left{opacity:0;transform:translateX(-40px);transition:opacity 0.7s ease,transform 0.7s ease}
+.reveal-left.visible{opacity:1;transform:translateX(0)}
+.reveal-scale{opacity:0;transform:scale(0.88);transition:opacity 0.6s ease,transform 0.6s cubic-bezier(.22,.68,0,1.5)}
+.reveal-scale.visible{opacity:1;transform:scale(1)}
+
+/* Stagger children */
+.stagger > *{opacity:0;transform:translateY(30px);transition:opacity 0.6s ease,transform 0.6s cubic-bezier(.22,.68,0,1.2)}
+.stagger.visible > *:nth-child(1){opacity:1;transform:none;transition-delay:0s}
+.stagger.visible > *:nth-child(2){opacity:1;transform:none;transition-delay:0.08s}
+.stagger.visible > *:nth-child(3){opacity:1;transform:none;transition-delay:0.16s}
+.stagger.visible > *:nth-child(4){opacity:1;transform:none;transition-delay:0.24s}
+.stagger.visible > *:nth-child(5){opacity:1;transform:none;transition-delay:0.32s}
+.stagger.visible > *:nth-child(6){opacity:1;transform:none;transition-delay:0.4s}
+.stagger.visible > *:nth-child(7){opacity:1;transform:none;transition-delay:0.48s}
+.stagger.visible > *:nth-child(8){opacity:1;transform:none;transition-delay:0.56s}
+.stagger.visible > *:nth-child(n+9){opacity:1;transform:none;transition-delay:0.6s}
+
+/* ── Counter ── */
+.counter{display:inline-block}
+
+/* ── Gold glow text ── */
+.glow{text-shadow:0 0 40px rgba(201,168,76,0.4)}
+
+/* ── Gradient border ── */
+.grad-border{
+  position:relative;border-radius:20px;padding:1px;
+  background:linear-gradient(135deg,var(--gold-dim),transparent,var(--gold-dim));
+}
+.grad-border > *{border-radius:19px;background:#0d0d0d}
+
+/* ── Tabs highlight bar ── */
+.tab-indicator{
+  height:3px;width:40px;border-radius:2px;
+  background:linear-gradient(90deg,var(--gold),var(--gold-lt));
+  margin-bottom:20px;
+  box-shadow:0 0 12px rgba(201,168,76,0.5);
+}
+
+/* ── Floating label ── */
+.float-chip{
+  display:inline-flex;align-items:center;gap:6px;
+  border-radius:30px;padding:4px 12px;
+  font-size:11px;font-weight:700;letter-spacing:0.5px;
+  margin-bottom:16px;
+}
+.float-chip.blue{background:rgba(25,118,210,0.15);border:1px solid rgba(25,118,210,0.3);color:#64B5F6}
+.float-chip.green{background:rgba(46,125,50,0.15);border:1px solid rgba(46,125,50,0.3);color:#81C784}
+.float-chip.purple{background:rgba(123,31,162,0.15);border:1px solid rgba(123,31,162,0.3);color:#CE93D8}
+
+/* Responsive */
+@media(max-width:768px){
+  .feature-grid{grid-template-columns:1fr}
+  .role-hero{padding:28px 24px;flex-direction:column;align-items:flex-start}
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .section{padding:70px 16px}
+}
+@media(max-width:480px){
+  .role-hero-icon{font-size:40px}
+  .stats-grid{grid-template-columns:1fr}
+}
+
+/* ─── Print ─── */
+@media print{
+  body{background:#fff;color:#000}
+  .bg-mesh,#particles,.hero-scroll,.role-nav{display:none}
+  .hero{min-height:auto;padding:40px 24px}
+  .f-card{border:1px solid #ddd;break-inside:avoid}
+  .section{padding:40px 0}
+}
+</style>
+</head>
+<body>
+
+<!-- Animated bg -->
+<div class="bg-mesh"></div>
+<canvas id="particles"></canvas>
+
+<div class="wrap">
+
+<!-- ══════════════════════════════════════════════
+     HERO
+══════════════════════════════════════════════ -->
+<section class="hero">
+  <div class="hero-badge">
+    <span class="dot"></span>
+    Plataforma Digital · Artes Marciales
+  </div>
+
+  <h1>
+    <span class="line1">Warrior</span>
+    <span class="line2">Path</span>
+  </h1>
+
+  <p class="hero-sub">
+    La plataforma todo-en-uno para escuelas de artes marciales y disciplinas de combate.
+    Gestión completa para instructores, progreso en tiempo real para alumnos.
+  </p>
+
+  <div class="hero-stats stagger">
+    <div class="hero-stat">
+      <div class="num"><span class="counter" data-target="5">0</span></div>
+      <div class="lbl">Pestañas Alumno</div>
+    </div>
+    <div class="hero-stat">
+      <div class="num"><span class="counter" data-target="4">0</span></div>
+      <div class="lbl">Pestañas Instructor</div>
+    </div>
+    <div class="hero-stat">
+      <div class="num"><span class="counter" data-target="12">0</span></div>
+      <div class="lbl">Logros Gamificados</div>
+    </div>
+    <div class="hero-stat">
+      <div class="num"><span class="counter" data-target="3">0</span></div>
+      <div class="lbl">Idiomas</div>
+    </div>
+    <div class="hero-stat">
+      <div class="num">∞</div>
+      <div class="lbl">Escuelas y Disciplinas</div>
+    </div>
+  </div>
+
+  <div class="hero-scroll">
+    <div class="scroll-line"></div>
+    <span>Scroll</span>
+  </div>
+</section>
+
+<div class="gold-line"></div>
+
+<!-- ══════════════════════════════════════════════
+     STICKY NAV
+══════════════════════════════════════════════ -->
+<nav class="role-nav" id="roleNav">
+  <a class="role-btn student" href="#student">🥋 Alumno</a>
+  <a class="role-btn teacher" href="#teacher">🏆 Instructor</a>
+  <a class="role-btn parent" href="#parent">👨‍👧 Tutor / Padre</a>
+  <a class="role-btn g" href="#platform" style="--col:var(--gold)">⚡ Plataforma</a>
+</nav>
+
+<!-- ══════════════════════════════════════════════
+     ALUMNO
+══════════════════════════════════════════════ -->
+<section class="section" id="student">
+  <div class="reveal-left">
+    <span class="float-chip blue">🥋 Rol: Alumno</span>
+    <div class="tab-indicator"></div>
+    <span class="section-eyebrow">Panel del Alumno</span>
+    <h2 class="section-title">Todo el progreso,<br><span>en su mano</span></h2>
+    <p class="section-desc">Cada alumno tiene acceso a su escuela, su progresión, su comunidad y sus pagos, todo en tiempo real desde el celular.</p>
+  </div>
+
+  <div class="role-hero student-bg reveal">
+    <div class="role-hero-glow"></div>
+    <div class="role-hero-icon">🥋</div>
+    <div class="role-hero-text">
+      <h2>5 pestañas, todo integrado</h2>
+      <p>El alumno accede a información actualizada de su escuela, su nivel de progreso, sus compañeros, sus pagos y su perfil personal, todo desde un panel centralizado.</p>
+    </div>
+  </div>
+
+  <div class="feature-grid stagger">
+
+    <div class="f-card s reveal-scale">
+      <div class="f-card-top">
+        <div class="f-icon">🏫</div>
+        <div><h3>Mi Escuela</h3><div class="f-tag">Información y Eventos</div></div>
+      </div>
+      <ul>
+        <li>Información completa: nombre, descripción, contacto y ciudad</li>
+        <li>Logo e identidad visual de la escuela</li>
+        <li>Horarios de clases por día de la semana con detalle de disciplina</li>
+        <li>Próximos eventos a los que fue invitado (hasta 3)</li>
+        <li>Vista de detalle de cada evento con descripción</li>
+      </ul>
+    </div>
+
+    <div class="f-card s reveal-scale">
+      <div class="f-card-top">
+        <div class="f-icon">📈</div>
+        <div><h3>Mi Progreso</h3><div class="f-tag">Niveles, Técnicas y Logros</div></div>
+      </div>
+      <ul>
+        <li>Selector de disciplina (si está inscripto en más de una)</li>
+        <li>Nivel actual con nombre y color del sistema de progresión</li>
+        <li>Ruta de progresión: niveles cumplidos, actual y futuros</li>
+        <li>Historial de promociones con fecha y notas del instructor</li>
+        <li>Técnicas asignadas con descripción y video tutorial</li>
+        <li>Historial de asistencias y estadísticas</li>
+        <li><strong>12 logros gamificados</strong> con insignias y fechas de vigencia</li>
+        <li>Animación de confeti al detectar una nueva promoción</li>
+      </ul>
+    </div>
+
+    <div class="f-card s reveal-scale">
+      <div class="f-card-top">
+        <div class="f-icon">👥</div>
+        <div><h3>Comunidad de la Escuela</h3><div class="f-tag">Compañeros y Técnicas</div></div>
+      </div>
+      <ul>
+        <li><strong>Compañeros:</strong> todos los miembros activos agrupados por rol</li>
+        <li>Perfil de cada compañero con disciplinas inscriptas</li>
+        <li><strong>Técnicas:</strong> catálogo completo de la escuela por disciplina</li>
+        <li>Menú desplegable por categoría con contador de técnicas</li>
+        <li>Vista de detalle: nombre, descripción y video de cada técnica</li>
+      </ul>
+    </div>
+
+    <div class="f-card s reveal-scale">
+      <div class="f-card-top">
+        <div class="f-icon">💳</div>
+        <div><h3>Mis Pagos</h3><div class="f-tag">Historial Financiero</div></div>
+      </div>
+      <ul>
+        <li>Historial completo de pagos registrados por la escuela</li>
+        <li>Monto, moneda, concepto y fecha de cada pago</li>
+        <li>Indicador visual en la pestaña cuando hay pagos pendientes</li>
+        <li>Ordenados del más reciente al más antiguo</li>
+      </ul>
+    </div>
+
+    <div class="f-card s full reveal-scale">
+      <div class="f-card-top">
+        <div class="f-icon">👤</div>
+        <div><h3>Mi Perfil</h3><div class="f-tag">Datos Personales y Acciones de Cuenta</div></div>
+      </div>
+      <ul>
+        <li>Encabezado con avatar (iniciales o foto), nombre, email y badge de rol</li>
+        <li>Datos personales: nombre, teléfono, género y fecha de nacimiento</li>
+        <li>Información de emergencia: contacto, servicio médico y notas médicas</li>
+        <li>Formulario completo de edición de perfil en pantalla dedicada</li>
+        <li>Inscribirse en otra escuela sin salir de la app</li>
+        <li>Crear una nueva escuela (acceso al wizard de creación)</li>
+        <li>Gestionar perfiles de hijos (rol de tutor/padre)</li>
+        <li>Cerrar sesión con diálogo de confirmación</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<hr class="section-divider"/>
+
+<!-- ══════════════════════════════════════════════
+     INSTRUCTOR
+══════════════════════════════════════════════ -->
+<section class="section" id="teacher">
+  <div class="reveal-left">
+    <span class="float-chip green">🏆 Rol: Instructor / Maestro</span>
+    <div class="tab-indicator" style="background:linear-gradient(90deg,#2E7D32,#81C784)"></div>
+    <span class="section-eyebrow">Panel del Instructor</span>
+    <h2 class="section-title">Administración total<br><span>de tu escuela</span></h2>
+    <p class="section-desc">El instructor tiene control completo sobre alumnos, clases, horarios, pagos, currículum y eventos desde un único lugar.</p>
+  </div>
+
+  <div class="role-hero teacher-bg reveal">
+    <div class="role-hero-glow"></div>
+    <div class="role-hero-icon">🏆</div>
+    <div class="role-hero-text">
+      <h2>4 pestañas + gestión avanzada</h2>
+      <p>Desde aceptar alumnos hasta armar el currículum, tomar asistencia o ver reportes financieros. Todo en tiempo real, sincronizado con los dispositivos de todos los alumnos.</p>
+    </div>
+  </div>
+
+  <div class="feature-grid stagger">
+
+    <div class="f-card t reveal-scale">
+      <div class="f-card-top">
+        <div class="f-icon">🏠</div>
+        <div><h3>Inicio — Panel de Control</h3><div class="f-tag">Vista General del Día</div></div>
+      </div>
+      <ul>
+        <li>Selector de escuela en el encabezado (si administra varias)</li>
+        <li>Contador en tiempo real de alumnos activos</li>
+        <li>Alerta de solicitudes de ingreso pendientes</li>
+        <li>Clases del día con título, disciplina, color y horario</li>
+        <li>Botón flotante para iniciar el registro de asistencia directamente</li>
+      </ul>
+    </div>
+
+    <div class="f-card t reveal-scale">
+      <div class="f-card-top">
+        <div class="f-icon">✅</div>
+        <div><h3>Registro de Asistencia</h3><div class="f-tag">Toma Rápida desde Home</div></div>
+      </div>
+      <ul>
+        <li>Selector de clase del día (filtrado automáticamente)</li>
+        <li>Lista de todos los alumnos activos con checkbox</li>
+        <li>Marcar / desmarcar presentes con un toque</li>
+        <li>Guarda registro en Firestore con fecha y lista de asistentes</li>
+        <li>Registro visible en ficha de cada alumno y en reportes</li>
+      </ul>
+    </div>
+
+    <div class="f-card t reveal-scale">
+      <div class="f-card-top">
+        <div class="f-icon">🎓</div>
+        <div><h3>Gestión de Alumnos</h3><div class="f-tag">Activos · Pendientes · Inactivos</div></div>
+      </div>
+      <ul>
+        <li>Tres pestañas: Activos, Pendientes e Inactivos</li>
+        <li>Aceptar solicitudes de ingreso (selección de disciplina y nivel inicial)</li>
+        <li>Rechazar solicitudes con confirmación</li>
+        <li>Tap en alumno para acceder a su ficha completa</li>
+        <li>Actualización en tiempo real vía Firestore</li>
+      </ul>
+    </div>
+
+    <div class="f-card t reveal-scale">
+      <div class="f-card-top">
+        <div class="f-icon">📋</div>
+        <div><h3>Ficha Completa del Alumno</h3><div class="f-tag">Gestión Individual</div></div>
+      </div>
+      <ul>
+        <li>Una pestaña por cada disciplina en la que está inscripto</li>
+        <li>Nivel actual con color del sistema de progresión</li>
+        <li>Historial de promociones y cambios de rol con fecha</li>
+        <li>Asignar / quitar técnicas individualmente o en lote</li>
+        <li>Registro de asistencias y pagos filtrados por año</li>
+        <li>Registrar nuevos pagos y asignar plan de pago</li>
+        <li>Promover de nivel con nota del instructor</li>
+      </ul>
+    </div>
+
+    <div class="f-card t reveal-scale">
+      <div class="f-card-top">
+        <div class="f-icon">🥊</div>
+        <div><h3>Currículum de la Escuela</h3><div class="f-tag">Niveles y Técnicas</div></div>
+      </div>
+      <ul>
+        <li>Gestionar disciplinas de la escuela (Karate, BJJ, Muay Thai, etc.)</li>
+        <li>Crear y ordenar niveles con nombre y color (arrastrar para reordenar)</li>
+        <li>Agregar / editar / eliminar técnicas por disciplina y categoría</li>
+        <li>Descripción y URL de video tutorial por técnica</li>
+        <li>Color temático personalizable por disciplina</li>
+      </ul>
+    </div>
+
+    <div class="f-card t reveal-scale">
+      <div class="f-card-top">
+        <div class="f-icon">📅</div>
+        <div><h3>Horarios y Eventos</h3><div class="f-tag">Organización Semanal</div></div>
+      </div>
+      <ul>
+        <li>Crear clases recurrentes por día de la semana</li>
+        <li>Asignar título, disciplina y horario exacto (inicio y fin)</li>
+        <li>Crear eventos con título, descripción, fecha y hora</li>
+        <li>Invitar alumnos específicos a cada evento</li>
+        <li>Vista de eventos próximos y pasados en dos pestañas</li>
+        <li>Los horarios aparecen en tiempo real en la app del alumno</li>
+      </ul>
+    </div>
+
+    <div class="f-card t reveal-scale">
+      <div class="f-card-top">
+        <div class="f-icon">💰</div>
+        <div><h3>Gestión Financiera</h3><div class="f-tag">Cobros y Reportes</div></div>
+      </div>
+      <ul>
+        <li>Configurar cuota de inscripción y cuota de examen</li>
+        <li>Selección de moneda: USD, UYU, ARS, EUR, MXN</li>
+        <li>Crear planes de pago mensuales o de pago único</li>
+        <li>Registrar pagos individuales desde la ficha de cada alumno</li>
+        <li>Reporte financiero anual con gráfico de ingresos</li>
+        <li>Estadísticas de asistencia integradas al reporte</li>
+      </ul>
+    </div>
+
+    <div class="f-card t reveal-scale">
+      <div class="f-card-top">
+        <div class="f-icon">⚙️</div>
+        <div><h3>Datos de la Escuela</h3><div class="f-tag">Identidad y Ubicación</div></div>
+      </div>
+      <ul>
+        <li>Editar nombre, dirección, ciudad, teléfono y descripción</li>
+        <li>Subir o cambiar el logo de la escuela</li>
+        <li>Fijar ubicación geográfica en mapa (OpenStreetMap, sin costo)</li>
+        <li>Usar GPS para centrar la ubicación automáticamente</li>
+        <li>Agregar o quitar disciplinas y marcar la disciplina principal</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<hr class="section-divider"/>
+
+<!-- ══════════════════════════════════════════════
+     TUTOR
+══════════════════════════════════════════════ -->
+<section class="section" id="parent">
+  <div class="reveal-left">
+    <span class="float-chip purple">👨‍👧 Rol: Tutor / Padre</span>
+    <div class="tab-indicator" style="background:linear-gradient(90deg,#7B1FA2,#CE93D8)"></div>
+    <span class="section-eyebrow">Panel del Tutor</span>
+    <h2 class="section-title">Seguimiento familiar<br><span>sin esfuerzo</span></h2>
+    <p class="section-desc">Los padres pueden gestionar los perfiles de sus hijos y ver su progreso en la escuela, sin necesidad de que los menores tengan cuenta propia.</p>
+  </div>
+
+  <div class="role-hero parent-bg reveal">
+    <div class="role-hero-glow"></div>
+    <div class="role-hero-icon">👨‍👧</div>
+    <div class="role-hero-text">
+      <h2>Un perfil para toda la familia</h2>
+      <p>El tutor crea perfiles proxy para sus hijos (sin email), los gestiona desde su cuenta y accede al dashboard completo de cada menor con un solo toque.</p>
+    </div>
+  </div>
+
+  <div class="feature-grid stagger">
+
+    <div class="f-card p reveal-scale">
+      <div class="f-card-top">
+        <div class="f-icon">👨‍👧</div>
+        <div><h3>Dashboard del Tutor</h3><div class="f-tag">Vista Familiar</div></div>
+      </div>
+      <ul>
+        <li>Vista de su propio perfil de usuario</li>
+        <li>Tarjetas de todos sus hijos registrados con nombre y edad calculada</li>
+        <li>Tap en hijo para ingresar a su dashboard completo de alumno</li>
+        <li>Agregar nuevos perfiles de hijos desde la app</li>
+        <li>Actualización en tiempo real</li>
+      </ul>
+    </div>
+
+    <div class="f-card p reveal-scale">
+      <div class="f-card-top">
+        <div class="f-icon">➕</div>
+        <div><h3>Agregar Perfil de Hijo</h3><div class="f-tag">Menores sin Cuenta Propia</div></div>
+      </div>
+      <ul>
+        <li>Crear perfil sin cuenta de email (proxy en nombre del padre)</li>
+        <li>Nombre, fecha de nacimiento y género</li>
+        <li>Datos de contacto de emergencia del menor</li>
+        <li>Servicio médico de emergencia e información médica relevante</li>
+        <li>Vínculo de tutoría almacenado en Firestore</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<hr class="section-divider"/>
+
+<!-- ══════════════════════════════════════════════
+     PLATAFORMA
+══════════════════════════════════════════════ -->
+<section class="section" id="platform">
+  <div class="reveal-left">
+    <span class="section-eyebrow">⚡ Características de la Plataforma</span>
+    <h2 class="section-title">Tecnología que<br><span>marca la diferencia</span></h2>
+    <p class="section-desc">Infraestructura moderna, datos en tiempo real y experiencia de usuario de primer nivel.</p>
+  </div>
+
+  <div class="platform-grid stagger">
+
+    <div class="f-card g reveal-scale">
+      <div class="f-card-top">
+        <div class="f-icon">🌐</div>
+        <div><h3>Mapa de Descubrimiento</h3><div class="f-tag">Landing Interactiva</div></div>
+      </div>
+      <ul>
+        <li>Pantalla de bienvenida con mapa de escuelas registradas</li>
+        <li>Pins geolocalizados en OpenStreetMap (sin costo de API)</li>
+        <li>Filtro por disciplina en tiempo real</li>
+        <li>Ficha de escuela al tocar un pin: nombre, horarios y planes</li>
+        <li>Animaciones de entrada cinematográficas al abrir la app</li>
+      </ul>
+    </div>
+
+    <div class="f-card g reveal-scale">
+      <div class="f-card-top">
+        <div class="f-icon">🔔</div>
+        <div><h3>Notificaciones y Alertas</h3><div class="f-tag">Siempre Informado</div></div>
+      </div>
+      <ul>
+        <li>Notificaciones push para eventos e invitaciones</li>
+        <li>Badge en pestaña de pagos cuando hay adeudos</li>
+        <li>Alerta de solicitudes pendientes en home del instructor</li>
+        <li>Animación de confeti al detectar una nueva promoción</li>
+        <li>Mensajes de confirmación y error en todas las acciones</li>
+      </ul>
+    </div>
+
+    <div class="f-card g reveal-scale">
+      <div class="f-card-top">
+        <div class="f-icon">🏅</div>
+        <div><h3>Gamificación — 12 Logros</h3><div class="f-tag">Motivación y Retención</div></div>
+      </div>
+      <ul>
+        <li><strong>Asistencia Semanal, Mensual y Anual</strong> con cooldown configurable</li>
+        <li><strong>Madrugador</strong> — entrenar antes de las 8am</li>
+        <li><strong>Noctámbulo</strong> — entrenar después de las 8pm</li>
+        <li><strong>Guerrero Invernal</strong> — asistir en meses fríos</li>
+        <li><strong>Cinturón de Técnicas</strong> — por cantidad de técnicas aprendidas</li>
+        <li><strong>Cumpleaños del Guerrero</strong> — logro especial de cumpleaños</li>
+        <li>Insignias con estado: ganado, expirado o bloqueado</li>
+      </ul>
+    </div>
+
+    <div class="f-card g reveal-scale">
+      <div class="f-card-top">
+        <div class="f-icon">🌍</div>
+        <div><h3>Internacionalización</h3><div class="f-tag">Listo para el Mundo</div></div>
+      </div>
+      <ul>
+        <li>Tres idiomas incluidos: <strong>Español · Inglés · Portugués</strong></li>
+        <li>Cambio de idioma en tiempo real desde la pantalla de login</li>
+        <li>Fechas y formatos localizados automáticamente</li>
+        <li>Fácilmente extensible a otros idiomas</li>
+      </ul>
+    </div>
+
+    <div class="f-card g reveal-scale">
+      <div class="f-card-top">
+        <div class="f-icon">🎨</div>
+        <div><h3>Diseño y Branding</h3><div class="f-tag">Personalizable por Escuela</div></div>
+      </div>
+      <ul>
+        <li>Logo de escuela propio en todo el panel</li>
+        <li>Color temático personalizable por disciplina</li>
+        <li>Material Design adaptado a iOS y Android nativo</li>
+        <li>Splash screen animado con branding del producto</li>
+        <li>Interfaz oscura profesional y moderna</li>
+      </ul>
+    </div>
+
+    <div class="f-card g reveal-scale">
+      <div class="f-card-top">
+        <div class="f-icon">⚡</div>
+        <div><h3>Tecnología y Seguridad</h3><div class="f-tag">Infraestructura Firebase</div></div>
+      </div>
+      <ul>
+        <li>Datos en tiempo real — cambios visibles al instante en todos los dispositivos</li>
+        <li>Autenticación segura con Firebase Auth</li>
+        <li>Almacenamiento de imágenes en Firebase Storage</li>
+        <li>Feature toggles vía Remote Config (sin redespliegue de la app)</li>
+        <li>Soporte para múltiples escuelas y roles desde una sola cuenta</li>
+        <li>Disponible en iOS y Android</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     STATS
+══════════════════════════════════════════════ -->
+<div class="gold-line"></div>
+<section class="stats-section">
+  <div class="reveal">
+    <span class="section-eyebrow" style="color:var(--gold)">En números</span>
+    <h2 class="section-title glow" style="margin-bottom:48px">Una plataforma <span>completa</span></h2>
+  </div>
+  <div class="stats-grid stagger">
+    <div class="stat-card reveal-scale">
+      <span class="big"><span class="counter2" data-target="5">0</span></span>
+      <div class="lbl">Pestañas del Alumno</div>
+    </div>
+    <div class="stat-card reveal-scale">
+      <span class="big"><span class="counter2" data-target="4">0</span></span>
+      <div class="lbl">Pestañas del Instructor</div>
+    </div>
+    <div class="stat-card reveal-scale">
+      <span class="big"><span class="counter2" data-target="12">0</span></span>
+      <div class="lbl">Logros Gamificados</div>
+    </div>
+    <div class="stat-card reveal-scale">
+      <span class="big"><span class="counter2" data-target="3">0</span></span>
+      <div class="lbl">Idiomas</div>
+    </div>
+    <div class="stat-card reveal-scale">
+      <span class="big">∞</span>
+      <div class="lbl">Escuelas y Disciplinas</div>
+    </div>
+    <div class="stat-card reveal-scale">
+      <span class="big">100%</span>
+      <div class="lbl">Datos en Tiempo Real</div>
+    </div>
+  </div>
+</section>
+<div class="gold-line"></div>
+
+<!-- ══════════════════════════════════════════════
+     FOOTER
+══════════════════════════════════════════════ -->
+<footer class="footer">
+  <div class="footer-logo">Warrior Path</div>
+  <p>Desarrollado por <strong style="color:var(--gold)">SPC</strong> · Todos los derechos reservados · 2025</p>
+  <p style="margin-top:6px">Plataforma digital para escuelas de artes marciales y disciplinas de combate · iOS & Android</p>
+</footer>
+
+</div><!-- /wrap -->
+
+<script>
+/* ════════════════════════════════════════
+   PARTICLES
+════════════════════════════════════════ */
+(function(){
+  const canvas=document.getElementById('particles');
+  const ctx=canvas.getContext('2d');
+  let W,H,particles=[];
+  const COLORS=['rgba(201,168,76,','rgba(25,118,210,','rgba(46,125,50,'];
+
+  function resize(){
+    W=canvas.width=window.innerWidth;
+    H=canvas.height=window.innerHeight;
+  }
+  window.addEventListener('resize',resize);resize();
+
+  function Particle(){
+    this.x=Math.random()*W;
+    this.y=Math.random()*H;
+    this.r=Math.random()*1.8+0.4;
+    this.vx=(Math.random()-0.5)*0.25;
+    this.vy=(Math.random()-0.5)*0.25;
+    this.alpha=Math.random()*0.4+0.1;
+    this.color=COLORS[Math.floor(Math.random()*COLORS.length)];
+  }
+  Particle.prototype.draw=function(){
+    ctx.beginPath();
+    ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+    ctx.fillStyle=this.color+this.alpha+')';
+    ctx.fill();
+  };
+  Particle.prototype.update=function(){
+    this.x+=this.vx;this.y+=this.vy;
+    if(this.x<0)this.x=W;if(this.x>W)this.x=0;
+    if(this.y<0)this.y=H;if(this.y>H)this.y=0;
+  };
+
+  for(let i=0;i<120;i++)particles.push(new Particle());
+
+  (function loop(){
+    ctx.clearRect(0,0,W,H);
+    particles.forEach(p=>{p.update();p.draw()});
+    requestAnimationFrame(loop);
+  })();
+})();
+
+/* ════════════════════════════════════════
+   SCROLL REVEAL
+════════════════════════════════════════ */
+const observer=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.classList.add('visible');
+    }
+  });
+},{threshold:0.08,rootMargin:'0px 0px -40px 0px'});
+
+document.querySelectorAll('.reveal,.reveal-left,.reveal-scale,.stagger').forEach(el=>observer.observe(el));
+
+/* ════════════════════════════════════════
+   COUNTER ANIMATION
+════════════════════════════════════════ */
+function animateCounter(el,target,duration=1600){
+  let start=null;
+  function step(ts){
+    if(!start)start=ts;
+    const progress=Math.min((ts-start)/duration,1);
+    const eased=1-Math.pow(1-progress,3);
+    el.textContent=Math.round(eased*target);
+    if(progress<1)requestAnimationFrame(step);
+    else el.textContent=target;
+  }
+  requestAnimationFrame(step);
+}
+
+// Hero counters — start immediately
+setTimeout(()=>{
+  document.querySelectorAll('.counter').forEach(el=>{
+    animateCounter(el,parseInt(el.dataset.target),1400);
+  });
+},600);
+
+// Stats section counters — start on scroll
+const counterObs=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      e.target.querySelectorAll('.counter2').forEach(el=>{
+        animateCounter(el,parseInt(el.dataset.target),1800);
+      });
+      counterObs.unobserve(e.target);
+    }
+  });
+},{threshold:0.3});
+const statsSection=document.querySelector('.stats-grid');
+if(statsSection)counterObs.observe(statsSection);
+
+/* ════════════════════════════════════════
+   ACTIVE NAV HIGHLIGHT ON SCROLL
+════════════════════════════════════════ */
+const sections=document.querySelectorAll('section[id]');
+const navBtns=document.querySelectorAll('.role-btn');
+const sectionObs=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      navBtns.forEach(b=>b.classList.remove('active'));
+      const active=document.querySelector(`.role-btn[href="#${e.target.id}"]`);
+      if(active)active.classList.add('active');
+    }
+  });
+},{threshold:0.4});
+sections.forEach(s=>sectionObs.observe(s));
+
+/* ════════════════════════════════════════
+   PARALLAX HERO
+════════════════════════════════════════ */
+window.addEventListener('scroll',()=>{
+  const hero=document.querySelector('.hero');
+  if(hero){
+    hero.style.transform=`translateY(${window.scrollY*0.25}px)`;
+    hero.style.opacity=Math.max(0,1-window.scrollY/600);
+  }
+});
+
+/* ════════════════════════════════════════
+   MOUSE GLOW EFFECT ON CARDS
+════════════════════════════════════════ */
+document.querySelectorAll('.f-card').forEach(card=>{
+  card.addEventListener('mousemove',e=>{
+    const rect=card.getBoundingClientRect();
+    const x=e.clientX-rect.left;
+    const y=e.clientY-rect.top;
+    card.style.setProperty('--mx',x+'px');
+    card.style.setProperty('--my',y+'px');
+  });
+});
+</script>
+</body>
+</html>
