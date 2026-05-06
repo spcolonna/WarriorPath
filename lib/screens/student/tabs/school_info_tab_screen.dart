@@ -148,90 +148,252 @@ class _SchoolHeader extends StatelessWidget {
 
 // ── Clase de hoy ──────────────────────────────────────────────────────────────
 
-class _TodaySection extends StatelessWidget {
+class _TodaySection extends StatefulWidget {
   final String schoolId;
   const _TodaySection({required this.schoolId});
+
+  @override
+  State<_TodaySection> createState() => _TodaySectionState();
+}
+
+class _TodaySectionState extends State<_TodaySection> {
+  final Set<String> _loadingIds = {};
+
+  // Returns true if now is within [startTime - 30min, endTime + 4h]
+  static bool _inWindow(String startTime, String endTime) {
+    try {
+      final now = DateTime.now();
+      final base = DateTime(now.year, now.month, now.day);
+      final sp = startTime.split(':');
+      final ep = endTime.split(':');
+      final classStart = base.add(Duration(hours: int.parse(sp[0]), minutes: int.parse(sp[1])));
+      final classEnd   = base.add(Duration(hours: int.parse(ep[0]), minutes: int.parse(ep[1])));
+      return now.isAfter(classStart.subtract(const Duration(minutes: 30))) &&
+             now.isBefore(classEnd.add(const Duration(hours: 4)));
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> _selfCheckIn({
+    required String scheduleId,
+    required String scheduleTitle,
+    required String memberId,
+  }) async {
+    setState(() => _loadingIds.add(scheduleId));
+    try {
+      final now = DateTime.now();
+      final startOfDay = DateTime(now.year, now.month, now.day);
+      final endOfDay   = startOfDay.add(const Duration(days: 1));
+
+      final snap = await FirebaseFirestore.instance
+          .collection('schools').doc(widget.schoolId)
+          .collection('attendanceRecords')
+          .where('scheduleTitle', isEqualTo: scheduleTitle)
+          .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+          .where('date', isLessThan: Timestamp.fromDate(endOfDay))
+          .limit(1)
+          .get();
+
+      if (snap.docs.isNotEmpty) {
+        await snap.docs.first.reference.update({
+          'presentStudentIds': FieldValue.arrayUnion([memberId]),
+        });
+      } else {
+        await FirebaseFirestore.instance
+            .collection('schools').doc(widget.schoolId)
+            .collection('attendanceRecords')
+            .add({
+          'date': Timestamp.now(),
+          'scheduleTitle': scheduleTitle,
+          'presentStudentIds': [memberId],
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loadingIds.remove(scheduleId));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final primary = Theme.of(context).primaryColor;
     final l10n = AppLocalizations.of(context);
+    final memberId = Provider.of<SessionProvider>(context, listen: false).activeProfileId;
     final todayWeekday = DateTime.now().weekday;
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day);
+    final endOfDay   = startOfDay.add(const Duration(days: 1));
 
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
-          .collection('schools').doc(schoolId)
+          .collection('schools').doc(widget.schoolId)
           .collection('classSchedules')
           .where('dayOfWeek', isEqualTo: todayWeekday)
           .orderBy('startTime')
           .snapshots(),
-      builder: (context, snapshot) {
-        final classes = snapshot.data?.docs ?? [];
+      builder: (context, schedulesSnap) {
+        final classes = schedulesSnap.data?.docs ?? [];
         final hasClass = classes.isNotEmpty;
 
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-          child: Container(
-            decoration: BoxDecoration(
-              color: hasClass ? primary : Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            padding: const EdgeInsets.all(20),
-            child: hasClass
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.todayClass,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      ...classes.map((doc) {
-                        final d = doc.data() as Map<String, dynamic>;
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  '${d['startTime']} – ${d['endTime']}',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  d['title'] ?? '',
-                                  style: const TextStyle(color: Colors.white, fontSize: 14),
-                                ),
-                              ),
-                            ],
+        return StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('schools').doc(widget.schoolId)
+              .collection('attendanceRecords')
+              .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+              .where('date', isLessThan: Timestamp.fromDate(endOfDay))
+              .snapshots(),
+          builder: (context, attendanceSnap) {
+            // Build a set of class titles the student is already checked into today
+            final checkedIn = <String>{};
+            if (memberId != null) {
+              for (final rec in attendanceSnap.data?.docs ?? []) {
+                final data = rec.data() as Map<String, dynamic>;
+                final ids = List<String>.from(data['presentStudentIds'] ?? []);
+                if (ids.contains(memberId)) {
+                  checkedIn.add(data['scheduleTitle'] as String? ?? '');
+                }
+              }
+            }
+
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: hasClass ? primary : Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                padding: const EdgeInsets.all(20),
+                child: hasClass
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.todayClass,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
                           ),
-                        );
-                      }),
-                    ],
-                  )
-                : Row(
-                    children: [
-                      Icon(Icons.event_busy_outlined, color: Colors.grey.shade400),
-                      const SizedBox(width: 12),
-                      Text(l10n.noSchedulerClass, style: TextStyle(color: Colors.grey.shade500)),
-                    ],
-                  ),
-          ),
+                          const SizedBox(height: 12),
+                          ...classes.map((doc) {
+                            final d          = doc.data() as Map<String, dynamic>;
+                            final startTime  = d['startTime'] as String? ?? '';
+                            final endTime    = d['endTime']   as String? ?? '';
+                            final title      = d['title']     as String? ?? '';
+                            final scheduleId = doc.id;
+                            final inWindow   = _inWindow(startTime, endTime);
+                            final isChecked  = checkedIn.contains(title);
+                            final isLoading  = _loadingIds.contains(scheduleId);
+
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Time + title row
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withValues(alpha: 0.2),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Text(
+                                          '$startTime – $endTime',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          title,
+                                          style: const TextStyle(color: Colors.white, fontSize: 14),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+
+                                  // Check-in row (only when in time window)
+                                  if (memberId != null && inWindow) ...[
+                                    const SizedBox(height: 10),
+                                    if (isChecked)
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.check_circle,
+                                              color: Colors.white.withValues(alpha: 0.9), size: 16),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            'Asistencia registrada',
+                                            style: TextStyle(
+                                              color: Colors.white.withValues(alpha: 0.9),
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    else if (isLoading)
+                                      const SizedBox(
+                                        width: 22,
+                                        height: 22,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2.5,
+                                        ),
+                                      )
+                                    else
+                                      TextButton.icon(
+                                        onPressed: () => _selfCheckIn(
+                                          scheduleId: scheduleId,
+                                          scheduleTitle: title,
+                                          memberId: memberId,
+                                        ),
+                                        icon: const Icon(Icons.how_to_reg_outlined,
+                                            color: Colors.white, size: 18),
+                                        label: const Text(
+                                          'Registrar mi asistencia',
+                                          style: TextStyle(color: Colors.white, fontSize: 13),
+                                        ),
+                                        style: TextButton.styleFrom(
+                                          backgroundColor:
+                                              Colors.white.withValues(alpha: 0.20),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 12, vertical: 6),
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(8)),
+                                        ),
+                                      ),
+                                  ],
+                                ],
+                              ),
+                            );
+                          }),
+                        ],
+                      )
+                    : Row(
+                        children: [
+                          Icon(Icons.event_busy_outlined, color: Colors.grey.shade400),
+                          const SizedBox(width: 12),
+                          Text(l10n.noSchedulerClass,
+                              style: TextStyle(color: Colors.grey.shade500)),
+                        ],
+                      ),
+              ),
+            );
+          },
         );
       },
     );

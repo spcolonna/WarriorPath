@@ -9,6 +9,9 @@ import 'package:warrior_path/screens/student/tabs/payments_tab_screen.dart';
 import 'package:warrior_path/screens/student/tabs/profile_tab_screen.dart';
 import 'package:warrior_path/screens/student/tabs/progress_tab_screen.dart';
 import 'package:warrior_path/screens/student/tabs/school_info_tab_screen.dart';
+import 'package:warrior_path/services/achievement_engine.dart';
+import 'package:warrior_path/services/local_notification_service.dart';
+import 'package:warrior_path/widgets/achievement_unlock_overlay.dart';
 
 import '../../l10n/app_localizations.dart';
 
@@ -29,6 +32,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
 
   int _selectedIndex = 0;
   late ConfettiController _confettiController;
+  List<AchievementStatus> _pendingAchievements = [];
 
   @override
   void initState() {
@@ -97,6 +101,14 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     });
   }
 
+  void _onNewAchievements(List<AchievementStatus> achievements) {
+    if (!mounted || achievements.isEmpty) return;
+    setState(() => _pendingAchievements = achievements);
+    for (final a in achievements) {
+      LocalNotificationService.showAchievementUnlocked(a);
+    }
+  }
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -115,7 +127,11 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
 
     final List<Widget> widgetOptions = <Widget>[
       SchoolInfoTabScreen(schoolId: schoolId),
-      ProgressTabScreen(schoolId: schoolId, memberId: memberId),
+      ProgressTabScreen(
+        schoolId: schoolId,
+        memberId: memberId,
+        onNewAchievements: _onNewAchievements,
+      ),
       CommunityTabScreen(schoolId: schoolId),
       PaymentsTabScreen(schoolId: schoolId, memberId: memberId),
       StudentProfileTabScreen(memberId: memberId),
@@ -144,6 +160,13 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           emissionFrequency: 0.05,
           gravity: 0.2,
         ),
+        if (_pendingAchievements.isNotEmpty)
+          Positioned.fill(
+            child: AchievementUnlockSequence(
+              achievements: _pendingAchievements,
+              onDone: () => setState(() => _pendingAchievements = []),
+            ),
+          ),
       ],
     );
   }

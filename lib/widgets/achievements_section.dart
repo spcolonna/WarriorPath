@@ -91,7 +91,9 @@ class _AchievementData {
 
   final Map<String, dynamic> firestoreUpdates;
 
-  const _AchievementData(this.statuses, this.firestoreUpdates);
+  final List<AchievementStatus> newlyEarned;
+
+  const _AchievementData(this.statuses, this.firestoreUpdates, this.newlyEarned);
 }
 
 // ── Widget principal ──────────────────────────────────────────────────────────
@@ -103,6 +105,8 @@ class AchievementsSection extends StatefulWidget {
 
   final Map<String, dynamic> memberProgress;
 
+  final void Function(List<AchievementStatus>)? onNewAchievements;
+
   const AchievementsSection({
     super.key,
 
@@ -111,6 +115,8 @@ class AchievementsSection extends StatefulWidget {
     required this.memberId,
 
     required this.memberProgress,
+
+    this.onNewAchievements,
   });
 
   @override
@@ -119,6 +125,7 @@ class AchievementsSection extends StatefulWidget {
 
 class _AchievementsSectionState extends State<AchievementsSection> {
   late Future<_AchievementData> _future;
+  bool _overlayTriggered = false;
 
   @override
   void initState() {
@@ -186,6 +193,11 @@ class _AchievementsSectionState extends State<AchievementsSection> {
       stored: stored,
     );
 
+    // Detect first-time earns (condition met and no prior stored entry)
+    final newlyEarned = statuses
+        .where((s) => s.conditionMet && stored[s.def.id] == null)
+        .toList();
+
     final updates = AchievementEngine.buildFirestoreUpdates(statuses);
 
     if (updates.isNotEmpty) {
@@ -194,7 +206,7 @@ class _AchievementsSectionState extends State<AchievementsSection> {
       } catch (_) {}
     }
 
-    return _AchievementData(statuses, updates);
+    return _AchievementData(statuses, updates, newlyEarned);
   }
 
   @override
@@ -209,6 +221,18 @@ class _AchievementsSectionState extends State<AchievementsSection> {
 
             child: Center(child: CircularProgressIndicator()),
           );
+        }
+
+        if (!_overlayTriggered &&
+            snapshot.connectionState == ConnectionState.done &&
+            snapshot.data != null) {
+          _overlayTriggered = true;
+          final newlyEarned = snapshot.data!.newlyEarned;
+          if (newlyEarned.isNotEmpty) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) widget.onNewAchievements?.call(newlyEarned);
+            });
+          }
         }
 
         final statuses = snapshot.data?.statuses ?? [];

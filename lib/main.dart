@@ -2,6 +2,7 @@ import 'package:provider/provider.dart';
 import 'package:warrior_path/providers/locale_provider.dart';
 import 'package:warrior_path/providers/session_provider.dart';
 import 'package:warrior_path/providers/theme_provider.dart';
+import 'package:warrior_path/services/local_notification_service.dart';
 import 'package:warrior_path/services/notification_service.dart';
 import 'package:warrior_path/services/remote_config_service.dart';
 import 'package:flutter/material.dart';
@@ -24,6 +25,12 @@ void main() async {
       await NotificationService().initialize();
     } catch (e) {
       print('NotificationService error: $e');
+    }
+
+    try {
+      await LocalNotificationService.initialize();
+    } catch (e) {
+      print('LocalNotificationService error: $e');
     }
     
     try {

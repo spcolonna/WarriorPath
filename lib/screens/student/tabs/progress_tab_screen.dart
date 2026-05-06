@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:warrior_path/models/discipline_model.dart';
 import 'package:warrior_path/models/level_model.dart';
 import 'package:warrior_path/models/technique_model.dart';
+import 'package:warrior_path/services/achievement_engine.dart';
 import 'package:warrior_path/widgets/achievements_section.dart';
 import 'package:collection/collection.dart';
 import '../../../l10n/app_localizations.dart';
@@ -13,11 +14,13 @@ import '../my_attendance_history_screen.dart';
 class ProgressTabScreen extends StatefulWidget {
   final String schoolId;
   final String memberId;
+  final void Function(List<AchievementStatus>)? onNewAchievements;
 
   const ProgressTabScreen({
     super.key,
     required this.schoolId,
     required this.memberId,
+    this.onNewAchievements,
   });
 
   @override
@@ -125,6 +128,7 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
               schoolId: widget.schoolId,
               memberId: widget.memberId,
               memberProgress: _memberProgress,
+              onNewAchievements: widget.onNewAchievements,
             ),
             const SizedBox(height: 32),
           ],

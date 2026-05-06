@@ -1,6 +1,12 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:warrior_path/providers/session_provider.dart';
+import 'package:warrior_path/providers/theme_provider.dart';
 import 'package:warrior_path/screens/WelcomeScreen.dart';
 import 'package:warrior_path/screens/landing_screen.dart';
+import 'package:warrior_path/screens/student/student_dashboard_screen.dart';
+import 'package:warrior_path/screens/teacher_dashboard_screen.dart';
 
 class AppSplashScreen extends StatefulWidget {
   final bool showLanding;
@@ -17,9 +23,6 @@ class _AppSplashScreenState extends State<AppSplashScreen>
   static const _gold = Color(0xFFFFD700);
 
   late AnimationController _ctrl;
-
-  // SPC company logo: fade in 0→30% del timeline
-  late Animation<double> _spcFade;
 
   // App logo: scale + fade in 15→55%
   late Animation<double> _appScale;
@@ -42,12 +45,6 @@ class _AppSplashScreenState extends State<AppSplashScreen>
     _ctrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2200),
-    );
-
-    _spcFade = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(
-          parent: _ctrl,
-          curve: const Interval(0.0, 0.30, curve: Curves.easeIn)),
     );
 
     _appScale = Tween<double>(begin: 0.25, end: 1.0).animate(
@@ -91,16 +88,39 @@ class _AppSplashScreenState extends State<AppSplashScreen>
   }
 
   Future<void> _runSequence() async {
+    // Kick off session restore in parallel with the animation
+    final savedFuture = SessionProvider.loadSaved();
+
     await Future.delayed(const Duration(milliseconds: 250));
     _ctrl.forward();
-    // Esperar que termine la animación + pausa para disfrutarla
     await Future.delayed(const Duration(milliseconds: 3200));
+    if (!mounted) return;
+
+    Widget destination;
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      final saved = await savedFuture;
+      if (saved != null && mounted) {
+        Provider.of<SessionProvider>(context, listen: false)
+            .setFullActiveSession(saved.schoolId, saved.role, saved.profileId);
+        Provider.of<ThemeProvider>(context, listen: false)
+            .loadThemeFromSchool(saved.schoolId);
+        destination = saved.role == 'maestro'
+            ? const TeacherDashboardScreen()
+            : const StudentDashboardScreen();
+      } else {
+        destination =
+            widget.showLanding ? const LandingScreen() : const WelcomeScreen();
+      }
+    } else {
+      destination =
+          widget.showLanding ? const LandingScreen() : const WelcomeScreen();
+    }
+
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (_, _, _) => widget.showLanding
-            ? const LandingScreen()
-            : const WelcomeScreen(),
+        pageBuilder: (_, _, _) => destination,
         transitionsBuilder: (_, anim, _, child) =>
             FadeTransition(opacity: anim, child: child),
         transitionDuration: const Duration(milliseconds: 700),
@@ -145,48 +165,6 @@ class _AppSplashScreenState extends State<AppSplashScreen>
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // ── Logo SPC (empresa) ──────────────────────────────────────
-              FadeTransition(
-                opacity: _spcFade,
-                child: Column(
-                  children: [
-                    Container(
-                      width: 72,
-                      height: 72,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.white.withValues(alpha: 0.15),
-                            blurRadius: 20,
-                            spreadRadius: 2,
-                          ),
-                        ],
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      child: Image.asset(
-                        'assets/logo/spc_logo_compressed.jpg',
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) => const SizedBox.shrink(),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'PRESENTS',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.5),
-                        fontSize: 11,
-                        letterSpacing: 3.5,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 48),
-
               // ── Logo de la app ──────────────────────────────────────────
               ScaleTransition(
                 scale: _appScale,
