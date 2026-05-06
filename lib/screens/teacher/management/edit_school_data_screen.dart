@@ -5,8 +5,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:warrior_path/models/discipline_model.dart';
 import 'package:warrior_path/theme/martial_art_themes.dart';
+import 'package:warrior_path/widgets/location_picker_map.dart';
 
 class EditSchoolDataScreen extends StatefulWidget {
   final String schoolId;
@@ -35,6 +37,8 @@ class _EditSchoolDataScreenState extends State<EditSchoolDataScreen> {
   File? _newLogoImageFile;
   bool _isLoading = true;
   bool _isSaving = false;
+  LatLng? _selectedLocation;
+  bool _locationExpanded = false;
 
   // Estado para Disciplinas
   List<DisciplineModel> _disciplines = [];
@@ -63,6 +67,11 @@ class _EditSchoolDataScreenState extends State<EditSchoolDataScreen> {
         _phoneController.text = data['phone'] ?? '';
         _descriptionController.text = data['description'] ?? '';
         _currentLogoUrl = data['logoUrl'];
+        final lat = (data['latitude'] as num?)?.toDouble();
+        final lng = (data['longitude'] as num?)?.toDouble();
+        if (lat != null && lng != null) {
+          _selectedLocation = LatLng(lat, lng);
+        }
       }
 
       final disciplinesSnapshot = results[1] as QuerySnapshot;
@@ -162,6 +171,10 @@ class _EditSchoolDataScreenState extends State<EditSchoolDataScreen> {
         'city': _cityController.text.trim(), 'phone': _phoneController.text.trim(), 'description': _descriptionController.text.trim(),
       };
       if (newLogoUrl != null) dataToUpdate['logoUrl'] = newLogoUrl;
+      if (_selectedLocation != null) {
+        dataToUpdate['latitude'] = _selectedLocation!.latitude;
+        dataToUpdate['longitude'] = _selectedLocation!.longitude;
+      }
 
       final firestore = FirebaseFirestore.instance;
       final schoolRef = firestore.collection('schools').doc(widget.schoolId);
@@ -219,6 +232,35 @@ class _EditSchoolDataScreenState extends State<EditSchoolDataScreen> {
               TextFormField(controller: _phoneController, decoration: InputDecoration(labelText: l10n.phone, border: const OutlineInputBorder()), keyboardType: TextInputType.phone),
               const SizedBox(height: 16),
               TextFormField(controller: _descriptionController, decoration: InputDecoration(labelText: l10n.description, border: const OutlineInputBorder()), maxLines: 4),
+              const SizedBox(height: 16),
+              InkWell(
+                onTap: () => setState(() => _locationExpanded = !_locationExpanded),
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    children: [
+                      Icon(Icons.location_on_outlined, color: _selectedLocation != null ? Colors.green : Colors.grey),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _selectedLocation != null ? 'Ubicación fijada en el mapa' : 'Ubicación en el mapa (opcional)',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ),
+                      Icon(_locationExpanded ? Icons.expand_less : Icons.expand_more),
+                    ],
+                  ),
+                ),
+              ),
+              if (_locationExpanded)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: LocationPickerMap(
+                    initialLocation: _selectedLocation,
+                    onLocationSelected: (loc) => setState(() => _selectedLocation = loc),
+                  ),
+                ),
               const Divider(height: 40),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,

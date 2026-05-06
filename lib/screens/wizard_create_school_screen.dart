@@ -4,9 +4,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:warrior_path/models/school_model.dart';
 import 'package:warrior_path/screens/wizard_discipline_hub_screen.dart';
 import 'package:warrior_path/theme/martial_art_themes.dart';
+import 'package:warrior_path/widgets/location_picker_map.dart';
 import '../l10n/app_localizations.dart';
 
 class WizardCreateSchoolScreen extends StatefulWidget {
@@ -38,6 +40,10 @@ class _WizardCreateSchoolScreenState extends State<WizardCreateSchoolScreen> {
   // Lógica de Disciplinas
   MartialArtTheme? _selectedThemeForNewDiscipline;
   List<MartialArtTheme> _selectedDisciplines = [];
+
+  // Ubicación en mapa
+  LatLng? _selectedLocation;
+  bool _locationExpanded = false;
 
   // Lógica de Sub-Escuela
   bool _isSubSchool = false;
@@ -105,6 +111,8 @@ class _WizardCreateSchoolScreenState extends State<WizardCreateSchoolScreen> {
         isSubSchool: _isSubSchool,
         parentSchoolId: _selectedParentSchool?['id'],
         parentSchoolName: _selectedParentSchool?['name'],
+        latitude: _selectedLocation?.latitude,
+        longitude: _selectedLocation?.longitude,
       );
 
       final firestore = FirebaseFirestore.instance;
@@ -312,6 +320,13 @@ class _WizardCreateSchoolScreenState extends State<WizardCreateSchoolScreen> {
               TextField(controller: _phoneController, decoration: InputDecoration(labelText: l10n.phone), keyboardType: TextInputType.phone),
               const SizedBox(height: 16),
               TextField(controller: _descriptionController, decoration: InputDecoration(labelText: l10n.description), maxLines: 3),
+              const SizedBox(height: 24),
+              _LocationSection(
+                selectedLocation: _selectedLocation,
+                isExpanded: _locationExpanded,
+                onToggle: () => setState(() => _locationExpanded = !_locationExpanded),
+                onLocationSelected: (loc) => setState(() => _selectedLocation = loc),
+              ),
               const SizedBox(height: 32),
               if (_isLoading)
                 const Center(child: CircularProgressIndicator())
@@ -325,6 +340,62 @@ class _WizardCreateSchoolScreenState extends State<WizardCreateSchoolScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _LocationSection extends StatelessWidget {
+  final LatLng? selectedLocation;
+  final bool isExpanded;
+  final VoidCallback onToggle;
+  final ValueChanged<LatLng> onLocationSelected;
+
+  const _LocationSection({
+    required this.selectedLocation,
+    required this.isExpanded,
+    required this.onToggle,
+    required this.onLocationSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        InkWell(
+          onTap: onToggle,
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.location_on_outlined,
+                  color: selectedLocation != null ? Colors.green : Colors.grey,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    selectedLocation != null
+                        ? 'Ubicación fijada en el mapa'
+                        : 'Ubicación en el mapa (opcional)',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+                Icon(isExpanded ? Icons.expand_less : Icons.expand_more),
+              ],
+            ),
+          ),
+        ),
+        if (isExpanded)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: LocationPickerMap(
+              initialLocation: selectedLocation,
+              onLocationSelected: onLocationSelected,
+            ),
+          ),
+      ],
     );
   }
 }

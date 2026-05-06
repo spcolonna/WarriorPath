@@ -9,7 +9,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:warrior_path/widgets/ad_banner_widget.dart';
-import 'package:warrior_path/screens/WelcomeScreen.dart';
+import 'package:warrior_path/screens/app_splash_screen.dart';
 
 import 'l10n/app_localizations.dart';
 
@@ -52,6 +52,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final remoteConfigService = RemoteConfigService.instance;
     final bool showBannerAd = remoteConfigService.getBool('show_banner_ad');
+    final bool showLanding = remoteConfigService.getBool('show_landing_screen');
 
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
@@ -81,7 +82,7 @@ class MyApp extends StatelessWidget {
               localizationsDelegates: AppLocalizations.localizationsDelegates, // 2. Usa los delegados generados
               supportedLocales: AppLocalizations.supportedLocales, // 3. Usa los locales generados
 
-              home: const WelcomeScreen(),
+              home: AppSplashScreen(showLanding: showLanding),
               builder: (context, navigator) {
                 return Column(
                   children: [

@@ -377,5 +377,26 @@
     "unassignTechniqueConfirm": "Tem certeza de que deseja desatribuir esta técnica do aluno?",
     "techniqueUnassignedSuccess": "Técnica desatribuída com sucesso.",
     "revertPromotionConfirm": "Tem certeza? Isso excluirá o registro do histórico e reverterá o nível do aluno para o anterior.",
-    "revertPromotion": "Reverter Promoção"
+    "revertPromotion": "Reverter Promoção",
+    "logOutConfirmation": "Tem certeza de que deseja sair?",
+    "studentRole": "Aluno",
+    "editProfile": "Editar Perfil",
+    "yourAchievements": "Suas Conquistas",
+    "achievementPermanent": "Conquista permanente",
+    "achievementExpiresToday": "Expira hoje — complete novamente!",
+    "achievementExpiresInDays": "Expira em {days} dia{plural}",
+    "@achievementExpiresInDays": {
+        "placeholders": { "days": {"type": "int"}, "plural": {"type": "String"} }
+    },
+    "achievementExpired": "Expirou — cumpra a condição para recuperar",
+    "achievementNotObtained": "Ainda não obtido",
+    "achievementRenews": "Esta conquista se renova a cada {days} dias se você cumprir a condição.",
+    "@achievementRenews": {
+        "placeholders": { "days": {"type": "int"} }
+    },
+    "achievementObtainedOn": "Obtido em: {date}",
+    "@achievementObtainedOn": {
+        "placeholders": { "date": {"type": "String"} }
+    },
+    "achievementExpiredBadge": "Expirou!"
 }

@@ -11,7 +11,9 @@ class RemoteConfigService {
 
   static RemoteConfigService get instance {
     if (_instance == null) {
-      throw Exception('RemoteConfigService no ha sido inicializado. Llama a getInstance() primero en tu main.dart');
+      throw Exception(
+        'RemoteConfigService no ha sido inicializado. Llama a getInstance() primero en tu main.dart',
+      );
     }
     return _instance!;
   }
@@ -19,15 +21,18 @@ class RemoteConfigService {
   static Future<RemoteConfigService> getInstance() async {
     if (_instance == null) {
       final remoteConfig = FirebaseRemoteConfig.instance;
-      await remoteConfig.setConfigSettings(RemoteConfigSettings(
-        fetchTimeout: const Duration(minutes: 1),
-        minimumFetchInterval: Duration.zero,
-      ));
+      await remoteConfig.setConfigSettings(
+        RemoteConfigSettings(
+          fetchTimeout: const Duration(minutes: 1),
+          minimumFetchInterval: Duration.zero,
+        ),
+      );
 
       // --- CAMBIO: AÑADIMOS EL VALOR POR DEFECTO PARA EL BANNER ---
       await remoteConfig.setDefaults(const {
         "online_payments_enabled": false,
-        "show_banner_ad": false, // Apagado por defecto
+        "show_banner_ad": false,
+        "show_landing_screen": false,
       });
       // --- FIN DEL CAMBIO ---
 
@@ -37,7 +42,8 @@ class RemoteConfigService {
   }
 
   // Getter específico que ya tenías
-  bool get onlinePaymentsEnabled => _remoteConfig.getBool('online_payments_enabled');
+  bool get onlinePaymentsEnabled =>
+      _remoteConfig.getBool('online_payments_enabled');
 
   // --- CAMBIO: AÑADIMOS EL MÉTODO GENÉRICO QUE FALTA ---
   /// Obtiene un valor booleano de Remote Config usando una clave (key).
@@ -45,7 +51,6 @@ class RemoteConfigService {
     return _remoteConfig.getBool(key);
   }
   // --- FIN DEL CAMBIO ---
-
 
   Future<void> fetchAndActivate() async {
     try {

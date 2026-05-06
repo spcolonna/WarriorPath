@@ -416,6 +416,45 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               ),
             ),
           ),
+          _SpcFooter(),
+        ],
+      ),
+    );
+  }
+}
+
+class _SpcFooter extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20, top: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            'Developed by ',
+            style: TextStyle(fontSize: 11, color: Colors.grey.shade400),
+          ),
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 4,
+                ),
+              ],
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Image.asset(
+              'assets/logo/spc_logo_compressed.jpg',
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => const SizedBox.shrink(),
+            ),
+          ),
         ],
       ),
     );

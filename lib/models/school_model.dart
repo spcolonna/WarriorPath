@@ -12,6 +12,8 @@ class SchoolModel {
   final bool isSubSchool;
   final String? parentSchoolId;
   final String? parentSchoolName;
+  final double? latitude;
+  final double? longitude;
 
   SchoolModel({
     this.id,
@@ -25,7 +27,27 @@ class SchoolModel {
     this.isSubSchool = false,
     this.parentSchoolId,
     this.parentSchoolName,
+    this.latitude,
+    this.longitude,
   });
+
+  factory SchoolModel.fromJson(Map<String, dynamic> json, String id) {
+    return SchoolModel(
+      id: id,
+      name: json['name'] ?? '',
+      ownerId: json['ownerId'] ?? '',
+      logoUrl: json['logoUrl'],
+      address: json['address'] ?? '',
+      city: json['city'] ?? '',
+      phone: json['phone'] ?? '',
+      description: json['description'] ?? '',
+      isSubSchool: json['isSubSchool'] ?? false,
+      parentSchoolId: json['parentSchoolId'],
+      parentSchoolName: json['parentSchoolName'],
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
+    );
+  }
 
   Map<String, dynamic> toJson() {
     return {
@@ -39,6 +61,8 @@ class SchoolModel {
       'isSubSchool': isSubSchool,
       'parentSchoolId': parentSchoolId,
       'parentSchoolName': parentSchoolName,
+      'latitude': latitude,
+      'longitude': longitude,
       'createdAt': FieldValue.serverTimestamp(),
     };
   }

@@ -9,7 +9,7 @@ import 'package:warrior_path/models/payment_plan_model.dart';
 
 class FinanceManagementScreen extends StatefulWidget {
   final String schoolId;
-  const FinanceManagementScreen({Key? key, required this.schoolId}) : super(key: key);
+  const FinanceManagementScreen({super.key, required this.schoolId});
 
   @override
   State<FinanceManagementScreen> createState() => _FinanceManagementScreenState();
@@ -24,6 +24,7 @@ class _FinanceManagementScreenState extends State<FinanceManagementScreen> with 
   final _examFeeController = TextEditingController();
   String _selectedCurrency = 'USD';
   final List<String> _currencies = ['USD', 'UYU', 'ARS', 'EUR', 'MXN'];
+  int _paymentDueDay = 5;
 
   List<PaymentPlanModel> _plans = [];
   List<PaymentPlanModel> _initialPlans = [];
@@ -61,6 +62,7 @@ class _FinanceManagementScreenState extends State<FinanceManagementScreen> with 
         _inscriptionFeeController.text = financials['inscriptionFee']?.toString() ?? '0';
         _examFeeController.text = financials['examFee']?.toString() ?? '0';
         _selectedCurrency = financials['currency'] ?? 'USD';
+        _paymentDueDay = (financials['paymentDueDay'] as int?) ?? 5;
       }
 
       final plansSnapshot = results[1] as QuerySnapshot<Map<String, dynamic>>;
@@ -194,7 +196,12 @@ class _FinanceManagementScreenState extends State<FinanceManagementScreen> with 
       final plansRef = schoolRef.collection('paymentPlans');
       final batch = firestore.batch();
 
-      final financialData = {'inscriptionFee': double.tryParse(_inscriptionFeeController.text) ?? 0.0, 'examFee': double.tryParse(_examFeeController.text) ?? 0.0, 'currency': _selectedCurrency};
+      final financialData = {
+        'inscriptionFee': double.tryParse(_inscriptionFeeController.text) ?? 0.0,
+        'examFee': double.tryParse(_examFeeController.text) ?? 0.0,
+        'currency': _selectedCurrency,
+        'paymentDueDay': _paymentDueDay,
+      };
       batch.update(schoolRef, {'financials': financialData});
 
       final initialIds = _initialPlans.map((p) => p.id).toSet();
@@ -242,6 +249,83 @@ class _FinanceManagementScreenState extends State<FinanceManagementScreen> with 
     );
   }
 
+  Widget _buildDueDayPicker() {
+    final now = DateTime.now();
+    // Próxima fecha de vencimiento: si el día ya pasó este mes, muestra el del próximo mes
+    final thisMonthDue = DateTime(now.year, now.month, _paymentDueDay);
+    final nextDue = thisMonthDue.isBefore(now)
+        ? DateTime(now.year, now.month + 1, _paymentDueDay)
+        : thisMonthDue;
+    final nextDueLabel = DateFormat("d 'de' MMMM yyyy", 'es_ES').format(nextDue);
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: Theme.of(context).primaryColor.withValues(alpha: 0.4)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.event_outlined, color: Theme.of(context).primaryColor, size: 20),
+                const SizedBox(width: 10),
+                const Expanded(
+                  child: Text(
+                    'Día de vencimiento',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                  ),
+                ),
+                DropdownButton<int>(
+                  value: _paymentDueDay,
+                  underline: const SizedBox(),
+                  borderRadius: BorderRadius.circular(10),
+                  items: List.generate(28, (i) => i + 1)
+                      .map((d) => DropdownMenuItem(
+                            value: d,
+                            child: Text(
+                              'Día $d',
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ))
+                      .toList(),
+                  onChanged: (v) {
+                    if (v != null) setState(() => _paymentDueDay = v);
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: Theme.of(context).primaryColor.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, size: 14, color: Theme.of(context).primaryColor),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Próximo vencimiento: $nextDueLabel',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).primaryColor,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildPlansAndPricesTab() {
     return Scaffold(
       body: SingleChildScrollView(
@@ -251,11 +335,20 @@ class _FinanceManagementScreenState extends State<FinanceManagementScreen> with 
           children: [
             Text('Costos Únicos', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 16),
-            DropdownButtonFormField<String>(value: _selectedCurrency, decoration: const InputDecoration(labelText: 'Moneda', border: OutlineInputBorder()), items: _currencies.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(), onChanged: (v) { if (v != null) setState(() => _selectedCurrency = v); }),
+            DropdownButtonFormField<String>(initialValue: _selectedCurrency, decoration: const InputDecoration(labelText: 'Moneda', border: OutlineInputBorder()), items: _currencies.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(), onChanged: (v) { if (v != null) setState(() => _selectedCurrency = v); }),
             const SizedBox(height: 16),
             TextFormField(controller: _inscriptionFeeController, decoration: InputDecoration(labelText: 'Precio de Inscripción', prefixText: '$_selectedCurrency ', border: const OutlineInputBorder()), keyboardType: const TextInputType.numberWithOptions(decimal: true), inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))]),
             const SizedBox(height: 16),
             TextFormField(controller: _examFeeController, decoration: InputDecoration(labelText: 'Precio por Examen', prefixText: '$_selectedCurrency ', border: const OutlineInputBorder()), keyboardType: const TextInputType.numberWithOptions(decimal: true), inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))]),
+            const Divider(height: 40),
+            Text('Vencimiento Mensual', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 8),
+            Text(
+              'Día del mes en que vence el pago de cuotas. Se usará para enviar avisos automáticos a los alumnos.',
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 16),
+            _buildDueDayPicker(),
             const Divider(height: 40),
             Text('Planes de Cuotas Mensuales', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 8),
@@ -350,11 +443,8 @@ class _FinanceManagementScreenState extends State<FinanceManagementScreen> with 
 
 
   Widget _buildBarChart(Map<int, double> monthlyTotals, String currency, BuildContext context) {
-    final now = DateTime.now();
     final List<BarChartGroupData> barGroups = [];
     final monthFormatter = DateFormat('MMM', 'es_ES');
-
-    final year = _selectedYear ?? now.year;
 
     for (int i = 1; i <= 12; i++) {
       final monthKey = i;

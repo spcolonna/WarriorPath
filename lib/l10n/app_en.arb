@@ -15,10 +15,22 @@
     "registrationErrorContent": "Could not complete registration. The email may already be in use or the password is too weak.",
     "errorTitle": "Error",
     "genericErrorContent": "An error occurred: {errorDetails}",
-    "@genericErrorContent": { "placeholders": { "errorDetails": { "type": "String" } } },
+    "@genericErrorContent": {
+        "placeholders": {
+            "errorDetails": {
+                "type": "String"
+            }
+        }
+    },
     "ok": "Ok",
     "welcomeTitle": "Welcome, {userName}!",
-    "@welcomeTitle": { "placeholders": { "userName": { "type": "String" } } },
+    "@welcomeTitle": {
+        "placeholders": {
+            "userName": {
+                "type": "String"
+            }
+        }
+    },
     "teacher": "Teacher",
     "sessionError": "Error: Invalid session.",
     "noSchedulerClass": "There are no classes scheduled for today.",
@@ -61,14 +73,38 @@
     "cancel": "Cancel",
     "eliminate": "Delete",
     "deleteError": "Error deleting: {e}",
-    "@deleteError": { "placeholders": { "e": { "type": "String" } } },
+    "@deleteError": {
+        "placeholders": {
+            "e": {
+                "type": "String"
+            }
+        }
+    },
     "rolUpdatedTo": "Role updated to {rol}",
-    "@rolUpdatedTo": { "placeholders": { "rol": { "type": "String" } } },
+    "@rolUpdatedTo": {
+        "placeholders": {
+            "rol": {
+                "type": "String"
+            }
+        }
+    },
     "deleteLevel": "Deleted Level",
     "promotionTo": "Promoted to {level}",
-    "@promotionTo": { "placeholders": { "level": { "type": "String" } } },
+    "@promotionTo": {
+        "placeholders": {
+            "level": {
+                "type": "String"
+            }
+        }
+    },
     "notesValue": "Notes: {notes}",
-    "@notesValue": { "placeholders": { "notes": { "type": "String" } } },
+    "@notesValue": {
+        "placeholders": {
+            "notes": {
+                "type": "String"
+            }
+        }
+    },
     "notesLabel": "Notes",
     "maleGender": "Male",
     "femaleGender": "Female",
@@ -76,13 +112,31 @@
     "noSpecifyGender": "Prefers not to say",
     "noClassForTHisDay": "There were no classes scheduled for the selected day.",
     "classFor": "Classes for {day}",
-    "@classFor": { "placeholders": { "day": { "type": "String" } } },
+    "@classFor": {
+        "placeholders": {
+            "day": {
+                "type": "String"
+            }
+        }
+    },
     "successAssistance": "Attendance registered successfully.",
     "saveError": "Error saving: {e}",
-    "@saveError": { "placeholders": { "e": { "type": "String" } } },
+    "@saveError": {
+        "placeholders": {
+            "e": {
+                "type": "String"
+            }
+        }
+    },
     "successRevertPromotion": "Promotion reverted successfully.",
     "errorToRevert": "Error reverting: {e}",
-    "@errorToRevert": { "placeholders": { "e": { "type": "String" } } },
+    "@errorToRevert": {
+        "placeholders": {
+            "e": {
+                "type": "String"
+            }
+        }
+    },
     "registerPayment": "Register Payment",
     "selectPlan": "Select a plan",
     "concept": "Concept",
@@ -93,16 +147,34 @@
     "optional": "optional",
     "studentSuccessPromotion": "Student promoted successfully!",
     "promotionError": "Error promoting: {e}",
-    "@promotionError": { "placeholders": { "e": { "type": "String" } } },
+    "@promotionError": {
+        "placeholders": {
+            "e": {
+                "type": "String"
+            }
+        }
+    },
     "changeRolMember": "Change Member Role",
     "instructor": "instructor",
     "save": "Save",
     "updateRolSuccess": "Role updated successfully.",
     "updateRolError": "Error changing role: {e}",
-    "@updateRolError": { "placeholders": { "e": { "type": "String" } } },
+    "@updateRolError": {
+        "placeholders": {
+            "e": {
+                "type": "String"
+            }
+        }
+    },
     "successPayment": "Payment registered successfully.",
     "paymentError": "Error registering payment: {e}",
-    "@paymentError": { "placeholders": { "e": { "type": "String" } } },
+    "@paymentError": {
+        "placeholders": {
+            "e": {
+                "type": "String"
+            }
+        }
+    },
     "assignPlan": "Assign Payment Plan",
     "removeAssignedPlan": "Remove assigned plan",
     "withPutLevel": "No Level",
@@ -111,7 +183,13 @@
     "assignTechnic": "Assign Techniques",
     "notassignedPaymentPlan": "No payment plan assigned.",
     "paymentPlanNotFoud": "Assigned plan (ID: {assignedPlanId}) not found.",
-    "@paymentPlanNotFoud": { "placeholders": { "assignedPlanId": { "type": "String" } } },
+    "@paymentPlanNotFoud": {
+        "placeholders": {
+            "assignedPlanId": {
+                "type": "String"
+            }
+        }
+    },
     "contactData": "Contact Data",
     "saveAndContinue": "Save and Continue",
     "subscriptionExpired": "Subscription Expired",
@@ -120,12 +198,24 @@
     "renewalSubject": "Subscription Renewal - Warrior Path",
     "mailError": "Could not open mail application.",
     "mailLaunchError": "Error trying to open mail: {e}",
-    "@mailLaunchError": { "placeholders": { "e": { "type": "String" } } },
+    "@mailLaunchError": {
+        "placeholders": {
+            "e": {
+                "type": "String"
+            }
+        }
+    },
     "nameAndMartialArtRequired": "Name and Martial Art are required.",
     "needSelectSubSchool": "If it is a sub-school, you must select the main school.",
     "notAuthenticatedUser": "User not authenticated.",
     "createSchoolError": "Error creating school: {e}",
-    "@createSchoolError": { "placeholders": { "e": { "type": "String" } } },
+    "@createSchoolError": {
+        "placeholders": {
+            "e": {
+                "type": "String"
+            }
+        }
+    },
     "crateSchoolStep2": "Create Your School (Step 2)",
     "isSubSchool": "Is it a Sub-School?",
     "pickAColor": "Pick a color",
@@ -167,11 +257,29 @@
     "unknownSchool": "Unknown School",
     "noActiveProfilesFound": "No active profiles found.",
     "enterAs": "Enter as {e}",
-    "@enterAs": { "placeholders": { "e": { "type": "String" } } },
+    "@enterAs": {
+        "placeholders": {
+            "e": {
+                "type": "String"
+            }
+        }
+    },
     "inSchool": "in {message}",
-    "@inSchool": { "placeholders": { "message": { "type": "String" } } },
+    "@inSchool": {
+        "placeholders": {
+            "message": {
+                "type": "String"
+            }
+        }
+    },
     "yourAnswer": "Your Answer: {message}",
-    "@yourAnswer": { "placeholders": { "message": { "type": "String" } } },
+    "@yourAnswer": {
+        "placeholders": {
+            "message": {
+                "type": "String"
+            }
+        }
+    },
     "cost": "Cost",
     "time": "Time",
     "date": "Date",
@@ -179,9 +287,21 @@
     "invited": "Invited",
     "eventDetails": "Event Details",
     "errorSendingResponse": "Error sending response: {e}",
-    "@errorSendingResponse": { "placeholders": { "e": { "type": "String" } } },
+    "@errorSendingResponse": {
+        "placeholders": {
+            "e": {
+                "type": "String"
+            }
+        }
+    },
     "responseSent": "Response sent: {message}",
-    "@responseSent": { "placeholders": { "message": { "type": "String" } } },
+    "@responseSent": {
+        "placeholders": {
+            "message": {
+                "type": "String"
+            }
+        }
+    },
     "manageEvents": "Manage Events",
     "manageEventsDescription": "Create exams, tournaments, and seminars.",
     "manageSchedulesDescription": "Define the shifts and days of your classes.",
@@ -207,13 +327,31 @@
     "myData": "My Data",
     "myProfile": "My Profile",
     "profileUpdateError": "Error updating profile: {message}",
-    "@profileUpdateError": { "placeholders": { "message": { "type": "String" } } },
+    "@profileUpdateError": {
+        "placeholders": {
+            "message": {
+                "type": "String"
+            }
+        }
+    },
     "profileUpdatedSuccess": "Profile updated successfully.",
     "noStudentsWithStatus": "No students with status {state}",
-    "@noStudentsWithStatus": { "placeholders": { "state": { "type": "String" } } },
+    "@noStudentsWithStatus": {
+        "placeholders": {
+            "state": {
+                "type": "String"
+            }
+        }
+    },
     "noName": "No Name",
     "applicationDate": "Application date: {message}",
-    "@applicationDate": { "placeholders": { "message": { "type": "String" } } },
+    "@applicationDate": {
+        "placeholders": {
+            "message": {
+                "type": "String"
+            }
+        }
+    },
     "studentAcceptedSuccess": "Student accepted successfully.",
     "applicationRejected": "Application rejected.",
     "monday": "Monday",
@@ -231,7 +369,16 @@
     "errorLoadingPaymentHistory": "Error loading your payment history.",
     "noPaymentsRegisteredYet": "You have no registered payments yet.",
     "paymentDetails": "{concept}\nPaid on {date}",
-    "@paymentDetails": { "placeholders": { "concept": { "type": "String" }, "date": { "type": "String" } } },
+    "@paymentDetails": {
+        "placeholders": {
+            "concept": {
+                "type": "String"
+            },
+            "date": {
+                "type": "String"
+            }
+        }
+    },
     "myProgress": "My Progress",
     "yourPath": "Your Path",
     "promotionHistory": "Promotion History",
@@ -243,7 +390,13 @@
     "teacherHasNotAssignedTechniques": "Your teacher has not assigned you techniques yet.",
     "noPromotionsRegisteredYet": "You have no promotions registered yet.",
     "couldNotOpenVideo": "Could not open video: {link}",
-    "@couldNotOpenVideo": { "placeholders": { "link": { "type": "String" } } },
+    "@couldNotOpenVideo": {
+        "placeholders": {
+            "link": {
+                "type": "String"
+            }
+        }
+    },
     "noDescriptionAvailable": "No description available.",
     "watchTechniqueVideo": "Watch Technique Video",
     "close": "Close",
@@ -268,7 +421,13 @@
     "creatingChildProfile": "Creating child's profile...",
     "childProfileCreatedSuccess": "Child's profile created successfully.",
     "childProfileCreatedError": "Error creating child's profile: {e}",
-    "@childProfileCreatedError": { "placeholders": { "e": { "type": "String" } } },
+    "@childProfileCreatedError": {
+        "placeholders": {
+            "e": {
+                "type": "String"
+            }
+        }
+    },
     "requiredField": "This field is required.",
     "guardianPanel": "Guardian Panel",
     "myChildren": "My Children",
@@ -280,19 +439,43 @@
     "alreadyLinkedToSchool": "You already have a link with this school.",
     "confirmApplicationTitle": "Confirm Application",
     "confirmApplicationMessage": "Do you want to send your application to join \"{schoolName}\"?",
-    "@confirmApplicationMessage": { "placeholders": { "schoolName": { "type": "String" } } },
+    "@confirmApplicationMessage": {
+        "placeholders": {
+            "schoolName": {
+                "type": "String"
+            }
+        }
+    },
     "send": "Send",
     "applicationSentSuccess": "Application to \"{schoolName}\" sent!",
-    "@applicationSentSuccess": { "placeholders": { "schoolName": { "type": "String" } } },
+    "@applicationSentSuccess": {
+        "placeholders": {
+            "schoolName": {
+                "type": "String"
+            }
+        }
+    },
     "applicationSentError": "Error sending application: {e}",
-    "@applicationSentError": { "placeholders": { "e": { "type": "String" } } },
+    "@applicationSentError": {
+        "placeholders": {
+            "e": {
+                "type": "String"
+            }
+        }
+    },
     "noNewSchoolsFound": "No new schools found.",
     "apply": "Apply",
     "noCity": "No City",
     "manageProfiles": "Manage Profiles",
     "myUser": "My User",
     "associatedWith": "Associated with: {schoolName}",
-    "@associatedWith": { "placeholders": { "schoolName": { "type": "String" } } },
+    "@associatedWith": {
+        "placeholders": {
+            "schoolName": {
+                "type": "String"
+            }
+        }
+    },
     "searchParentSchool": "Search for main school",
     "associateLaterMessage": "If you can't find the school, you can associate it later from the management panel.",
     "disciplines": "Disciplines",
@@ -306,7 +489,13 @@
     "addYourTechniques": "2. Add your Techniques",
     "createCategoriesFirst": "Create categories first, then add your first technique.",
     "techniqueNumber": "Technique #{index}",
-    "@techniqueNumber": { "placeholders": { "index": { "type": "String" } } },
+    "@techniqueNumber": {
+        "placeholders": {
+            "index": {
+                "type": "String"
+            }
+        }
+    },
     "techniqueName": "Technique Name *",
     "selectCategory": "Select a category",
     "categoryLabel": "Category *",
@@ -318,7 +507,13 @@
     "atLeastOneCategoryError": "You must create at least one category.",
     "allTechniquesNeedNameCategoryError": "All techniques must have a name and a category assigned.",
     "techniquesFor": "Techniques for \"{disciplineName}\"",
-    "@techniquesFor": { "placeholders": { "disciplineName": { "type": "String" } } },
+    "@techniquesFor": {
+        "placeholders": {
+            "disciplineName": {
+                "type": "String"
+            }
+        }
+    },
     "configurePricingStep5": "Configure Pricing (Step 5)",
     "uniqueCostsAndCurrency": "Unique Costs & Currency",
     "currency": "Currency",
@@ -339,12 +534,24 @@
     "progressionSystem": "Progression System",
     "pricingAndPlans": "Pricing and Plans",
     "disciplineLabel": "Discipline: {disciplineName}",
-    "@disciplineLabel": { "placeholders": { "disciplineName": { "type": "String" } } },
+    "@disciplineLabel": {
+        "placeholders": {
+            "disciplineName": {
+                "type": "String"
+            }
+        }
+    },
     "levelsCreated": "Levels Created",
     "techniquesAdded": "Techniques Added",
     "finalizeAndOpenSchool": "Finalize and Open my School",
     "errorFinalizing": "Error finalizing: {e}",
-    "@errorFinalizing": { "placeholders": { "e": { "type": "String" } } },
+    "@errorFinalizing": {
+        "placeholders": {
+            "e": {
+                "type": "String"
+            }
+        }
+    },
     "categoriesLabel": "Categories",
     "selectDisciplinesPrompt": "Select one or more. The first one you choose will be the primary.",
     "institutionalDataOptional": "Institutional Data (Optional)",
@@ -357,7 +564,13 @@
     "continueToPricing": "Continue to Pricing",
     "errorLoadingDisciplines": "Error loading disciplines.",
     "levelsFor": "Levels for \"{disciplineName}\"",
-    "@levelsFor": { "placeholders": { "disciplineName": { "type": "String" } } },
+    "@levelsFor": {
+        "placeholders": {
+            "disciplineName": {
+                "type": "String"
+            }
+        }
+    },
     "progressionSystemName": "Progression System Name *",
     "progressionSystemHint": "Ex: Sashes, Belts, Grades",
     "levelsOrderHint": "Levels (order from lowest to highest)",
@@ -381,7 +594,13 @@
     "curriculumByDiscipline": "Curriculum by Discipline",
     "selectDisciplineToEdit": "Select a discipline to view and edit its levels and techniques.",
     "curriculumFor": "Curriculum for {disciplineName}",
-    "@curriculumFor": { "placeholders": { "disciplineName": { "type": "String" } } },
+    "@curriculumFor": {
+        "placeholders": {
+            "disciplineName": {
+                "type": "String"
+            }
+        }
+    },
     "saveAllChanges": "Save All Changes",
     "curriculumSaveSuccess": "Curriculum saved successfully.",
     "manageDisciplines": "Manage Disciplines",
@@ -392,13 +611,25 @@
     "selectDisciplineForStudent": "Select the primary discipline this student will be enrolled in.",
     "noDisciplinesAvailable": "There are no active disciplines in your school. Go to Management -> Curriculum to create them.",
     "progressFor": "Progress ({disciplineName})",
-    "@progressFor": { "placeholders": { "disciplineName": { "type": "String" } } },
+    "@progressFor": {
+        "placeholders": {
+            "disciplineName": {
+                "type": "String"
+            }
+        }
+    },
     "enrollInDisciplines": "Enroll in Disciplines",
     "noDisciplinesEnrolled": "This student is not yet enrolled in any disciplines.",
     "noProgressSystemForDiscipline": "This discipline does not have a progression system defined yet.",
     "noTechniquesForDiscipline": "This discipline does not have any techniques defined yet.",
     "assignTechniquesFor": "Assign Techniques for {disciplineName}",
-    "@assignTechniquesFor": { "placeholders": { "disciplineName": { "type": "String" } } },
+    "@assignTechniquesFor": {
+        "placeholders": {
+            "disciplineName": {
+                "type": "String"
+            }
+        }
+    },
     "saveAssignments": "Save Assignments",
     "techniquesAssignedSuccess": "Techniques assigned successfully.",
     "noDisciplinesEnrolledStudent": "You are not yet enrolled in any disciplines.",
@@ -411,7 +642,13 @@
     "eventUpdated": "Event updated.",
     "eventCreatedInviteStudents": "Event created! Now you can invite students.",
     "eventCreationError": "Error creating event: {e}",
-    "@eventCreationError": { "placeholders": { "e": { "type": "String" } } },
+    "@eventCreationError": {
+        "placeholders": {
+            "e": {
+                "type": "String"
+            }
+        }
+    },
     "selectDate": "Select Date *",
     "locationOptional": "Location (Optional)",
     "costOptional": "Cost (Optional)",
@@ -425,5 +662,26 @@
     "unassignTechniqueConfirm": "Are you sure you want to unassign this technique from the student?",
     "techniqueUnassignedSuccess": "Technique unassigned successfully.",
     "revertPromotionConfirm": "Are you sure? This will delete the history record and revert the student's level to the previous one.",
-    "revertPromotion": "Revert Promotion"
+    "revertPromotion": "Revert Promotion",
+    "logOutConfirmation": "Are you sure you want to log out?",
+    "studentRole": "Student",
+    "editProfile": "Edit Profile",
+    "yourAchievements": "Your Achievements",
+    "achievementPermanent": "Permanent achievement",
+    "achievementExpiresToday": "Expires today — complete it again!",
+    "achievementExpiresInDays": "Expires in {days} day{plural}",
+    "@achievementExpiresInDays": {
+        "placeholders": { "days": {"type": "int"}, "plural": {"type": "String"} }
+    },
+    "achievementExpired": "Expired — complete the condition to recover it",
+    "achievementNotObtained": "Not yet obtained",
+    "achievementRenews": "This achievement renews every {days} days if you meet the condition.",
+    "@achievementRenews": {
+        "placeholders": { "days": {"type": "int"} }
+    },
+    "achievementObtainedOn": "Obtained: {date}",
+    "@achievementObtainedOn": {
+        "placeholders": { "date": {"type": "String"} }
+    },
+    "achievementExpiredBadge": "Expired!"
 }

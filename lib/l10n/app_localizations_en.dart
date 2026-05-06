@@ -1298,4 +1298,47 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get revertPromotion => 'Revert Promotion';
+
+  @override
+  String get logOutConfirmation => 'Are you sure you want to log out?';
+
+  @override
+  String get studentRole => 'Student';
+
+  @override
+  String get editProfile => 'Edit Profile';
+
+  @override
+  String get yourAchievements => 'Your Achievements';
+
+  @override
+  String get achievementPermanent => 'Permanent achievement';
+
+  @override
+  String get achievementExpiresToday => 'Expires today — complete it again!';
+
+  @override
+  String achievementExpiresInDays(int days, String plural) {
+    return 'Expires in $days day$plural';
+  }
+
+  @override
+  String get achievementExpired =>
+      'Expired — complete the condition to recover it';
+
+  @override
+  String get achievementNotObtained => 'Not yet obtained';
+
+  @override
+  String achievementRenews(int days) {
+    return 'This achievement renews every $days days if you meet the condition.';
+  }
+
+  @override
+  String achievementObtainedOn(String date) {
+    return 'Obtained: $date';
+  }
+
+  @override
+  String get achievementExpiredBadge => 'Expired!';
 }

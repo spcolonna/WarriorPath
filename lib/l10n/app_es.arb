@@ -379,5 +379,26 @@
     "unassignTechniqueConfirm": "¿Estás seguro de que quieres quitarle esta técnica al alumno?",
     "techniqueUnassignedSuccess": "Técnica quitada con éxito.",
     "revertPromotionConfirm": "¿Estás seguro? Esto eliminará el registro del historial y revertirá el nivel del alumno al anterior.",
-    "revertPromotion": "Revertir Promoción"
+    "revertPromotion": "Revertir Promoción",
+    "logOutConfirmation": "¿Estás seguro de que quieres cerrar sesión?",
+    "studentRole": "Alumno",
+    "editProfile": "Editar Perfil",
+    "yourAchievements": "Tus Logros",
+    "achievementPermanent": "Logro permanente",
+    "achievementExpiresToday": "Expira hoy — ¡volvé a cumplirlo!",
+    "achievementExpiresInDays": "Expira en {days} día{plural}",
+    "@achievementExpiresInDays": {
+        "placeholders": { "days": {"type": "int"}, "plural": {"type": "String"} }
+    },
+    "achievementExpired": "Expiró — cumplí la condición para recuperarlo",
+    "achievementNotObtained": "Aún no obtenido",
+    "achievementRenews": "Este logro se renueva cada {days} días si cumplís la condición.",
+    "@achievementRenews": {
+        "placeholders": { "days": {"type": "int"} }
+    },
+    "achievementObtainedOn": "Obtenido: {date}",
+    "@achievementObtainedOn": {
+        "placeholders": { "date": {"type": "String"} }
+    },
+    "achievementExpiredBadge": "¡Expiró!"
 }

@@ -2421,6 +2421,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Revert Promotion'**
   String get revertPromotion;
+
+  /// No description provided for @logOutConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to log out?'**
+  String get logOutConfirmation;
+
+  /// No description provided for @studentRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Student'**
+  String get studentRole;
+
+  /// No description provided for @editProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Profile'**
+  String get editProfile;
+
+  /// No description provided for @yourAchievements.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Achievements'**
+  String get yourAchievements;
+
+  /// No description provided for @achievementPermanent.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanent achievement'**
+  String get achievementPermanent;
+
+  /// No description provided for @achievementExpiresToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Expires today — complete it again!'**
+  String get achievementExpiresToday;
+
+  /// No description provided for @achievementExpiresInDays.
+  ///
+  /// In en, this message translates to:
+  /// **'Expires in {days} day{plural}'**
+  String achievementExpiresInDays(int days, String plural);
+
+  /// No description provided for @achievementExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired — complete the condition to recover it'**
+  String get achievementExpired;
+
+  /// No description provided for @achievementNotObtained.
+  ///
+  /// In en, this message translates to:
+  /// **'Not yet obtained'**
+  String get achievementNotObtained;
+
+  /// No description provided for @achievementRenews.
+  ///
+  /// In en, this message translates to:
+  /// **'This achievement renews every {days} days if you meet the condition.'**
+  String achievementRenews(int days);
+
+  /// No description provided for @achievementObtainedOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Obtained: {date}'**
+  String achievementObtainedOn(String date);
+
+  /// No description provided for @achievementExpiredBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired!'**
+  String get achievementExpiredBadge;
 }
 
 class _AppLocalizationsDelegate

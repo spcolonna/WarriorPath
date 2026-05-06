@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:warrior_path/models/discipline_model.dart';
 import 'package:warrior_path/models/level_model.dart';
 import 'package:warrior_path/models/technique_model.dart';
+import 'package:warrior_path/widgets/achievements_section.dart';
 import 'package:collection/collection.dart';
 import '../../../l10n/app_localizations.dart';
 import '../my_attendance_history_screen.dart';
@@ -119,7 +120,13 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
                 },
               ),
             ),
-            const SizedBox(height: 24),
+            const Divider(height: 40, indent: 16, endIndent: 16),
+            AchievementsSection(
+              schoolId: widget.schoolId,
+              memberId: widget.memberId,
+              memberProgress: _memberProgress,
+            ),
+            const SizedBox(height: 32),
           ],
         ),
       )),
