@@ -15,232 +15,561 @@ class SchoolInfoTabScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.mySchool),
-      ),
+      appBar: AppBar(title: Text(l10n.mySchool)),
       body: FutureBuilder<DocumentSnapshot>(
         future: FirebaseFirestore.instance.collection('schools').doc(schoolId).get(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: Text(l10n.loading));
+            return const Center(child: CircularProgressIndicator());
           }
           if (!snapshot.hasData || !snapshot.data!.exists) {
             return Center(child: Text(l10n.couldNotLoadSchoolInfo));
           }
 
-          final schoolData = snapshot.data!.data() as Map<String, dynamic>;
-          final logoUrl = schoolData['logoUrl'] as String?;
-          final primaryDiscipline = schoolData['primaryDisciplineName'] ?? l10n.martialArt;
+          final data = snapshot.data!.data() as Map<String, dynamic>;
+          final logoUrl       = data['logoUrl'] as String?;
+          final schoolName    = data['name'] as String? ?? l10n.schoolNameLabel;
+          final discipline    = data['primaryDisciplineName'] as String? ?? l10n.martialArt;
+          final rawAddress    = '${data['address'] ?? ''}, ${data['city'] ?? ''}'.trim().replaceAll(RegExp(r'^,\s*|,\s*$'), '');
+          final address       = rawAddress.replaceAll(RegExp(r'^,+|,+$'), '').trim();
+          final phone         = data['phone'] as String?;
 
-          return SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(24.0),
-                  color: Theme.of(context).primaryColor.withOpacity(0.1),
-                  child: Column(
-                    children: [
-                      CircleAvatar(
-                        radius: 50,
-                        backgroundColor: Colors.white,
-                        backgroundImage: (logoUrl != null && logoUrl.isNotEmpty) ? NetworkImage(logoUrl) : null,
-                        child: (logoUrl == null || logoUrl.isEmpty) ? const Icon(Icons.school, size: 50) : null,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(schoolData['name'] ?? l10n.schoolNameLabel, style: Theme.of(context).textTheme.headlineMedium, textAlign: TextAlign.center),
-                      Text(primaryDiscipline, style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.grey.shade600), textAlign: TextAlign.center),
-                    ],
-                  ),
+          return CustomScrollView(
+            slivers: [
+              // ── Header ─────────────────────────────────────────────────
+              SliverToBoxAdapter(
+                child: _SchoolHeader(
+                  logoUrl: logoUrl,
+                  schoolName: schoolName,
+                  discipline: discipline,
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
+              ),
+
+              // ── Clase de hoy ────────────────────────────────────────────
+              SliverToBoxAdapter(
+                child: _TodaySection(schoolId: schoolId),
+              ),
+
+              // ── Horario semanal ─────────────────────────────────────────
+              SliverToBoxAdapter(
+                child: _WeekSchedule(schoolId: schoolId),
+              ),
+
+              // ── Próximos eventos ────────────────────────────────────────
+              SliverToBoxAdapter(
+                child: _UpcomingEvents(schoolId: schoolId),
+              ),
+
+              // ── Contacto ────────────────────────────────────────────────
+              SliverToBoxAdapter(
+                child: _ContactSection(address: address, phone: phone),
+              ),
+
+              // ── Switch perfil ───────────────────────────────────────────
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
                   child: Card(
-                    elevation: 2,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      side: BorderSide(color: Colors.grey.shade200),
+                    ),
                     child: ListTile(
                       leading: Icon(Icons.swap_horiz, color: Theme.of(context).primaryColor),
                       title: Text(l10n.switchProfileSchool),
-                      trailing: const Icon(Icons.arrow_forward_ios),
-                      onTap: () {
-                        Provider.of<SessionProvider>(context, listen: false).setActiveProfileId(null);
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (context) => const RoleSelectorScreen()),
-                        );
-                      },
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const RoleSelectorScreen()),
+                      ),
                     ),
                   ),
                 ),
-                _buildUpcomingEvents(context, schoolId),
-                _buildInfoCard(context: context, title: l10n.contactData, children: [
-                  ListTile(leading: const Icon(Icons.location_on), title: Text(l10n.address), subtitle: Text('${schoolData['address'] ?? ''}, ${schoolData['city'] ?? ''}')),
-                  ListTile(leading: const Icon(Icons.phone), title: Text(l10n.phone), subtitle: Text(schoolData['phone'] ?? l10n.noSpecify)),
-                ]),
-                _buildScheduleCard(context, schoolId),
-              ],
-            ),
+              ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+            ],
           );
         },
       ),
     );
   }
+}
 
-  Widget _buildInfoCard({required BuildContext context, required String title, required List<Widget> children}) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      child: Card(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(padding: const EdgeInsets.all(16.0), child: Text(title, style: Theme.of(context).textTheme.titleLarge)),
-            const Divider(height: 1),
-            ...children,
-          ],
-        ),
+// ── Header compacto ───────────────────────────────────────────────────────────
+
+class _SchoolHeader extends StatelessWidget {
+  final String? logoUrl;
+  final String schoolName;
+  final String discipline;
+  const _SchoolHeader({required this.logoUrl, required this.schoolName, required this.discipline});
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).primaryColor;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 30,
+            backgroundColor: primary.withValues(alpha: 0.1),
+            backgroundImage: (logoUrl?.isNotEmpty == true) ? NetworkImage(logoUrl!) : null,
+            child: (logoUrl?.isNotEmpty != true)
+                ? Icon(Icons.school_outlined, size: 30, color: primary)
+                : null,
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  schoolName,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  discipline,
+                  style: TextStyle(color: primary, fontWeight: FontWeight.w500, fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
+}
 
-  Widget _buildUpcomingEvents(BuildContext context, String schoolId) {
+// ── Clase de hoy ──────────────────────────────────────────────────────────────
+
+class _TodaySection extends StatelessWidget {
+  final String schoolId;
+  const _TodaySection({required this.schoolId});
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).primaryColor;
     final l10n = AppLocalizations.of(context);
-    final studentId = Provider.of<SessionProvider>(context, listen: false).activeProfileId;
-    if (studentId == null) return const SizedBox.shrink();
+    final todayWeekday = DateTime.now().weekday;
 
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('schools').doc(schoolId).collection('events')
-          .where('invitedStudentIds', arrayContains: studentId)
-          .where('date', isGreaterThanOrEqualTo: Timestamp.now())
-          .orderBy('date').limit(3).snapshots(),
+      stream: FirebaseFirestore.instance
+          .collection('schools').doc(schoolId)
+          .collection('classSchedules')
+          .where('dayOfWeek', isEqualTo: todayWeekday)
+          .orderBy('startTime')
+          .snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return const SizedBox.shrink();
+        final classes = snapshot.data?.docs ?? [];
+        final hasClass = classes.isNotEmpty;
 
         return Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+          child: Container(
+            decoration: BoxDecoration(
+              color: hasClass ? primary : Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            padding: const EdgeInsets.all(20),
+            child: hasClass
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.todayClass,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      ...classes.map((doc) {
+                        final d = doc.data() as Map<String, dynamic>;
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  '${d['startTime']} – ${d['endTime']}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  d['title'] ?? '',
+                                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      Icon(Icons.event_busy_outlined, color: Colors.grey.shade400),
+                      const SizedBox(width: 12),
+                      Text(l10n.noSchedulerClass, style: TextStyle(color: Colors.grey.shade500)),
+                    ],
+                  ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ── Horario semanal con selector de día ───────────────────────────────────────
+
+class _WeekSchedule extends StatefulWidget {
+  final String schoolId;
+  const _WeekSchedule({required this.schoolId});
+
+  @override
+  State<_WeekSchedule> createState() => _WeekScheduleState();
+}
+
+class _WeekScheduleState extends State<_WeekSchedule> {
+  late int _selectedDay;
+  late Future<Map<String, String>> _disciplinesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDay = DateTime.now().weekday;
+    _disciplinesFuture = _fetchDisciplines();
+  }
+
+  Future<Map<String, String>> _fetchDisciplines() async {
+    final snap = await FirebaseFirestore.instance
+        .collection('schools').doc(widget.schoolId)
+        .collection('disciplines').get();
+    return {for (var d in snap.docs) d.id: (d.data()['name'] as String?) ?? ''};
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final primary = Theme.of(context).primaryColor;
+    final List<String> dayShort = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+    final today = DateTime.now().weekday;
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('schools').doc(widget.schoolId)
+          .collection('classSchedules')
+          .orderBy('dayOfWeek')
+          .orderBy('startTime')
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Padding(
+            padding: EdgeInsets.all(32),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final Map<int, List<QueryDocumentSnapshot>> grouped = {};
+        for (var doc in snapshot.data!.docs) {
+          final day = doc['dayOfWeek'] as int;
+          grouped.putIfAbsent(day, () => []).add(doc);
+        }
+
+        final daysWithClasses = grouped.keys.toSet();
+        final selectedClasses = grouped[_selectedDay] ?? [];
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(l10n.upcomingEvents, style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 8),
-              ...snapshot.data!.docs.map((doc) {
-                final event = EventModel.fromFirestore(doc);
-                return Card(
-                  child: ListTile(
-                    leading: const Icon(Icons.event_available),
-                    title: Text(event.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text(DateFormat('dd MMMM, yyyy', 'es_ES').format(event.date)),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => StudentEventDetailScreen(
-                            schoolId: schoolId,
-                            eventId: doc.id,
+              Text(
+                l10n.classSchedule,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 14),
+
+              // ── Selector de días ──────────────────────────────────────
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: List.generate(7, (i) {
+                  final dayIndex = i + 1;
+                  final isSelected = _selectedDay == dayIndex;
+                  final isToday = today == dayIndex;
+                  final hasClass = daysWithClasses.contains(dayIndex);
+
+                  return GestureDetector(
+                    onTap: () => setState(() => _selectedDay = dayIndex),
+                    child: Column(
+                      children: [
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? primary
+                                : isToday
+                                    ? primary.withValues(alpha: 0.12)
+                                    : Colors.transparent,
+                            shape: BoxShape.circle,
+                            border: isToday && !isSelected
+                                ? Border.all(color: primary.withValues(alpha: 0.4))
+                                : null,
+                          ),
+                          child: Center(
+                            child: Text(
+                              dayShort[i],
+                              style: TextStyle(
+                                color: isSelected
+                                    ? Colors.white
+                                    : isToday
+                                        ? primary
+                                        : Colors.grey.shade600,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
                           ),
                         ),
-                      );
-                    },
+                        const SizedBox(height: 5),
+                        Container(
+                          width: 5,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: hasClass
+                                ? (isSelected ? primary : primary.withValues(alpha: 0.4))
+                                : Colors.transparent,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ),
+
+              const SizedBox(height: 16),
+
+              // ── Clases del día seleccionado ───────────────────────────
+              if (selectedClasses.isEmpty)
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    child: Text(
+                      l10n.noSchedulerClass,
+                      style: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+                    ),
                   ),
-                );
-              }),
-              const Divider(height: 32),
+                )
+              else
+                FutureBuilder<Map<String, String>>(
+                  future: _disciplinesFuture,
+                  builder: (context, disciplinesSnap) {
+                    final disciplines = disciplinesSnap.data ?? {};
+                    return Column(
+                      children: selectedClasses.map((doc) {
+                        final d = doc.data() as Map<String, dynamic>;
+                        final disciplineName = disciplines[d['disciplineId']] ?? '';
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 10),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.shade200),
+                          ),
+                          child: Row(
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    d['startTime'] ?? '',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                      color: primary,
+                                    ),
+                                  ),
+                                  Text(
+                                    d['endTime'] ?? '',
+                                    style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(width: 16),
+                              Container(width: 1, height: 36, color: Colors.grey.shade200),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      d['title'] ?? '',
+                                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                                    ),
+                                    if (disciplineName.isNotEmpty)
+                                      Text(
+                                        disciplineName,
+                                        style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    );
+                  },
+                ),
             ],
           ),
         );
       },
     );
   }
-
-  Widget _buildScheduleCard(BuildContext context, String schoolId) {
-    return _ScheduleView(schoolId: schoolId);
-  }
 }
 
-class _ScheduleView extends StatefulWidget {
+// ── Próximos eventos ──────────────────────────────────────────────────────────
+
+class _UpcomingEvents extends StatelessWidget {
   final String schoolId;
-  const _ScheduleView({required this.schoolId});
-
-  @override
-  State<_ScheduleView> createState() => _ScheduleViewState();
-}
-
-class _ScheduleViewState extends State<_ScheduleView> {
-  late Future<Map<String, String>> _disciplinesMapFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    _disciplinesMapFuture = _fetchDisciplinesAsMap();
-  }
-
-  Future<Map<String, String>> _fetchDisciplinesAsMap() async {
-    final disciplinesSnapshot = await FirebaseFirestore.instance
-        .collection('schools').doc(widget.schoolId)
-        .collection('disciplines').get();
-    final Map<String, String> disciplinesMap = {};
-    for (var doc in disciplinesSnapshot.docs) {
-      disciplinesMap[doc.id] = (doc.data()['name'] as String?) ?? '...';
-    }
-    return disciplinesMap;
-  }
+  const _UpcomingEvents({required this.schoolId});
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final List<String> dayLabels = [l10n.monday, l10n.tuesday, l10n.wednesday, l10n.thursday, l10n.friday, l10n.saturday, l10n.sunday];
+    final studentId = Provider.of<SessionProvider>(context, listen: false).activeProfileId;
+    if (studentId == null) return const SizedBox.shrink();
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('schools').doc(schoolId)
+          .collection('events')
+          .where('invitedStudentIds', arrayContains: studentId)
+          .where('date', isGreaterThanOrEqualTo: Timestamp.now())
+          .orderBy('date')
+          .limit(3)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.upcomingEvents,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              ...snapshot.data!.docs.map((doc) {
+                final event = EventModel.fromFirestore(doc);
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey.shade200),
+                  ),
+                  child: ListTile(
+                    leading: Icon(Icons.event_outlined, color: Theme.of(context).primaryColor),
+                    title: Text(event.title, style: const TextStyle(fontWeight: FontWeight.w600)),
+                    subtitle: Text(DateFormat('dd MMM yyyy').format(event.date), style: const TextStyle(fontSize: 12)),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => StudentEventDetailScreen(schoolId: schoolId, eventId: doc.id),
+                    )),
+                  ),
+                );
+              }),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ── Contacto ──────────────────────────────────────────────────────────────────
+
+class _ContactSection extends StatelessWidget {
+  final String address;
+  final String? phone;
+  const _ContactSection({required this.address, required this.phone});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final primary = Theme.of(context).primaryColor;
+    final hasAddress = address.isNotEmpty;
+    final hasPhone = phone != null && phone!.isNotEmpty;
+    if (!hasAddress && !hasPhone) return const SizedBox.shrink();
 
     return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Card(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(padding: const EdgeInsets.all(16.0), child: Text(l10n.classSchedule, style: Theme.of(context).textTheme.titleLarge)),
-            const Divider(height: 1),
-            FutureBuilder<Map<String, String>>(
-              future: _disciplinesMapFuture,
-              builder: (context, disciplinesSnapshot) {
-                if (!disciplinesSnapshot.hasData) return const Center(child: CircularProgressIndicator());
-                final disciplinesMap = disciplinesSnapshot.data ?? {};
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.contactData,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          if (hasAddress)
+            _ContactRow(icon: Icons.location_on_outlined, text: address, color: primary),
+          if (hasAddress && hasPhone) const SizedBox(height: 8),
+          if (hasPhone)
+            _ContactRow(icon: Icons.phone_outlined, text: phone!, color: primary),
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+}
 
-                return StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('classSchedules').orderBy('dayOfWeek').orderBy('startTime').snapshots(),
-                  builder: (context, scheduleSnapshot) {
-                    if (scheduleSnapshot.connectionState == ConnectionState.waiting) return const Padding(padding: EdgeInsets.all(16), child: Center(child: CircularProgressIndicator()));
-                    if (!scheduleSnapshot.hasData || scheduleSnapshot.data!.docs.isEmpty) return ListTile(title: Text(l10n.scheduleNotDefinedYet));
+class _ContactRow extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final Color color;
+  const _ContactRow({required this.icon, required this.text, required this.color});
 
-                    final Map<int, List<QueryDocumentSnapshot>> groupedSchedules = {};
-                    for (var doc in scheduleSnapshot.data!.docs) {
-                      final day = doc['dayOfWeek'] as int;
-                      if (groupedSchedules[day] == null) groupedSchedules[day] = [];
-                      groupedSchedules[day]!.add(doc);
-                    }
-
-                    return Column(
-                      children: List.generate(7, (index) {
-                        final dayIndex = index + 1;
-                        final schedulesForDay = groupedSchedules[dayIndex] ?? [];
-                        if (schedulesForDay.isEmpty) return const SizedBox.shrink();
-
-                        return ExpansionTile(
-                          title: Text(dayLabels[index], style: const TextStyle(fontWeight: FontWeight.bold)),
-                          children: schedulesForDay.map((doc) {
-                            final data = doc.data() as Map<String, dynamic>;
-                            final disciplineName = disciplinesMap[data['disciplineId']] ?? l10n.general;
-                            return ListTile(
-                              title: Text(data['title']),
-                              subtitle: Text(disciplineName),
-                              trailing: Text('${data['startTime']} - ${data['endTime']}'),
-                            );
-                          }).toList(),
-                        );
-                      }),
-                    );
-                  },
-                );
-              },
-            ),
-          ],
-        ),
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(width: 14),
+          Expanded(child: Text(text, style: const TextStyle(fontSize: 14))),
+        ],
       ),
     );
   }

@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:warrior_path/providers/session_provider.dart';
+import 'package:warrior_path/providers/theme_provider.dart';
 import 'package:warrior_path/screens/student/school_search_screen.dart';
 import 'package:warrior_path/screens/student/student_dashboard_screen.dart';
 import 'package:warrior_path/screens/teacher_dashboard_screen.dart';
@@ -51,11 +52,13 @@ class _RoleSelectorScreenState extends State<RoleSelectorScreen> {
 
   void _selectProfile(Map<String, dynamic> profile) {
     final sessionProvider = Provider.of<SessionProvider>(context, listen: false);
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
     final schoolId = profile['schoolId'];
     final role = profile['role'];
     final profileId = profile['profileId'];
 
     sessionProvider.setFullActiveSession(schoolId, role, profileId);
+    themeProvider.loadThemeFromSchool(schoolId);
 
     Widget destination;
     if (role == 'maestro') {

@@ -43,6 +43,10 @@ class _EventManagementScreenState extends State<EventManagementScreen> with Sing
         title: Text(l10n.manageEvents),
         bottom: TabBar(
           controller: _tabController,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white.withValues(alpha: 0.55),
+          indicatorColor: Colors.white,
+          indicatorWeight: 3,
           tabs: const [Tab(text: 'Próximos'), Tab(text: 'Pasados')],
         ),
       ),

@@ -48,6 +48,10 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
         title: Text(l10n.students),
         bottom: TabBar(
           controller: _tabController,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white.withValues(alpha: 0.55),
+          indicatorColor: Colors.white,
+          indicatorWeight: 3,
           tabs: [
             Tab(text: l10n.actives),
             Tab(text: l10n.pending),

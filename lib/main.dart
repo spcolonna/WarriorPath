@@ -61,7 +61,11 @@ class MyApp extends StatelessWidget {
             return MaterialApp(
               title: 'Warrior Path',
               theme: ThemeData(
-                primarySwatch: Colors.blue,
+                colorScheme: ColorScheme.fromSeed(
+                  seedColor: themeProvider.theme.primaryColor,
+                  primary: themeProvider.theme.primaryColor,
+                  secondary: themeProvider.theme.accentColor,
+                ),
                 primaryColor: themeProvider.theme.primaryColor,
                 appBarTheme: AppBarTheme(
                   backgroundColor: themeProvider.theme.primaryColor,
@@ -71,6 +75,12 @@ class MyApp extends StatelessWidget {
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
+                ),
+                tabBarTheme: const TabBarThemeData(
+                  labelColor: Colors.white,
+                  unselectedLabelColor: Color(0x8DFFFFFF),
+                  indicatorColor: Colors.white,
+                  indicatorSize: TabBarIndicatorSize.tab,
                 ),
                 floatingActionButtonTheme: FloatingActionButtonThemeData(
                   backgroundColor: themeProvider.theme.accentColor,

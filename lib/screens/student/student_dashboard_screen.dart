@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:confetti/confetti.dart';
 import 'package:warrior_path/providers/session_provider.dart';
+import 'package:warrior_path/providers/theme_provider.dart';
 import 'package:warrior_path/screens/student/tabs/community_tab_screen.dart';
 import 'package:warrior_path/screens/student/tabs/payments_tab_screen.dart';
 import 'package:warrior_path/screens/student/tabs/profile_tab_screen.dart';
@@ -35,6 +36,11 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     _confettiController = ConfettiController(duration: const Duration(seconds: 4));
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final session = Provider.of<SessionProvider>(context, listen: false);
+      if (session.activeSchoolId != null) {
+        Provider.of<ThemeProvider>(context, listen: false)
+            .loadThemeFromSchool(session.activeSchoolId!);
+      }
       _checkUnseenPromotion();
     });
   }
@@ -123,49 +129,11 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
             index: _selectedIndex,
             children: widgetOptions,
           ),
-          bottomNavigationBar: BottomNavigationBar(
-            items: <BottomNavigationBarItem>[
-              BottomNavigationBarItem(icon: const Icon(Icons.school), label: l10n.mySchool),
-              BottomNavigationBarItem(icon: const Icon(Icons.leaderboard), label: l10n.myProgress),
-              BottomNavigationBarItem(icon: const Icon(Icons.groups), label: l10n.schoolCommunity),
-              BottomNavigationBarItem(
-                label: l10n.myPayments,
-                icon: StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection('schools').doc(schoolId)
-                      .collection('members').doc(memberId)
-                      .collection('paymentReminders')
-                      .where('status', isEqualTo: 'pending')
-                      .limit(1)
-                      .snapshots(),
-                  builder: (context, snapshot) {
-                    final bool hasPendingPayments = snapshot.hasData && snapshot.data!.docs.isNotEmpty;
-                    return Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        const Icon(Icons.payment),
-                        if (hasPendingPayments)
-                          Positioned(
-                            top: -4,
-                            right: -6,
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(
-                                color: Colors.red,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ),
-                      ],
-                    );
-                  },
-                ),
-              ),
-              BottomNavigationBarItem(icon: const Icon(Icons.person), label: l10n.myProfile),
-            ],
-            currentIndex: _selectedIndex,
+          bottomNavigationBar: _StudentBottomNav(
+            selectedIndex: _selectedIndex,
             onTap: _onItemTapped,
-            type: BottomNavigationBarType.fixed,
+            schoolId: schoolId,
+            memberId: memberId,
           ),
         ),
         ConfettiWidget(
@@ -177,6 +145,155 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           gravity: 0.2,
         ),
       ],
+    );
+  }
+}
+
+// ── Bottom nav sin labels ─────────────────────────────────────────────────────
+
+class _StudentBottomNav extends StatelessWidget {
+  final int selectedIndex;
+  final ValueChanged<int> onTap;
+  final String schoolId;
+  final String memberId;
+
+  const _StudentBottomNav({
+    required this.selectedIndex,
+    required this.onTap,
+    required this.schoolId,
+    required this.memberId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).primaryColor;
+    final unselected = Colors.grey.shade400;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _NavItem(icon: Icons.school_outlined, selectedIcon: Icons.school, index: 0, selectedIndex: selectedIndex, color: primary, unselected: unselected, onTap: onTap),
+              _NavItem(icon: Icons.leaderboard_outlined, selectedIcon: Icons.leaderboard, index: 1, selectedIndex: selectedIndex, color: primary, unselected: unselected, onTap: onTap),
+              _NavItem(icon: Icons.groups_outlined, selectedIcon: Icons.groups, index: 2, selectedIndex: selectedIndex, color: primary, unselected: unselected, onTap: onTap),
+              _PaymentNavItem(selectedIndex: selectedIndex, color: primary, unselected: unselected, onTap: onTap, schoolId: schoolId, memberId: memberId),
+              _NavItem(icon: Icons.person_outline, selectedIcon: Icons.person, index: 4, selectedIndex: selectedIndex, color: primary, unselected: unselected, onTap: onTap),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NavItem extends StatelessWidget {
+  final IconData icon;
+  final IconData selectedIcon;
+  final int index;
+  final int selectedIndex;
+  final Color color;
+  final Color unselected;
+  final ValueChanged<int> onTap;
+
+  const _NavItem({
+    required this.icon,
+    required this.selectedIcon,
+    required this.index,
+    required this.selectedIndex,
+    required this.color,
+    required this.unselected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isSelected = index == selectedIndex;
+    return GestureDetector(
+      onTap: () => onTap(index),
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withValues(alpha: 0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Icon(
+          isSelected ? selectedIcon : icon,
+          color: isSelected ? color : unselected,
+          size: 26,
+        ),
+      ),
+    );
+  }
+}
+
+class _PaymentNavItem extends StatelessWidget {
+  final int selectedIndex;
+  final Color color;
+  final Color unselected;
+  final ValueChanged<int> onTap;
+  final String schoolId;
+  final String memberId;
+
+  const _PaymentNavItem({
+    required this.selectedIndex,
+    required this.color,
+    required this.unselected,
+    required this.onTap,
+    required this.schoolId,
+    required this.memberId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const index = 3;
+    final isSelected = index == selectedIndex;
+    return GestureDetector(
+      onTap: () => onTap(index),
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withValues(alpha: 0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('schools').doc(schoolId)
+              .collection('members').doc(memberId)
+              .collection('paymentReminders')
+              .where('status', isEqualTo: 'pending')
+              .limit(1)
+              .snapshots(),
+          builder: (context, snapshot) {
+            final hasPending = snapshot.hasData && snapshot.data!.docs.isNotEmpty;
+            return Badge(
+              isLabelVisible: hasPending,
+              child: Icon(
+                isSelected ? Icons.payment : Icons.payment_outlined,
+                color: isSelected ? color : unselected,
+                size: 26,
+              ),
+            );
+          },
+        ),
+      ),
     );
   }
 }
