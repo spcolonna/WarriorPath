@@ -400,5 +400,10 @@
     "@achievementObtainedOn": {
         "placeholders": { "date": {"type": "String"} }
     },
-    "achievementExpiredBadge": "¡Expiró!"
+    "achievementExpiredBadge": "¡Expiró!",
+    "changeLanguage": "Idioma de la aplicación",
+    "changeLanguageSubtitle": "Español, English, Português",
+    "languageSpanish": "Español",
+    "languageEnglish": "English",
+    "languagePortuguese": "Português"
 }

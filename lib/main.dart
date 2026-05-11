@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
 import 'package:warrior_path/providers/locale_provider.dart';
 import 'package:warrior_path/providers/session_provider.dart';
@@ -101,12 +102,21 @@ class MyApp extends StatelessWidget {
 
               home: AppSplashScreen(showLanding: showLanding),
               builder: (context, navigator) {
-                return Column(
+                final content = Column(
                   children: [
                     Expanded(child: navigator!),
-                    if (showBannerAd)
-                      const AdBannerWidget(),
+                    if (showBannerAd) const AdBannerWidget(),
                   ],
+                );
+                if (!kIsWeb) return content;
+                return ColoredBox(
+                  color: Theme.of(context).colorScheme.surfaceContainerLow,
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 920),
+                      child: ClipRect(child: content),
+                    ),
+                  ),
                 );
               },
             );

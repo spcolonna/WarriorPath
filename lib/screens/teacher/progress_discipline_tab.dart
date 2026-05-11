@@ -250,7 +250,10 @@ class _ProgressDisciplineTabState extends State<ProgressDisciplineTab> {
                           builder: (context, levelSnapshot) {
                             String levelName = l10n.loading;
                             if (levelSnapshot.connectionState == ConnectionState.done) {
-                              levelName = levelSnapshot.data?['name'] ?? l10n.deleteLevel;
+                              final doc = levelSnapshot.data;
+                              levelName = (doc != null && doc.exists)
+                                  ? (doc['name'] as String? ?? l10n.deleteLevel)
+                                  : l10n.deleteLevel;
                             }
                             return ListTile(
                               leading: const Icon(Icons.military_tech, color: Colors.amber),

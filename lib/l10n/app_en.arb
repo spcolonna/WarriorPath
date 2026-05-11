@@ -683,5 +683,10 @@
     "@achievementObtainedOn": {
         "placeholders": { "date": {"type": "String"} }
     },
-    "achievementExpiredBadge": "Expired!"
+    "achievementExpiredBadge": "Expired!",
+    "changeLanguage": "App Language",
+    "changeLanguageSubtitle": "Español, English, Português",
+    "languageSpanish": "Español",
+    "languageEnglish": "English",
+    "languagePortuguese": "Português"
 }

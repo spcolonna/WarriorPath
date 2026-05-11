@@ -205,7 +205,14 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
                   ]),
                 ]),
               ),
-              TabBar(controller: _tabController, isScrollable: true, tabs: tabs),
+              TabBar(
+                controller: _tabController,
+                isScrollable: true,
+                tabs: tabs,
+                labelColor: Theme.of(context).primaryColor,
+                unselectedLabelColor: Colors.grey,
+                indicatorColor: Theme.of(context).primaryColor,
+              ),
               Expanded(child: TabBarView(controller: _tabController, children: tabViews)),
             ],
           ),
@@ -757,12 +764,13 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
             allPlans: allPlans,
             assignedPlanId: assignedPlanId,
             currency: currency,
-            onSave: (String concept, double amount, String? planId) {
+            onSave: (String concept, double amount, String? planId, DateTime date) {
               _savePayment(
                 concept: concept,
                 amount: amount,
                 currency: currency,
                 planId: planId,
+                paymentDate: date,
                 l10n: l10n,
               );
             },
@@ -777,6 +785,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
     required double amount,
     required String currency,
     String? planId,
+    required DateTime paymentDate,
     required AppLocalizations l10n,
   }) async {
     try {
@@ -784,7 +793,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
           .collection('schools').doc(widget.schoolId)
           .collection('members').doc(widget.studentId)
           .collection('payments').add({
-        'paymentDate': Timestamp.now(),
+        'paymentDate': Timestamp.fromDate(paymentDate),
         'concept': concept.trim(),
         'amount': amount,
         'currency': currency,

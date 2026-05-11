@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:warrior_path/providers/session_provider.dart';
 import 'package:warrior_path/screens/schedule/schedule_management_screen.dart';
+import 'package:warrior_path/screens/seed/seed_data_screen.dart';
 import 'package:warrior_path/screens/teacher/events/event_management_screen.dart';
 import 'package:warrior_path/screens/teacher/management/edit_school_data_screen.dart';
 import 'package:warrior_path/screens/teacher/management/finance_management_screen.dart';
@@ -93,6 +95,20 @@ class ManagementTabScreen extends StatelessWidget {
               );
             },
           ),
+          if (kIsWeb) ...[
+            const Divider(),
+            _buildManagementTile(
+              context: context,
+              icon: Icons.science_outlined,
+              title: 'Datos de Demo',
+              subtitle: 'Cargar escuela de ejemplo con alumnos, pagos, asistencias y logros',
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const SeedDataScreen()),
+                );
+              },
+            ),
+          ],
         ],
       ),
     );

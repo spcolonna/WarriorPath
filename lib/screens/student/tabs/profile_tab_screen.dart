@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:warrior_path/providers/locale_provider.dart';
 import 'package:warrior_path/screens/WelcomeScreen.dart';
 import 'package:warrior_path/screens/student/edit_profile_screen.dart';
 import 'package:warrior_path/screens/student/school_search_screen.dart';
@@ -320,6 +322,11 @@ class _ProfileBody extends StatelessWidget {
                       onTap: onEditTap,
                     ),
                     _ActionTile(
+                      icon: Icons.language,
+                      label: l10n.changeLanguage,
+                      onTap: () => _showLanguagePicker(context, l10n),
+                    ),
+                    _ActionTile(
                       icon: Icons.escalator_warning,
                       label: l10n.manageChildren,
                       onTap: () => Navigator.of(context).push(
@@ -365,6 +372,48 @@ class _ProfileBody extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  void _showLanguagePicker(BuildContext context, AppLocalizations l10n) {
+    final localeProvider = context.read<LocaleProvider>();
+    final current = localeProvider.locale?.languageCode ?? 'es';
+
+    final options = [
+      ('es', l10n.languageSpanish, '🇪🇸'),
+      ('en', l10n.languageEnglish, '🇺🇸'),
+      ('pt', l10n.languagePortuguese, '🇧🇷'),
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 16),
+            Text(l10n.changeLanguage, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const SizedBox(height: 8),
+            for (final (code, label, flag) in options)
+              ListTile(
+                leading: Text(flag, style: const TextStyle(fontSize: 22)),
+                title: Text(label),
+                trailing: current == code
+                    ? Icon(Icons.check, color: Theme.of(context).primaryColor)
+                    : null,
+                onTap: () {
+                  localeProvider.setLocale(Locale(code));
+                  Navigator.of(ctx).pop();
+                },
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

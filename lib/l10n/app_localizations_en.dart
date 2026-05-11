@@ -1341,4 +1341,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get achievementExpiredBadge => 'Expired!';
+
+  @override
+  String get changeLanguage => 'App Language';
+
+  @override
+  String get changeLanguageSubtitle => 'Español, English, Português';
+
+  @override
+  String get languageSpanish => 'Español';
+
+  @override
+  String get languageEnglish => 'English';
+
+  @override
+  String get languagePortuguese => 'Português';
 }

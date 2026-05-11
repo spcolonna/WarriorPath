@@ -2493,6 +2493,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Expired!'**
   String get achievementExpiredBadge;
+
+  /// No description provided for @changeLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'App Language'**
+  String get changeLanguage;
+
+  /// No description provided for @changeLanguageSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Español, English, Português'**
+  String get changeLanguageSubtitle;
+
+  /// No description provided for @languageSpanish.
+  ///
+  /// In en, this message translates to:
+  /// **'Español'**
+  String get languageSpanish;
+
+  /// No description provided for @languageEnglish.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get languageEnglish;
+
+  /// No description provided for @languagePortuguese.
+  ///
+  /// In en, this message translates to:
+  /// **'Português'**
+  String get languagePortuguese;
 }
 
 class _AppLocalizationsDelegate
