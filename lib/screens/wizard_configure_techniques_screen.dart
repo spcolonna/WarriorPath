@@ -80,13 +80,143 @@ class _WizardConfigureTechniquesScreenState extends State<WizardConfigureTechniq
   }
 
   void _addTechnique() {
-    setState(() {
-      _techniques.add(TechniqueModel(
-        name: '',
-        category: _categories.isNotEmpty ? _categories.first : '',
-        localId: _nextTechniqueId++,
-      ));
-    });
+    final newTech = TechniqueModel(
+      name: '',
+      category: _categories.isNotEmpty ? _categories.first : '',
+      localId: _nextTechniqueId++,
+    );
+    setState(() => _techniques.add(newTech));
+    _editTechnique(newTech);
+  }
+
+  void _editTechnique(TechniqueModel technique) {
+    final nameCtrl = TextEditingController(text: technique.name);
+    final descCtrl = TextEditingController(text: technique.description);
+    final videoCtrl = TextEditingController(text: technique.videoUrl ?? '');
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheet) {
+          String? selectedCategory = _categories.contains(technique.category)
+              ? technique.category
+              : (_categories.isNotEmpty ? _categories.first : null);
+
+          return DraggableScrollableSheet(
+            expand: false,
+            initialChildSize: 0.85,
+            minChildSize: 0.5,
+            maxChildSize: 0.95,
+            builder: (ctx2, scrollCtrl) => Padding(
+              padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom),
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: Container(
+                      width: 40, height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Row(
+                      children: [
+                        Text(
+                          technique.name.trim().isEmpty
+                              ? 'Nueva técnica'
+                              : technique.name,
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Divider(height: 1),
+                  Expanded(
+                    child: ListView(
+                      controller: scrollCtrl,
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                      children: [
+                        TextFormField(
+                          controller: nameCtrl,
+                          autofocus: true,
+                          onChanged: (v) {
+                            technique.name = v;
+                            setSheet(() {});
+                          },
+                          decoration: InputDecoration(
+                            labelText: l10n.techniqueName,
+                            border: const OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        if (_categories.isNotEmpty)
+                          DropdownButtonFormField<String>(
+                            initialValue: selectedCategory,
+                            decoration: InputDecoration(
+                              labelText: l10n.categoryLabel,
+                              border: const OutlineInputBorder(),
+                            ),
+                            items: _categories.map((c) =>
+                                DropdownMenuItem(value: c, child: Text(c))).toList(),
+                            onChanged: (v) {
+                              if (v != null) technique.category = v;
+                            },
+                          ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: descCtrl,
+                          onChanged: (v) => technique.description = v,
+                          decoration: InputDecoration(
+                            labelText: l10n.descriptionOptional,
+                            border: const OutlineInputBorder(),
+                          ),
+                          maxLines: 2,
+                        ),
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          controller: videoCtrl,
+                          onChanged: (v) =>
+                              technique.videoUrl = v.trim().isEmpty ? null : v.trim(),
+                          decoration: InputDecoration(
+                            labelText: l10n.videoLinkOptional,
+                            hintText: l10n.videoLinkHint,
+                            border: const OutlineInputBorder(),
+                            prefixIcon: const Icon(Icons.play_circle_outline),
+                          ),
+                          keyboardType: TextInputType.url,
+                        ),
+                        const SizedBox(height: 24),
+                        FilledButton(
+                          onPressed: () {
+                            setState(() {});
+                            Navigator.of(ctx).pop();
+                          },
+                          style: FilledButton.styleFrom(
+                            minimumSize: const Size.fromHeight(48),
+                          ),
+                          child: const Text('Listo'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 
   void _removeTechnique(int localId) {
@@ -169,43 +299,86 @@ class _WizardConfigureTechniquesScreenState extends State<WizardConfigureTechniq
               const SizedBox(height: 16),
               Text(l10n.addYourTechniques, style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 16),
-              if (_techniques.isEmpty) Text(l10n.createCategoriesFirst, textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey)),
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _techniques.length,
-                itemBuilder: (context, index) {
-                  final technique = _techniques[index];
-                  return Card(
-                    key: ValueKey(technique.localId),
-                    margin: const EdgeInsets.symmetric(vertical: 8),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(children: [
-                        Row(children: [
-                          Expanded(child: Text(l10n.techniqueNumber((index + 1).toString()), style: Theme.of(context).textTheme.titleMedium)),
-                          IconButton(icon: const Icon(Icons.delete_outline, color: Colors.red), onPressed: () => _removeTechnique(technique.localId!)),
-                        ],
+              if (_techniques.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Text(l10n.createCategoriesFirst, textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey)),
+                )
+              else
+                Card(
+                  margin: EdgeInsets.zero,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  child: Column(
+                    children: [
+                      for (int i = 0; i < _techniques.length; i++) ...[
+                        if (i > 0) const Divider(height: 1, indent: 16, endIndent: 16),
+                        InkWell(
+                          key: ValueKey(_techniques[i].localId),
+                          onTap: () => _editTechnique(_techniques[i]),
+                          borderRadius: i == 0
+                              ? const BorderRadius.vertical(top: Radius.circular(12))
+                              : i == _techniques.length - 1
+                                  ? const BorderRadius.vertical(bottom: Radius.circular(12))
+                                  : BorderRadius.zero,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 28, height: 28,
+                                  decoration: BoxDecoration(
+                                    color: _primaryColor.withValues(alpha: 0.12),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    '${i + 1}',
+                                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: _primaryColor),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        _techniques[i].name.trim().isEmpty
+                                            ? 'Sin nombre'
+                                            : _techniques[i].name,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14,
+                                          color: _techniques[i].name.trim().isEmpty
+                                              ? Colors.grey
+                                              : null,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      if (_techniques[i].category.isNotEmpty)
+                                        Text(
+                                          _techniques[i].category,
+                                          style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                                Icon(Icons.edit_outlined, size: 16, color: Colors.grey.shade400),
+                                const SizedBox(width: 4),
+                                GestureDetector(
+                                  onTap: () => _removeTechnique(_techniques[i].localId!),
+                                  child: Icon(Icons.delete_outline, size: 18, color: Colors.red.shade300),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                        TextFormField(initialValue: technique.name, onChanged: (value) => technique.name = value, decoration: InputDecoration(labelText: l10n.techniqueName)),
-                        const SizedBox(height: 12),
-                        DropdownButtonFormField<String>(
-                          value: technique.category.isNotEmpty && _categories.contains(technique.category) ? technique.category : null,
-                          hint: Text(l10n.selectCategory),
-                          items: _categories.map((cat) => DropdownMenuItem(value: cat, child: Text(cat))).toList(),
-                          onChanged: (value) { if (value != null) setState(() => technique.category = value); },
-                          decoration: InputDecoration(labelText: l10n.categoryLabel),
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(initialValue: technique.description, onChanged: (value) => technique.description = value, decoration: InputDecoration(labelText: l10n.descriptionOptional), maxLines: 2),
-                        const SizedBox(height: 12),
-                        TextFormField(initialValue: technique.videoUrl, onChanged: (value) => technique.videoUrl = value, decoration: InputDecoration(labelText: l10n.videoLinkOptional, hintText: l10n.videoLinkHint), keyboardType: TextInputType.url),
                       ],
-                      ),
-                    ),
-                  );
-                },
-              ),
+                    ],
+                  ),
+                ),
               const SizedBox(height: 16),
               ElevatedButton.icon(
                 icon: const Icon(Icons.add),

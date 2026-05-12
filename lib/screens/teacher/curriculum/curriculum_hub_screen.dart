@@ -73,6 +73,13 @@ class _CurriculumHubScreenState extends State<CurriculumHubScreen> {
 
           final disciplines = snapshot.data!;
 
+          if (disciplines.length == 1) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _navigateToDisciplineDetails(disciplines.first);
+            });
+            return const Center(child: CircularProgressIndicator());
+          }
+
           return ListView(
             padding: const EdgeInsets.all(16.0),
             children: [
