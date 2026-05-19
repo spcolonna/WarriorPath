@@ -50,9 +50,8 @@ class ApplicationSentScreen extends StatelessWidget {
                 icon: const Icon(Icons.search),
                 label: const Text('¿Te equivocaste? Busca otra escuela'),
                 onPressed: () {
-                  Navigator.of(context).pushReplacement(
+                  Navigator.of(context).push(
                     MaterialPageRoute(
-                      // Lo llevamos de vuelta al buscador de escuelas
                       builder: (context) => const SchoolSearchScreen(),
                     ),
                   );

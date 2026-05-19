@@ -5,14 +5,14 @@ import 'package:provider/provider.dart';
 import 'package:warrior_path/screens/parent/add_child_screen.dart';
 import 'package:warrior_path/screens/parent/guardian_dashboard_screen.dart';
 import 'package:warrior_path/screens/role_selector_screen.dart';
-import 'package:warrior_path/screens/student/application_sent_screen.dart';
+import 'package:warrior_path/screens/student/pending_progress_screen.dart';
 import 'package:warrior_path/screens/student/school_search_screen.dart';
 import 'package:warrior_path/screens/student/student_dashboard_screen.dart';
 import 'package:warrior_path/screens/teacher_dashboard_screen.dart';
+import 'package:warrior_path/screens/register_screen.dart';
 import 'package:warrior_path/screens/wizard_create_school_screen.dart';
 import 'package:warrior_path/screens/wizard_discipline_hub_screen.dart';
 import 'package:warrior_path/screens/wizard_profile_screen.dart';
-import 'package:warrior_path/services/auth_service.dart';
 import 'package:warrior_path/theme/AppColors.dart';
 import 'package:warrior_path/widgets/CustomInputField.dart';
 import 'package:warrior_path/widgets/CustomPasswordField.dart';
@@ -34,7 +34,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
-  final AuthService _authService = AuthService();
 
   Future<void> _navigateAfterAuth(User user) async {
     final userProfileDoc = await FirebaseFirestore.instance
@@ -174,13 +173,18 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           );
         }
       } else {
-        final pendingApplication =
+        final pendingApplications =
             userData['pendingApplications'] as Map<String, dynamic>?;
-        if (pendingApplication != null) {
+        if (pendingApplications != null && pendingApplications.isNotEmpty) {
+          final firstApp = pendingApplications.values.first as Map<String, dynamic>;
+          final schoolName = firstApp['schoolName'] as String? ?? '';
+          final applicationDate =
+              (firstApp['applicationDate'] as Timestamp?)?.toDate();
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
-              builder: (context) => ApplicationSentScreen(
-                schoolName: pendingApplication['schoolName'] ?? '',
+              builder: (context) => PendingProgressScreen(
+                schoolName: schoolName,
+                applicationDate: applicationDate,
               ),
             ),
           );
@@ -224,42 +228,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           errorMessage = l10n.unexpectedError;
       }
       _showErrorDialog(l10n.loginErrorTitle, errorMessage);
-    } catch (e) {
-      _showErrorDialog(l10n.errorTitle, l10n.genericErrorContent(e.toString()));
-    } finally {
-      if (mounted && _isLoading) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _performRegistration() async {
-    final l10n = AppLocalizations.of(context)!;
-    if (_isLoading) return;
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final email = _emailController.text.trim();
-      final password = _passwordController.text.trim();
-      final userModel = await _authService.signUpWithEmailPassword(
-        email,
-        password,
-      );
-      if (userModel != null) {
-        final user = FirebaseAuth.instance.currentUser;
-        if (user != null) {
-          await _navigateAfterAuth(user);
-        }
-      } else {
-        _showErrorDialog(
-          l10n.registrationErrorTitle,
-          l10n.registrationErrorContent,
-        );
-      }
     } catch (e) {
       _showErrorDialog(l10n.errorTitle, l10n.genericErrorContent(e.toString()));
     } finally {
@@ -396,7 +364,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                           const SizedBox(height: 16.0),
                           PrimaryButton(
                             text: l10n.createAccountButton,
-                            onPressed: _performRegistration,
+                            onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const RegisterScreen(),
+                              ),
+                            ),
                           ),
                           TextButton(
                             onPressed: () {
