@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:io';
 
 class NotificationService {
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
@@ -26,7 +27,7 @@ class NotificationService {
     // Esto cubre el caso de que el usuario ya tenga la sesión iniciada al abrir la app.
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      final token = await _fcm.getToken();
+      final token = await _getFcmTokenSafely();
       if (token != null) {
         await _saveTokenToDatabase(token, user.uid);
       }
@@ -54,7 +55,7 @@ class NotificationService {
     FirebaseAuth.instance.authStateChanges().listen((User? user) {
       if (user != null) {
         // El usuario acaba de iniciar sesión. Obtenemos el token y lo guardamos.
-        _fcm.getToken().then((token) {
+        _getFcmTokenSafely().then((token) {
           if (token != null) {
             _saveTokenToDatabase(token, user.uid);
           }
@@ -63,6 +64,27 @@ class NotificationService {
       // No hacemos nada en logout. El token sigue siendo válido para el dispositivo
       // y se asociará al siguiente usuario que inicie sesión.
     });
+  }
+
+  /// En iOS el token APNS puede no estar listo al arrancar la app. Reintenta
+  /// hasta 5 veces con 2 segundos de espera antes de rendirse.
+  Future<String?> _getFcmTokenSafely() async {
+    if (Platform.isIOS) {
+      for (int i = 0; i < 5; i++) {
+        try {
+          final apns = await _fcm.getAPNSToken();
+          if (apns == null) {
+            await Future.delayed(const Duration(seconds: 2));
+            continue;
+          }
+          return await _fcm.getToken();
+        } catch (_) {
+          await Future.delayed(const Duration(seconds: 2));
+        }
+      }
+      return null;
+    }
+    return await _fcm.getToken();
   }
 
   Future<void> _saveTokenToDatabase(String token, String userId) async {

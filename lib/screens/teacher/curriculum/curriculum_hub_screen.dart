@@ -7,7 +7,7 @@ import '../../../l10n/app_localizations.dart';
 
 class CurriculumHubScreen extends StatefulWidget {
   final String schoolId;
-  const CurriculumHubScreen({Key? key, required this.schoolId}) : super(key: key);
+  const CurriculumHubScreen({super.key, required this.schoolId});
 
   @override
   State<CurriculumHubScreen> createState() => _CurriculumHubScreenState();
@@ -38,7 +38,9 @@ class _CurriculumHubScreenState extends State<CurriculumHubScreen> {
     return disciplinesSnapshot.docs;
   }
 
-  Future<void> _navigateToDisciplineDetails(DocumentSnapshot disciplineDoc) async {
+  Future<void> _navigateToDisciplineDetails(
+    DocumentSnapshot disciplineDoc,
+  ) async {
     await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => DisciplineDetailScreen(
@@ -55,9 +57,7 @@ class _CurriculumHubScreenState extends State<CurriculumHubScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.curriculumByDiscipline),
-      ),
+      appBar: AppBar(title: Text(l10n.curriculumByDiscipline)),
       body: FutureBuilder<List<DocumentSnapshot>>(
         future: _disciplinesFuture,
         builder: (context, snapshot) {
@@ -75,7 +75,14 @@ class _CurriculumHubScreenState extends State<CurriculumHubScreen> {
 
           if (disciplines.length == 1) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              _navigateToDisciplineDetails(disciplines.first);
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (context) => DisciplineDetailScreen(
+                    schoolId: widget.schoolId,
+                    disciplineDoc: disciplines.first,
+                  ),
+                ),
+              );
             });
             return const Center(child: CircularProgressIndicator());
           }
@@ -96,7 +103,7 @@ class _CurriculumHubScreenState extends State<CurriculumHubScreen> {
                 final disciplineName = data['name'] ?? '';
 
                 final theme = MartialArtTheme.allThemes.firstWhere(
-                      (t) => t.name == disciplineName,
+                  (t) => t.name == disciplineName,
                   orElse: () => MartialArtTheme.karate,
                 );
 
@@ -114,7 +121,10 @@ class _CurriculumHubScreenState extends State<CurriculumHubScreen> {
                         backgroundColor: Colors.white,
                       ),
                     ),
-                    title: Text(disciplineName, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    title: Text(
+                      disciplineName,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
                     trailing: const Icon(Icons.arrow_forward_ios),
                     onTap: () => _navigateToDisciplineDetails(doc),
                   ),
