@@ -35,14 +35,12 @@
 			<key>NSAllowsArbitraryLoads</key>
 			<true/>
 		</dict>
-		<key>NSCameraUsageDescription</key>
-		<string>Necesitamos acceso a tu cámara por si quieres tomar una foto propia.</string>
 		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-		<string>Esta aplicación podría usar la ubicación para mejorar la experiencia y mostrar contenido relevante.</string>
+		<string>Warrior Path usa tu ubicación para mostrar las escuelas de artes marciales más cercanas en el mapa.</string>
 		<key>NSLocationWhenInUseUsageDescription</key>
-		<string>Esta aplicación podría usar la ubicación para mejorar la experiencia y mostrar contenido relevante.</string>
+		<string>Warrior Path usa tu ubicación para mostrar las escuelas de artes marciales más cercanas en el mapa.</string>
 		<key>NSPhotoLibraryUsageDescription</key>
-		<string>Necesitamos acceso a tu galería para que puedas seleccionar las fotos propia.</string>
+		<string>Necesitamos acceso a tu galería para que puedas subir tu foto de perfil o el logo de tu escuela.</string>
 		<key>SKAdNetworkItems</key>
 		<array>
 			<dict>

@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:warrior_path/providers/locale_provider.dart';
 import 'package:warrior_path/screens/WelcomeScreen.dart';
 import 'package:warrior_path/screens/student/edit_profile_screen.dart';
@@ -367,12 +368,71 @@ class _ProfileBody extends StatelessWidget {
                   ),
                   onPressed: onLogout,
                 ),
+                const SizedBox(height: 8),
+                TextButton.icon(
+                  icon: const Icon(Icons.privacy_tip_outlined, size: 18),
+                  label: const Text('Política de privacidad'),
+                  style: TextButton.styleFrom(foregroundColor: Colors.grey),
+                  onPressed: () => launchUrl(
+                    Uri.parse('https://sebastianperez-sketch.github.io/WarriorPath/support.html'),
+                    mode: LaunchMode.externalApplication,
+                  ),
+                ),
+                TextButton.icon(
+                  icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                  label: const Text('Eliminar mi cuenta', style: TextStyle(color: Colors.red)),
+                  onPressed: () => _confirmDeleteAccount(context),
+                ),
               ],
             ),
           ),
         ),
       ],
     );
+  }
+
+  Future<void> _confirmDeleteAccount(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Eliminar cuenta'),
+        content: const Text(
+          'Se eliminarán tus datos de acceso. Esta acción no se puede deshacer.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    try {
+      await FirebaseAuth.instance.currentUser?.delete();
+      if (context.mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+          (route) => false,
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e.code == 'requires-recent-login'
+                ? 'Por seguridad, cerrá sesión, volvé a iniciarla y luego eliminá la cuenta.'
+                : 'Error: ${e.message}',
+          ),
+        ),
+      );
+    }
   }
 
   void _showLanguagePicker(BuildContext context, AppLocalizations l10n) {

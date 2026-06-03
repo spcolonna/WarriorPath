@@ -11,7 +11,7 @@ class SubscriptionLapsedScreen extends StatelessWidget {
   ) async {
     final Uri emailLaunchUri = Uri(
       scheme: 'mailto',
-      path: 'tu-email-de-contacto@ejemplo.com',
+      path: 'spcolonna@gmail.com',
       query: 'subject=${Uri.encodeComponent(l10n.renewalSubject)}',
     );
 
