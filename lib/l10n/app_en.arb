@@ -688,5 +688,33 @@
     "changeLanguageSubtitle": "Español, English, Português",
     "languageSpanish": "Español",
     "languageEnglish": "English",
-    "languagePortuguese": "Português"
+    "languagePortuguese": "Português",
+    "schoolPendingValidationTitle": "School pending validation",
+    "schoolPendingValidationMessage": "Your school hasn't been validated yet. Contact the administrator to activate access to your dashboard.",
+    "addStudent": "Add student",
+    "addOfflineStudentTitle": "New student",
+    "addOfflineStudentDescription": "Create a student without an account to track their attendance, payments and progress. You'll be able to link them to their real account later.",
+    "studentNameLabel": "Student name",
+    "offlineStudentBadge": "No app",
+    "linkAccountTitle": "Link account",
+    "linkAccountSubtitle": "Move a no-app student's info to their real account",
+    "linkAccountDescription": "Pick a no-app student and the real account you want to transfer all their info to (payments, progress and attendance). The no-app student will be disabled.",
+    "manualStudentsLabel": "No-app students",
+    "registeredStudentsLabel": "Students with account",
+    "selectManualStudent": "Select the no-app student",
+    "selectRegisteredStudent": "Select the target real account",
+    "noManualStudents": "You have no no-app students.",
+    "noRegisteredStudents": "There are no students with an account to link.",
+    "linkConfirmTitle": "Confirm linking",
+    "linkConfirmMessage": "All info from \"{manual}\" will be transferred to \"{real}\". The no-app student will be disabled. This action can't be undone.",
+    "@linkConfirmMessage": {
+        "placeholders": { "manual": {"type": "String"}, "real": {"type": "String"} }
+    },
+    "linkButton": "Link",
+    "linkInProgress": "Linking accounts...",
+    "linkSuccess": "Account linked successfully.",
+    "linkErrorMsg": "Couldn't link: {error}",
+    "@linkErrorMsg": {
+        "placeholders": { "error": {"type": "String"} }
+    }
 }

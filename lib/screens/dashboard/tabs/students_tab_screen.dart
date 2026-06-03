@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:warrior_path/providers/session_provider.dart';
+import 'package:warrior_path/screens/teacher/add_offline_student_screen.dart';
 import 'package:warrior_path/screens/teacher/student_detail_screen.dart';
 
 import '../../../l10n/app_localizations.dart';
@@ -67,6 +68,18 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
           _buildStudentsList('inactive', schoolId),
         ],
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab_students_add',
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => AddOfflineStudentScreen(schoolId: schoolId),
+            ),
+          );
+        },
+        icon: const Icon(Icons.person_add_alt_1),
+        label: Text(l10n.addStudent),
+      ),
     );
   }
 
@@ -89,11 +102,13 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
               return _buildPendingStudentCard(doc, schoolId);
             }
             final data = doc.data() as Map<String, dynamic>;
+            final isOffline = data['isOfflineStudent'] == true;
             return Card(
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               child: ListTile(
                 leading: const CircleAvatar(child: Icon(Icons.person)),
                 title: Text(data['displayName'] ?? l10n.noName),
+                subtitle: isOffline ? _OfflineBadge(label: l10n.offlineStudentBadge) : null,
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () {
                   Navigator.of(context).push(
@@ -163,7 +178,9 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
         .collection('disciplines')
         .get();
 
-    if (disciplines.docs.isEmpty && mounted) {
+    if (!mounted) return;
+
+    if (disciplines.docs.isEmpty) {
       showDialog(context: context, builder: (ctx) => AlertDialog(
         title: Text(l10n.errorTitle),
         content: Text(l10n.noDisciplinesAvailable),
@@ -237,5 +254,41 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
     } catch (e) {
       if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
     }
+  }
+}
+
+class _OfflineBadge extends StatelessWidget {
+  final String label;
+  const _OfflineBadge({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.only(top: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        decoration: BoxDecoration(
+          color: Colors.orange.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.orange.shade400),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.cloud_off, size: 12, color: Colors.orange.shade700),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.orange.shade800,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

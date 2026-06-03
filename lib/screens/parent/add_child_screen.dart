@@ -46,7 +46,9 @@ class _AddChildScreenState extends State<AddChildScreen> {
   Future<void> _selectDateOfBirth(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: _selectedDateOfBirth ?? DateTime.now().subtract(const Duration(days: 365 * 10)),
+      initialDate:
+          _selectedDateOfBirth ??
+          DateTime.now().subtract(const Duration(days: 365 * 10)),
       firstDate: DateTime(1950),
       lastDate: DateTime.now(),
       locale: const Locale('es', 'ES'),
@@ -59,13 +61,14 @@ class _AddChildScreenState extends State<AddChildScreen> {
     }
   }
 
-
   Future<void> _saveChildProfile() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    setState(() { _isLoading = true; });
+    setState(() {
+      _isLoading = true;
+    });
 
     showDialog(
       context: context,
@@ -73,11 +76,13 @@ class _AddChildScreenState extends State<AddChildScreen> {
       builder: (ctx) => PopScope(
         canPop: false,
         child: AlertDialog(
-          content: Row(children: [
-            const CircularProgressIndicator(),
-            const SizedBox(width: 24),
-            Text(l10n.creatingChildProfile),
-          ]),
+          content: Row(
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(width: 24),
+              Text(l10n.creatingChildProfile),
+            ],
+          ),
         ),
       ),
     );
@@ -102,7 +107,8 @@ class _AddChildScreenState extends State<AddChildScreen> {
           'dateOfBirth': _selectedDateOfBirth,
           'emergencyContactName': _emergencyContactNameController.text.trim(),
           'emergencyContactPhone': _emergencyContactPhoneController.text.trim(),
-          'medicalEmergencyService': _medicalEmergencyServiceController.text.trim(),
+          'medicalEmergencyService': _medicalEmergencyServiceController.text
+              .trim(),
           'medicalInfo': _medicalInfoController.text.trim(),
           'isProxyAccount': true,
           'createdAt': FieldValue.serverTimestamp(),
@@ -118,27 +124,36 @@ class _AddChildScreenState extends State<AddChildScreen> {
         transaction.set(guardianshipRef, guardianshipData);
       });
 
-      await firestore.collection('users').doc(guardianUser.uid).update({'wizardStep': 99});
+      await firestore.collection('users').doc(guardianUser.uid).update({
+        'wizardStep': 99,
+      });
 
       if (mounted) Navigator.of(context, rootNavigator: true).pop();
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const GuardianDashboardScreen()),
-              (route) => false,
+          MaterialPageRoute(
+            builder: (context) => const GuardianDashboardScreen(),
+          ),
+          (route) => false,
         );
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.childProfileCreatedSuccess), backgroundColor: Colors.green)
+        SnackBar(
+          content: Text(l10n.childProfileCreatedSuccess),
+          backgroundColor: Colors.green,
+        ),
       );
-
     } catch (e) {
       if (mounted) Navigator.of(context, rootNavigator: true).pop();
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.childProfileCreatedError(e.toString())))
+        SnackBar(content: Text(l10n.childProfileCreatedError(e.toString()))),
       );
     } finally {
-      if (mounted) setState(() { _isLoading = false; });
+      if (mounted)
+        setState(() {
+          _isLoading = false;
+        });
     }
   }
 
@@ -155,49 +170,109 @@ class _AddChildScreenState extends State<AddChildScreen> {
             children: [
               Text(l10n.addChildDescription, textAlign: TextAlign.center),
               const SizedBox(height: 24),
-              Text(l10n.childData, style: Theme.of(context).textTheme.titleLarge),
+              Text(
+                l10n.childData,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _nameController,
-                decoration: InputDecoration(labelText: l10n.childFullName, border: const OutlineInputBorder()),
-                validator: (value) => value == null || value.isEmpty ? l10n.requiredField : null,
+                decoration: InputDecoration(
+                  labelText: l10n.childFullName,
+                  border: const OutlineInputBorder(),
+                ),
+                validator: (value) =>
+                    value == null || value.isEmpty ? l10n.requiredField : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _dobController,
-                decoration: InputDecoration(labelText: l10n.birdthDate, border: const OutlineInputBorder(), suffixIcon: const Icon(Icons.calendar_today)),
+                decoration: InputDecoration(
+                  labelText: l10n.birdthDate,
+                  border: const OutlineInputBorder(),
+                  suffixIcon: const Icon(Icons.calendar_today),
+                ),
                 readOnly: true,
                 onTap: () => _selectDateOfBirth(context),
-                validator: (value) => value == null || value.isEmpty ? l10n.requiredField : null,
+                validator: (value) =>
+                    value == null || value.isEmpty ? l10n.requiredField : null,
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _selectedSex,
-                decoration: InputDecoration(labelText: l10n.gender, border: const OutlineInputBorder()),
+                initialValue: _selectedSex,
+                decoration: InputDecoration(
+                  labelText: l10n.gender,
+                  border: const OutlineInputBorder(),
+                ),
                 items: [
-                  DropdownMenuItem(value: 'masculino', child: Text(l10n.maleGender)),
-                  DropdownMenuItem(value: 'femenino', child: Text(l10n.femaleGender)),
-                  DropdownMenuItem(value: 'otro', child: Text(l10n.otherGender)),
-                  DropdownMenuItem(value: 'prefiero_no_decirlo', child: Text(l10n.noSpecifyGender)),
+                  DropdownMenuItem(
+                    value: 'masculino',
+                    child: Text(l10n.maleGender),
+                  ),
+                  DropdownMenuItem(
+                    value: 'femenino',
+                    child: Text(l10n.femaleGender),
+                  ),
+                  DropdownMenuItem(
+                    value: 'otro',
+                    child: Text(l10n.otherGender),
+                  ),
+                  DropdownMenuItem(
+                    value: 'prefiero_no_decirlo',
+                    child: Text(l10n.noSpecifyGender),
+                  ),
                 ],
                 onChanged: (value) => setState(() => _selectedSex = value),
                 validator: (value) => value == null ? l10n.requiredField : null,
               ),
               const SizedBox(height: 32),
-              Text(l10n.emergencyInfo, style: Theme.of(context).textTheme.titleLarge),
+              Text(
+                l10n.emergencyInfo,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
               const SizedBox(height: 16),
-              TextFormField(controller: _emergencyContactNameController, decoration: InputDecoration(labelText: l10n.emergencyContactName, border: const OutlineInputBorder())),
+              TextFormField(
+                controller: _emergencyContactNameController,
+                decoration: InputDecoration(
+                  labelText: l10n.emergencyContactName,
+                  border: const OutlineInputBorder(),
+                ),
+              ),
               const SizedBox(height: 16),
-              TextFormField(controller: _emergencyContactPhoneController, decoration: InputDecoration(labelText: l10n.emergencyContactPhone, border: const OutlineInputBorder()), keyboardType: TextInputType.phone),
+              TextFormField(
+                controller: _emergencyContactPhoneController,
+                decoration: InputDecoration(
+                  labelText: l10n.emergencyContactPhone,
+                  border: const OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.phone,
+              ),
               const SizedBox(height: 16),
-              TextFormField(controller: _medicalEmergencyServiceController, decoration: InputDecoration(labelText: l10n.medicalEmergencyService, hintText: l10n.medicalServiceExample, border: const OutlineInputBorder())),
+              TextFormField(
+                controller: _medicalEmergencyServiceController,
+                decoration: InputDecoration(
+                  labelText: l10n.medicalEmergencyService,
+                  hintText: l10n.medicalServiceExample,
+                  border: const OutlineInputBorder(),
+                ),
+              ),
               const SizedBox(height: 16),
-              TextFormField(controller: _medicalInfoController, decoration: InputDecoration(labelText: l10n.relevantMedicalInfo, hintText: l10n.medicalInfoExample, border: const OutlineInputBorder()), maxLines: 4),
+              TextFormField(
+                controller: _medicalInfoController,
+                decoration: InputDecoration(
+                  labelText: l10n.relevantMedicalInfo,
+                  hintText: l10n.medicalInfoExample,
+                  border: const OutlineInputBorder(),
+                ),
+                maxLines: 4,
+              ),
               const SizedBox(height: 32),
               ElevatedButton.icon(
                 icon: const Icon(Icons.save),
                 label: Text(l10n.saveChild),
-                style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
                 onPressed: _isLoading ? null : _saveChildProfile,
               ),
             ],

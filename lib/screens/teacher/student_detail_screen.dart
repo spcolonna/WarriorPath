@@ -25,7 +25,8 @@ class StudentDetailScreen extends StatefulWidget {
   _StudentDetailScreenState createState() => _StudentDetailScreenState();
 }
 
-class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerProviderStateMixin {
+class _StudentDetailScreenState extends State<StudentDetailScreen>
+    with TickerProviderStateMixin {
   late AppLocalizations l10n;
   @override
   void didChangeDependencies() {
@@ -40,11 +41,18 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
   bool _isLoading = true;
   String _studentName = '';
   String? _photoUrl;
+  bool _isOfflineStudent = false;
   String _currentRole = '';
   int _selectedPaymentYear = DateTime.now().year;
-  final List<int> _availablePaymentYears = List.generate(5, (index) => DateTime.now().year - index);
+  final List<int> _availablePaymentYears = List.generate(
+    5,
+    (index) => DateTime.now().year - index,
+  );
   int _selectedAttendanceYear = DateTime.now().year;
-  final List<int> _availableAttendanceYears = List.generate(5, (index) => DateTime.now().year - index);
+  final List<int> _availableAttendanceYears = List.generate(
+    5,
+    (index) => DateTime.now().year - index,
+  );
 
   Map<String, dynamic> _memberProgress = {};
   List<DisciplineModel> _enrolledDisciplines = [];
@@ -56,7 +64,9 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
   @override
   void initState() {
     super.initState();
-    _confettiController = ConfettiController(duration: const Duration(seconds: 4));
+    _confettiController = ConfettiController(
+      duration: const Duration(seconds: 4),
+    );
     _tabController = TabController(length: _staticTabsCount, vsync: this);
     _loadAllData();
   }
@@ -65,7 +75,10 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
     final firestore = FirebaseFirestore.instance;
     final currentUser = FirebaseAuth.instance.currentUser;
 
-    final schoolDoc = await firestore.collection('schools').doc(widget.schoolId).get();
+    final schoolDoc = await firestore
+        .collection('schools')
+        .doc(widget.schoolId)
+        .get();
     if (schoolDoc.exists) {
       final schoolOwnerId = schoolDoc.data()?['ownerId'];
       if (mounted) {
@@ -75,59 +88,79 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
       }
     }
 
-    final userDoc = await firestore.collection('users').doc(widget.studentId).get();
+    final userDoc = await firestore
+        .collection('users')
+        .doc(widget.studentId)
+        .get();
     if (userDoc.exists && mounted) {
       setState(() {
         _studentName = userDoc.data()?['displayName'] ?? '';
         _photoUrl = userDoc.data()?['photoUrl'];
+        _isOfflineStudent = userDoc.data()?['isOfflineStudent'] == true;
       });
     }
 
     _memberSubscription?.cancel();
     _memberSubscription = FirebaseFirestore.instance
-        .collection('schools').doc(widget.schoolId)
-        .collection('members').doc(widget.studentId)
+        .collection('schools')
+        .doc(widget.schoolId)
+        .collection('members')
+        .doc(widget.studentId)
         .snapshots()
         .listen((memberSnapshot) async {
-      if (!memberSnapshot.exists || !mounted) {
-        setState(() => _isLoading = false);
-        return;
-      }
+          if (!memberSnapshot.exists || !mounted) {
+            setState(() => _isLoading = false);
+            return;
+          }
 
-      final memberData = memberSnapshot.data()!;
-      _currentRole = memberData['role'] ?? 'alumno';
-      _memberProgress = memberData['progress'] as Map<String, dynamic>? ?? {};
-      _assignedPaymentPlanId = memberData['assignedPaymentPlanId'] as String?;
-      final enrolledDisciplineIds = _memberProgress.keys.toList();
+          final memberData = memberSnapshot.data()!;
+          _currentRole = memberData['role'] ?? 'alumno';
+          _memberProgress =
+              memberData['progress'] as Map<String, dynamic>? ?? {};
+          _assignedPaymentPlanId =
+              memberData['assignedPaymentPlanId'] as String?;
+          final enrolledDisciplineIds = _memberProgress.keys.toList();
 
-      if (enrolledDisciplineIds.isNotEmpty) {
-        final disciplinesSnapshot = await FirebaseFirestore.instance
-            .collection('schools').doc(widget.schoolId)
-            .collection('disciplines')
-            .where(FieldPath.documentId, whereIn: enrolledDisciplineIds)
-            .get();
-        _enrolledDisciplines = disciplinesSnapshot.docs.map((doc) => DisciplineModel.fromFirestore(doc)).toList();
-      } else {
-        _enrolledDisciplines = [];
-      }
+          if (enrolledDisciplineIds.isNotEmpty) {
+            final disciplinesSnapshot = await FirebaseFirestore.instance
+                .collection('schools')
+                .doc(widget.schoolId)
+                .collection('disciplines')
+                .where(FieldPath.documentId, whereIn: enrolledDisciplineIds)
+                .get();
+            _enrolledDisciplines = disciplinesSnapshot.docs
+                .map((doc) => DisciplineModel.fromFirestore(doc))
+                .toList();
+          } else {
+            _enrolledDisciplines = [];
+          }
 
-      if (mounted) {
-        int staticTabs = 1;
-        if (_isOwnerViewing) {
-          staticTabs += 2;
-        }
-        int totalTabs = staticTabs + _enrolledDisciplines.length;
-        if (_enrolledDisciplines.isEmpty) {
-          totalTabs++;
-        }
+          if (mounted) {
+            int staticTabs = 1;
+            if (_isOwnerViewing) {
+              staticTabs += 2;
+            }
+            int totalTabs = staticTabs + _enrolledDisciplines.length;
+            if (_enrolledDisciplines.isEmpty) {
+              totalTabs++;
+            }
 
-        final currentTabIndex = _tabController.index;
-        _tabController.dispose();
-        _tabController = TabController(length: totalTabs, vsync: this, initialIndex: currentTabIndex.clamp(0, totalTabs > 0 ? totalTabs - 1 : 0));
-        _tabController.addListener(() => setState(() {}));
-        setState(() { _isLoading = false; });
-      }
-    });
+            final currentTabIndex = _tabController.index;
+            _tabController.dispose();
+            _tabController = TabController(
+              length: totalTabs,
+              vsync: this,
+              initialIndex: currentTabIndex.clamp(
+                0,
+                totalTabs > 0 ? totalTabs - 1 : 0,
+              ),
+            );
+            _tabController.addListener(() => setState(() {}));
+            setState(() {
+              _isLoading = false;
+            });
+          }
+        });
   }
 
   @override
@@ -141,7 +174,10 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return Scaffold(appBar: AppBar(), body: Center(child: Text(l10n.loading)));
+      return Scaffold(
+        appBar: AppBar(),
+        body: Center(child: Text(l10n.loading)),
+      );
     }
 
     final List<Tab> tabs = [
@@ -155,19 +191,31 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
       _buildGeneralInfoTab(),
       if (_isOwnerViewing) _buildAttendanceHistoryTab(),
       if (_isOwnerViewing) _buildPaymentsHistoryTab(),
-      ..._enrolledDisciplines.map((d) => ProgressDisciplineTab(
-        schoolId: widget.schoolId,
-        studentId: widget.studentId,
-        discipline: d,
-        studentProgress: _memberProgress[d.id] as Map<String, dynamic>? ?? {},
-        confettiController: _confettiController,
-        isOwnerViewing: _isOwnerViewing,
-      )),
+      ..._enrolledDisciplines.map(
+        (d) => ProgressDisciplineTab(
+          schoolId: widget.schoolId,
+          studentId: widget.studentId,
+          discipline: d,
+          studentProgress: _memberProgress[d.id] as Map<String, dynamic>? ?? {},
+          confettiController: _confettiController,
+          isOwnerViewing: _isOwnerViewing,
+        ),
+      ),
     ];
 
     if (_enrolledDisciplines.isEmpty) {
       tabs.add(Tab(text: l10n.progress));
-      tabViews.add(Center(child: Padding(padding: const EdgeInsets.all(24.0), child: Text(l10n.noDisciplinesEnrolled, textAlign: TextAlign.center))));
+      tabViews.add(
+        Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Text(
+              l10n.noDisciplinesEnrolled,
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      );
     }
 
     return Stack(
@@ -184,12 +232,13 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
                       _showChangeRoleDialog();
                     }
                   },
-                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                    PopupMenuItem<String>(
-                      value: 'change_role',
-                      child: Text(l10n.changeRol),
-                    ),
-                  ],
+                  itemBuilder: (BuildContext context) =>
+                      <PopupMenuEntry<String>>[
+                        PopupMenuItem<String>(
+                          value: 'change_role',
+                          child: Text(l10n.changeRol),
+                        ),
+                      ],
                 ),
             ],
           ),
@@ -197,13 +246,63 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
             children: [
               Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: Row(children: [
-                  CircleAvatar(radius: 40, backgroundImage: (_photoUrl != null && _photoUrl!.isNotEmpty) ? NetworkImage(_photoUrl!) : null, child: (_photoUrl == null || _photoUrl!.isEmpty) ? const Icon(Icons.person, size: 40) : null),
-                  const SizedBox(width: 16),
-                  Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(_studentName, style: Theme.of(context).textTheme.headlineSmall),
-                  ]),
-                ]),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 40,
+                      backgroundImage:
+                          (_photoUrl != null && _photoUrl!.isNotEmpty)
+                          ? NetworkImage(_photoUrl!)
+                          : null,
+                      child: (_photoUrl == null || _photoUrl!.isEmpty)
+                          ? const Icon(Icons.person, size: 40)
+                          : null,
+                    ),
+                    const SizedBox(width: 16),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _studentName,
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                        if (_isOfflineStudent) ...[
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.orange.shade400),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.cloud_off,
+                                  size: 12,
+                                  color: Colors.orange.shade700,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  l10n.offlineStudentBadge,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.orange.shade800,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
               TabBar(
                 controller: _tabController,
@@ -213,87 +312,123 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
                 unselectedLabelColor: Colors.grey,
                 indicatorColor: Theme.of(context).primaryColor,
               ),
-              Expanded(child: TabBarView(controller: _tabController, children: tabViews)),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: tabViews,
+                ),
+              ),
             ],
           ),
           floatingActionButton: _buildFloatingActionButton(),
         ),
-        ConfettiWidget(confettiController: _confettiController, blastDirectionality: BlastDirectionality.explosive),
+        ConfettiWidget(
+          confettiController: _confettiController,
+          blastDirectionality: BlastDirectionality.explosive,
+        ),
       ],
     );
   }
 
   Future<void> _showChangeRoleDialog() async {
-    final DisciplineModel? selectedDiscipline = await showDialog<DisciplineModel>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.selectDiscipline),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: _enrolledDisciplines.length,
-            itemBuilder: (context, index) {
-              final discipline = _enrolledDisciplines[index];
-              return ListTile(
-                title: Text(discipline.name),
-                onTap: () => Navigator.of(ctx).pop(discipline),
-              );
-            },
+    final DisciplineModel? selectedDiscipline =
+        await showDialog<DisciplineModel>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text(l10n.selectDiscipline),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: _enrolledDisciplines.length,
+                itemBuilder: (context, index) {
+                  final discipline = _enrolledDisciplines[index];
+                  return ListTile(
+                    title: Text(discipline.name),
+                    onTap: () => Navigator.of(ctx).pop(discipline),
+                  );
+                },
+              ),
+            ),
           ),
-        ),
-      ),
-    );
+        );
 
     if (selectedDiscipline == null || !mounted) return;
 
-    final currentProgress = _memberProgress[selectedDiscipline.id] as Map<String, dynamic>? ?? {};
+    final currentProgress =
+        _memberProgress[selectedDiscipline.id] as Map<String, dynamic>? ?? {};
     final currentRole = currentProgress['role'] as String? ?? 'alumno';
     String? newRole = currentRole;
 
     await showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(builder: (context, setDialogState) {
-        return AlertDialog(
-          title: Text(l10n.changeRolMember),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [l10n.student.toLowerCase(), l10n.instructor, l10n.teacher.toLowerCase()].map((roleKey) {
-              return RadioListTile<String>(
-                title: Text(roleKey[0].toUpperCase() + roleKey.substring(1)),
-                value: roleKey,
-                groupValue: newRole,
-                onChanged: (value) => setDialogState(() => newRole = value),
-              );
-            }).toList(),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.cancel)),
-            ElevatedButton(
-              onPressed: newRole == null || newRole == currentRole ? null : () {
-                _changeStudentRole(selectedDiscipline.id!, newRole!);
-                Navigator.of(context).pop();
-              },
-              child: Text(l10n.save),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: Text(l10n.changeRolMember),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children:
+                  [
+                    l10n.student.toLowerCase(),
+                    l10n.instructor,
+                    l10n.teacher.toLowerCase(),
+                  ].map((roleKey) {
+                    return RadioListTile<String>(
+                      title: Text(
+                        roleKey[0].toUpperCase() + roleKey.substring(1),
+                      ),
+                      value: roleKey,
+                      groupValue: newRole,
+                      onChanged: (value) =>
+                          setDialogState(() => newRole = value),
+                    );
+                  }).toList(),
             ),
-          ],
-        );
-      }),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(l10n.cancel),
+              ),
+              ElevatedButton(
+                onPressed: newRole == null || newRole == currentRole
+                    ? null
+                    : () {
+                        _changeStudentRole(selectedDiscipline.id!, newRole!);
+                        Navigator.of(context).pop();
+                      },
+                child: Text(l10n.save),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 
   Future<void> _changeStudentRole(String disciplineId, String newRole) async {
     try {
       final firestore = FirebaseFirestore.instance;
-      final memberRef = firestore.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId);
+      final memberRef = firestore
+          .collection('schools')
+          .doc(widget.schoolId)
+          .collection('members')
+          .doc(widget.studentId);
 
-      await memberRef.update({
-        'progress.$disciplineId.role': newRole,
-      });
+      await memberRef.update({'progress.$disciplineId.role': newRole});
 
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.updateRolSuccess), backgroundColor: Colors.green));
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.updateRolSuccess),
+            backgroundColor: Colors.green,
+          ),
+        );
     } catch (e) {
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.updateRolError(e.toString()))));
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.updateRolError(e.toString()))),
+        );
     }
   }
 
@@ -316,8 +451,9 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
           icon: const Icon(Icons.payment),
         );
       default:
-      // Si no hay disciplinas o estamos en una pestaña de progreso
-        if (_enrolledDisciplines.isEmpty || _tabController.index >= _staticTabsCount) {
+        // Si no hay disciplinas o estamos en una pestaña de progreso
+        if (_enrolledDisciplines.isEmpty ||
+            _tabController.index >= _staticTabsCount) {
           return FloatingActionButton.extended(
             onPressed: () => _showEnrollInDisciplineDialog(),
             label: Text(l10n.enrollInDisciplines),
@@ -339,20 +475,30 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
     if (pickedDate == null) return;
     final int dayOfWeek = pickedDate.weekday;
     final schedulesSnap = await FirebaseFirestore.instance
-        .collection('schools').doc(widget.schoolId)
-        .collection('classSchedules').where('dayOfWeek', isEqualTo: dayOfWeek).get();
+        .collection('schools')
+        .doc(widget.schoolId)
+        .collection('classSchedules')
+        .where('dayOfWeek', isEqualTo: dayOfWeek)
+        .get();
     if (schedulesSnap.docs.isEmpty && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.noClassForTHisDay)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.noClassForTHisDay)));
       return;
     }
     if (mounted) _selectScheduleForDate(schedulesSnap.docs, pickedDate);
   }
 
-  void _selectScheduleForDate(List<QueryDocumentSnapshot> schedules, DateTime selectedDate) {
+  void _selectScheduleForDate(
+    List<QueryDocumentSnapshot> schedules,
+    DateTime selectedDate,
+  ) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l10n.classFor(DateFormat.yMd('es_ES').format(selectedDate))),
+        title: Text(
+          l10n.classFor(DateFormat.yMd('es_ES').format(selectedDate)),
+        ),
         content: SizedBox(
           width: double.maxFinite,
           child: ListView.builder(
@@ -361,7 +507,8 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
             itemBuilder: (context, index) {
               final schedule = schedules[index].data() as Map<String, dynamic>;
               final scheduleTitle = schedule['title'];
-              final scheduleTime = '${schedule['startTime']} - ${schedule['endTime']}';
+              final scheduleTime =
+                  '${schedule['startTime']} - ${schedule['endTime']}';
               return ListTile(
                 title: Text(scheduleTitle),
                 subtitle: Text(scheduleTime),
@@ -378,11 +525,20 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
   }
 
   Future<void> _savePastAttendance(String scheduleTitle, DateTime date) async {
-    final normalizedDate = Timestamp.fromDate(DateTime(date.year, date.month, date.day));
+    final normalizedDate = Timestamp.fromDate(
+      DateTime(date.year, date.month, date.day),
+    );
     final firestore = FirebaseFirestore.instance;
-    final recordsRef = firestore.collection('schools').doc(widget.schoolId).collection('attendanceRecords');
+    final recordsRef = firestore
+        .collection('schools')
+        .doc(widget.schoolId)
+        .collection('attendanceRecords');
     try {
-      final query = await recordsRef.where('date', isEqualTo: normalizedDate).where('scheduleTitle', isEqualTo: scheduleTitle).limit(1).get();
+      final query = await recordsRef
+          .where('date', isEqualTo: normalizedDate)
+          .where('scheduleTitle', isEqualTo: scheduleTitle)
+          .limit(1)
+          .get();
       if (query.docs.isEmpty) {
         await recordsRef.add({
           'date': normalizedDate,
@@ -393,86 +549,152 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
         });
       } else {
         await recordsRef.doc(query.docs.first.id).update({
-          'presentStudentIds': FieldValue.arrayUnion([widget.studentId])
+          'presentStudentIds': FieldValue.arrayUnion([widget.studentId]),
         });
       }
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.successAssistance)));
+      if (mounted)
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.successAssistance)));
     } catch (e) {
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.saveError(e.toString()))));
+      if (mounted)
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.saveError(e.toString()))));
     }
   }
 
   Widget _buildGeneralInfoTab() {
     return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance.collection('users').doc(widget.studentId).snapshots(),
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.studentId)
+          .snapshots(),
       builder: (context, userSnapshot) {
-        if (!userSnapshot.hasData) return const Center(child: CircularProgressIndicator());
-        final userData = userSnapshot.data?.data() as Map<String, dynamic>? ?? {};
+        if (!userSnapshot.hasData)
+          return const Center(child: CircularProgressIndicator());
+        final userData =
+            userSnapshot.data?.data() as Map<String, dynamic>? ?? {};
         final String? gender = userData['gender'];
-        final DateTime? dateOfBirth = (userData['dateOfBirth'] as Timestamp?)?.toDate();
-        final String formattedDob = dateOfBirth != null ? DateFormat('dd/MM/yyyy', 'es_ES').format(dateOfBirth) : l10n.noSpecify;
+        final DateTime? dateOfBirth = (userData['dateOfBirth'] as Timestamp?)
+            ?.toDate();
+        final String formattedDob = dateOfBirth != null
+            ? DateFormat('dd/MM/yyyy', 'es_ES').format(dateOfBirth)
+            : l10n.noSpecify;
         return SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
-          child: Column(children: [
-            if (_isOwnerViewing) ...[
-              _buildInfoCard(
-                title: l10n.facturation,
-                icon: Icons.receipt_long,
-                iconColor: Colors.blueAccent,
-                children: [
-                  FutureBuilder<DocumentSnapshot>(
-                    future: _assignedPaymentPlanId == null
-                        ? null
-                        : FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('paymentPlans').doc(_assignedPaymentPlanId).get(),
-                    builder: (context, planSnapshot) {
-                      String planDetailsText = l10n.notassignedPaymentPlan;
-                      if (planSnapshot.connectionState == ConnectionState.waiting) {
-                        planDetailsText = l10n.loading;
-                      } else if (planSnapshot.hasData && planSnapshot.data!.exists) {
-                        final plan = PaymentPlanModel.fromFirestore(planSnapshot.data!);
-                        planDetailsText = '${plan.title} (${plan.amount} ${plan.currency})';
-                      } else if (_assignedPaymentPlanId != null) {
-                        planDetailsText = l10n.paymentPlanNotFoud(_assignedPaymentPlanId!);
-                      }
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(planDetailsText, style: const TextStyle(fontSize: 16)),
-                          const SizedBox(height: 16),
-                          Center(
-                            child: ElevatedButton(
-                              child: Text(l10n.changeAssignedPlan),
-                              onPressed: () => _showAssignPlanDialog(),
+          child: Column(
+            children: [
+              if (_isOwnerViewing) ...[
+                _buildInfoCard(
+                  title: l10n.facturation,
+                  icon: Icons.receipt_long,
+                  iconColor: Colors.blueAccent,
+                  children: [
+                    FutureBuilder<DocumentSnapshot>(
+                      future: _assignedPaymentPlanId == null
+                          ? null
+                          : FirebaseFirestore.instance
+                                .collection('schools')
+                                .doc(widget.schoolId)
+                                .collection('paymentPlans')
+                                .doc(_assignedPaymentPlanId)
+                                .get(),
+                      builder: (context, planSnapshot) {
+                        String planDetailsText = l10n.notassignedPaymentPlan;
+                        if (planSnapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          planDetailsText = l10n.loading;
+                        } else if (planSnapshot.hasData &&
+                            planSnapshot.data!.exists) {
+                          final plan = PaymentPlanModel.fromFirestore(
+                            planSnapshot.data!,
+                          );
+                          planDetailsText =
+                              '${plan.title} (${plan.amount} ${plan.currency})';
+                        } else if (_assignedPaymentPlanId != null) {
+                          planDetailsText = l10n.paymentPlanNotFoud(
+                            _assignedPaymentPlanId!,
+                          );
+                        }
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              planDetailsText,
+                              style: const TextStyle(fontSize: 16),
                             ),
-                          )
-                        ],
-                      );
-                    },
+                            const SizedBox(height: 16),
+                            Center(
+                              child: ElevatedButton(
+                                child: Text(l10n.changeAssignedPlan),
+                                onPressed: () => _showAssignPlanDialog(),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 16),
+              _buildInfoCard(
+                title: l10n.personalData,
+                icon: Icons.badge_outlined,
+                iconColor: Colors.teal,
+                children: [
+                  _buildInfoRow(
+                    "${l10n.birdthDate}:",
+                    '$formattedDob${_calculateAge(dateOfBirth)}',
                   ),
+                  _buildInfoRow("${l10n.gender}:", _formatGender(gender)),
                 ],
               ),
+              if (_isOwnerViewing) ...[
+                const SizedBox(height: 16),
+                _buildInfoCard(
+                  title: l10n.contactData,
+                  icon: Icons.contact_page,
+                  children: [
+                    _buildInfoRow(
+                      'Email:',
+                      userData['email'] ?? l10n.noSpecify,
+                    ),
+                    _buildInfoRow(
+                      '${l10n.phone}:',
+                      userData['phoneNumber'] ?? l10n.noSpecify,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _buildInfoCard(
+                  title: l10n.emergencyInfo,
+                  icon: Icons.emergency,
+                  iconColor: Colors.red,
+                  children: [
+                    _buildInfoRow(
+                      '${l10n.contact}:',
+                      userData['emergencyContactName'] ?? l10n.noSpecify,
+                    ),
+                    _buildInfoRow(
+                      '${l10n.phone}:',
+                      userData['emergencyContactPhone'] ?? l10n.noSpecify,
+                    ),
+                    _buildInfoRow(
+                      '${l10n.medService}:',
+                      userData['medicalEmergencyService'] ?? l10n.noSpecify,
+                    ),
+                    const Divider(),
+                    _buildInfoRow(
+                      '${l10n.medInfo}:',
+                      userData['medicalInfo'] ?? l10n.noSpecify,
+                    ),
+                  ],
+                ),
+              ],
             ],
-            const SizedBox(height: 16),
-            _buildInfoCard(title: l10n.personalData, icon: Icons.badge_outlined, iconColor: Colors.teal, children: [
-              _buildInfoRow("${l10n.birdthDate}:", '$formattedDob${_calculateAge(dateOfBirth)}'),
-              _buildInfoRow("${l10n.gender}:", _formatGender(gender)),
-            ]),
-            if (_isOwnerViewing) ...[
-              const SizedBox(height: 16),
-              _buildInfoCard(title: l10n.contactData, icon: Icons.contact_page, children: [
-                _buildInfoRow('Email:', userData['email'] ?? l10n.noSpecify),
-                _buildInfoRow('${l10n.phone}:', userData['phoneNumber'] ?? l10n.noSpecify),
-              ]),
-              const SizedBox(height: 16),
-              _buildInfoCard(title: l10n.emergencyInfo, icon: Icons.emergency, iconColor: Colors.red, children: [
-                _buildInfoRow('${l10n.contact}:', userData['emergencyContactName'] ?? l10n.noSpecify),
-                _buildInfoRow('${l10n.phone}:', userData['emergencyContactPhone'] ?? l10n.noSpecify),
-                _buildInfoRow('${l10n.medService}:', userData['medicalEmergencyService'] ?? l10n.noSpecify),
-                const Divider(),
-                _buildInfoRow('${l10n.medInfo}:', userData['medicalInfo'] ?? l10n.noSpecify),
-              ])
-            ],
-          ]),
+          ),
         );
       },
     );
@@ -480,11 +702,18 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
 
   Future<void> _showAssignPlanDialog() async {
     final firestore = FirebaseFirestore.instance;
-    final plansSnapshot = await firestore.collection('schools').doc(widget.schoolId).collection('paymentPlans').get();
-    final allPlans = plansSnapshot.docs.map((doc) => PaymentPlanModel.fromFirestore(doc)).toList();
+    final plansSnapshot = await firestore
+        .collection('schools')
+        .doc(widget.schoolId)
+        .collection('paymentPlans')
+        .get();
+    final allPlans = plansSnapshot.docs
+        .map((doc) => PaymentPlanModel.fromFirestore(doc))
+        .toList();
 
     PaymentPlanModel? selectedPlan;
-    if (_assignedPaymentPlanId != null && allPlans.any((p) => p.id == _assignedPaymentPlanId)) {
+    if (_assignedPaymentPlanId != null &&
+        allPlans.any((p) => p.id == _assignedPaymentPlanId)) {
       selectedPlan = allPlans.firstWhere((p) => p.id == _assignedPaymentPlanId);
     }
 
@@ -498,28 +727,58 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
               mainAxisSize: MainAxisSize.min,
               children: [
                 DropdownButtonFormField<PaymentPlanModel>(
-                  value: selectedPlan,
+                  initialValue: selectedPlan,
                   hint: Text(l10n.selectPlan),
-                  items: allPlans.map((plan) => DropdownMenuItem(value: plan, child: Text('${plan.title} (${plan.amount} ${plan.currency})'))).toList(),
-                  onChanged: (plan) => setDialogState(() => selectedPlan = plan),
+                  items: allPlans
+                      .map(
+                        (plan) => DropdownMenuItem(
+                          value: plan,
+                          child: Text(
+                            '${plan.title} (${plan.amount} ${plan.currency})',
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (plan) =>
+                      setDialogState(() => selectedPlan = plan),
                 ),
                 const SizedBox(height: 16),
                 TextButton(
-                  child: Text(l10n.removeAssignedPlan, style: const TextStyle(color: Colors.red)),
+                  child: Text(
+                    l10n.removeAssignedPlan,
+                    style: const TextStyle(color: Colors.red),
+                  ),
                   onPressed: () {
-                    firestore.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId).update({'assignedPaymentPlanId': null});
+                    firestore
+                        .collection('schools')
+                        .doc(widget.schoolId)
+                        .collection('members')
+                        .doc(widget.studentId)
+                        .update({'assignedPaymentPlanId': null});
                     Navigator.of(context).pop();
                   },
-                )
+                ),
               ],
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.cancel)),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(l10n.cancel),
+              ),
               ElevatedButton(
-                onPressed: selectedPlan == null ? null : () {
-                  firestore.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId).update({'assignedPaymentPlanId': selectedPlan!.id});
-                  Navigator.of(context).pop();
-                },
+                onPressed: selectedPlan == null
+                    ? null
+                    : () {
+                        firestore
+                            .collection('schools')
+                            .doc(widget.schoolId)
+                            .collection('members')
+                            .doc(widget.studentId)
+                            .update({
+                              'assignedPaymentPlanId': selectedPlan!.id,
+                            });
+                        Navigator.of(context).pop();
+                      },
                 child: Text(l10n.save),
               ),
             ],
@@ -546,7 +805,10 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
                 isDense: true,
                 underline: Container(),
                 items: _availableAttendanceYears.map((year) {
-                  return DropdownMenuItem(value: year, child: Text(year.toString()));
+                  return DropdownMenuItem(
+                    value: year,
+                    child: Text(year.toString()),
+                  );
                 }).toList(),
                 onChanged: (year) {
                   if (year != null) {
@@ -561,7 +823,9 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
         ),
         Expanded(
           child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('schools').doc(widget.schoolId)
+            stream: FirebaseFirestore.instance
+                .collection('schools')
+                .doc(widget.schoolId)
                 .collection('attendanceRecords')
                 .where('presentStudentIds', arrayContains: widget.studentId)
                 .where('date', isGreaterThanOrEqualTo: startDate)
@@ -569,12 +833,17 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
                 .orderBy('date', descending: true)
                 .snapshots(),
             builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return Center(child: Text(l10n.noRegisterAssitance));
+              if (snapshot.connectionState == ConnectionState.waiting)
+                return const Center(child: CircularProgressIndicator());
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty)
+                return Center(child: Text(l10n.noRegisterAssitance));
 
               final groupedAttendances = groupBy<QueryDocumentSnapshot, String>(
                 snapshot.data!.docs,
-                    (doc) => DateFormat('MMMM', l10n.localeName).format((doc['date'] as Timestamp).toDate()),
+                (doc) => DateFormat(
+                  'MMMM',
+                  l10n.localeName,
+                ).format((doc['date'] as Timestamp).toDate()),
               );
 
               return ListView.builder(
@@ -584,34 +853,67 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
                   final attendancesInMonth = groupedAttendances[month]!;
 
                   return ExpansionTile(
-                    title: Text(month[0].toUpperCase() + month.substring(1), style: const TextStyle(fontWeight: FontWeight.bold)),
+                    title: Text(
+                      month[0].toUpperCase() + month.substring(1),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
                     initiallyExpanded: true,
                     children: attendancesInMonth.map((doc) {
                       final record = doc.data() as Map<String, dynamic>;
                       final date = (record['date'] as Timestamp).toDate();
-                      final formattedDate = DateFormat('dd/MM/yyyy').format(date);
+                      final formattedDate = DateFormat(
+                        'dd/MM/yyyy',
+                      ).format(date);
 
                       return Card(
-                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
                         child: ListTile(
-                          leading: const Icon(Icons.check_circle, color: Colors.green),
-                          title: Text(record['scheduleTitle'] ?? l10n.classRoom),
+                          leading: const Icon(
+                            Icons.check_circle,
+                            color: Colors.green,
+                          ),
+                          title: Text(
+                            record['scheduleTitle'] ?? l10n.classRoom,
+                          ),
                           subtitle: Text(formattedDate),
                           trailing: IconButton(
-                            icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                            icon: const Icon(
+                              Icons.delete_outline,
+                              color: Colors.redAccent,
+                            ),
                             tooltip: l10n.eliminate,
                             onPressed: () async {
-                              final confirm = await showDialog<bool>(
-                                context: context,
-                                builder: (ctx) => AlertDialog(
-                                  title: Text(l10n.confirmDeletion),
-                                  content: Text(l10n.confirmAttendanceDelete),
-                                  actions: [
-                                    TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.cancel)),
-                                    ElevatedButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.eliminate, style: const TextStyle(color: Colors.red))),
-                                  ],
-                                ),
-                              ) ?? false;
+                              final confirm =
+                                  await showDialog<bool>(
+                                    context: context,
+                                    builder: (ctx) => AlertDialog(
+                                      title: Text(l10n.confirmDeletion),
+                                      content: Text(
+                                        l10n.confirmAttendanceDelete,
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.of(ctx).pop(false),
+                                          child: Text(l10n.cancel),
+                                        ),
+                                        ElevatedButton(
+                                          onPressed: () =>
+                                              Navigator.of(ctx).pop(true),
+                                          child: Text(
+                                            l10n.eliminate,
+                                            style: const TextStyle(
+                                              color: Colors.red,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ) ??
+                                  false;
 
                               if (confirm) {
                                 _deleteAttendance(doc.id);
@@ -648,7 +950,10 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
                 isDense: true, // Reduce el espaciado vertical
                 underline: Container(), // Elimina la línea de abajo
                 items: _availablePaymentYears.map((year) {
-                  return DropdownMenuItem(value: year, child: Text(year.toString()));
+                  return DropdownMenuItem(
+                    value: year,
+                    child: Text(year.toString()),
+                  );
                 }).toList(),
                 onChanged: (year) {
                   if (year != null) {
@@ -664,20 +969,28 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
 
         Expanded(
           child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('schools').doc(widget.schoolId)
-                .collection('members').doc(widget.studentId)
+            stream: FirebaseFirestore.instance
+                .collection('schools')
+                .doc(widget.schoolId)
+                .collection('members')
+                .doc(widget.studentId)
                 .collection('payments')
                 .where('paymentDate', isGreaterThanOrEqualTo: startDate)
                 .where('paymentDate', isLessThan: endDate)
                 .orderBy('paymentDate', descending: true)
                 .snapshots(),
             builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) return Center(child: Text(l10n.noPayment));
+              if (snapshot.connectionState == ConnectionState.waiting)
+                return const Center(child: CircularProgressIndicator());
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty)
+                return Center(child: Text(l10n.noPayment));
 
               final groupedPayments = groupBy<QueryDocumentSnapshot, String>(
                 snapshot.data!.docs,
-                    (doc) => DateFormat('MMMM', l10n.localeName).format((doc['paymentDate'] as Timestamp).toDate()),
+                (doc) => DateFormat(
+                  'MMMM',
+                  l10n.localeName,
+                ).format((doc['paymentDate'] as Timestamp).toDate()),
               );
 
               return ListView.builder(
@@ -687,38 +1000,75 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
                   final paymentsInMonth = groupedPayments[month]!;
 
                   return ExpansionTile(
-                    title: Text(month[0].toUpperCase() + month.substring(1), style: const TextStyle(fontWeight: FontWeight.bold)),
+                    title: Text(
+                      month[0].toUpperCase() + month.substring(1),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
                     initiallyExpanded: true,
                     children: paymentsInMonth.map((doc) {
                       final payment = doc.data() as Map<String, dynamic>;
-                      final date = (payment['paymentDate'] as Timestamp).toDate();
-                      final formattedDate = DateFormat('dd/MM/yyyy').format(date);
+                      final date = (payment['paymentDate'] as Timestamp)
+                          .toDate();
+                      final formattedDate = DateFormat(
+                        'dd/MM/yyyy',
+                      ).format(date);
 
                       return Card(
-                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
                         child: ListTile(
-                          leading: const Icon(Icons.receipt_long, color: Colors.green),
+                          leading: const Icon(
+                            Icons.receipt_long,
+                            color: Colors.green,
+                          ),
                           title: Text(payment['concept'] ?? l10n.payment),
                           subtitle: Text(formattedDate),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text('${payment['amount']} ${payment['currency']}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                              Text(
+                                '${payment['amount']} ${payment['currency']}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                               IconButton(
-                                icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  color: Colors.redAccent,
+                                ),
                                 tooltip: l10n.eliminate,
                                 onPressed: () async {
-                                  final confirm = await showDialog<bool>(
-                                    context: context,
-                                    builder: (ctx) => AlertDialog(
-                                      title: Text(l10n.confirmDeletion),
-                                      content: Text(l10n.confirmPaymentDelete),
-                                      actions: [
-                                        TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.cancel)),
-                                        ElevatedButton(onPressed: () => Navigator.of(ctx).pop(true), child: Text(l10n.eliminate, style: const TextStyle(color: Colors.red))),
-                                      ],
-                                    ),
-                                  ) ?? false;
+                                  final confirm =
+                                      await showDialog<bool>(
+                                        context: context,
+                                        builder: (ctx) => AlertDialog(
+                                          title: Text(l10n.confirmDeletion),
+                                          content: Text(
+                                            l10n.confirmPaymentDelete,
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Navigator.of(ctx).pop(false),
+                                              child: Text(l10n.cancel),
+                                            ),
+                                            ElevatedButton(
+                                              onPressed: () =>
+                                                  Navigator.of(ctx).pop(true),
+                                              child: Text(
+                                                l10n.eliminate,
+                                                style: const TextStyle(
+                                                  color: Colors.red,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ) ??
+                                      false;
 
                                   if (confirm) {
                                     _deletePayment(doc.id);
@@ -743,8 +1093,17 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
   Future<void> _showRegisterPaymentDialog() async {
     final firestore = FirebaseFirestore.instance;
     final results = await Future.wait([
-      firestore.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId).get(),
-      firestore.collection('schools').doc(widget.schoolId).collection('paymentPlans').get(),
+      firestore
+          .collection('schools')
+          .doc(widget.schoolId)
+          .collection('members')
+          .doc(widget.studentId)
+          .get(),
+      firestore
+          .collection('schools')
+          .doc(widget.schoolId)
+          .collection('paymentPlans')
+          .get(),
       firestore.collection('schools').doc(widget.schoolId).get(),
     ]);
 
@@ -752,9 +1111,14 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
     final plansSnapshot = results[1] as QuerySnapshot<Map<String, dynamic>>;
     final schoolDoc = results[2] as DocumentSnapshot<Map<String, dynamic>>;
 
-    final allPlans = plansSnapshot.docs.map((doc) => PaymentPlanModel.fromFirestore(doc)).toList();
+    final allPlans = plansSnapshot.docs
+        .map((doc) => PaymentPlanModel.fromFirestore(doc))
+        .toList();
     final assignedPlanId = memberDoc.data()?['paymentPlanId'] as String?;
-    final currency = (schoolDoc.data()?['financials'] as Map<String, dynamic>?)?['currency'] ?? 'USD';
+    final currency =
+        (schoolDoc.data()?['financials']
+            as Map<String, dynamic>?)?['currency'] ??
+        'USD';
 
     if (mounted) {
       showDialog(
@@ -764,16 +1128,17 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
             allPlans: allPlans,
             assignedPlanId: assignedPlanId,
             currency: currency,
-            onSave: (String concept, double amount, String? planId, DateTime date) {
-              _savePayment(
-                concept: concept,
-                amount: amount,
-                currency: currency,
-                planId: planId,
-                paymentDate: date,
-                l10n: l10n,
-              );
-            },
+            onSave:
+                (String concept, double amount, String? planId, DateTime date) {
+                  _savePayment(
+                    concept: concept,
+                    amount: amount,
+                    currency: currency,
+                    planId: planId,
+                    paymentDate: date,
+                    l10n: l10n,
+                  );
+                },
           );
         },
       );
@@ -790,34 +1155,47 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
   }) async {
     try {
       await FirebaseFirestore.instance
-          .collection('schools').doc(widget.schoolId)
-          .collection('members').doc(widget.studentId)
-          .collection('payments').add({
-        'paymentDate': Timestamp.fromDate(paymentDate),
-        'concept': concept.trim(),
-        'amount': amount,
-        'currency': currency,
-        'recordedBy': FirebaseAuth.instance.currentUser?.uid,
-        'schoolId': widget.schoolId,
-        'paymentPlanId': planId,
-        'studentId': widget.studentId,
-        'studentName': _studentName,
-      });
+          .collection('schools')
+          .doc(widget.schoolId)
+          .collection('members')
+          .doc(widget.studentId)
+          .collection('payments')
+          .add({
+            'paymentDate': Timestamp.fromDate(paymentDate),
+            'concept': concept.trim(),
+            'amount': amount,
+            'currency': currency,
+            'recordedBy': FirebaseAuth.instance.currentUser?.uid,
+            'schoolId': widget.schoolId,
+            'paymentPlanId': planId,
+            'studentId': widget.studentId,
+            'studentName': _studentName,
+          });
 
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.successPayment), backgroundColor: Colors.green));
-
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.successPayment),
+            backgroundColor: Colors.green,
+          ),
+        );
     } catch (e) {
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.paymentError(e.toString()))));
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.paymentError(e.toString()))),
+        );
     }
   }
 
   Future<void> _showEnrollInDisciplineDialog() async {
     final firestore = FirebaseFirestore.instance;
 
-    // 1. Buscamos TODAS las disciplinas activas de la escuela
+    // 1. Buscamos TODAS las disciplinas de la escuela
     final allDisciplinesSnap = await firestore
-        .collection('schools').doc(widget.schoolId)
-        .collection('disciplines').where('isActive', isEqualTo: true).get();
+        .collection('schools')
+        .doc(widget.schoolId)
+        .collection('disciplines')
+        .get();
 
     // 2. Filtramos para quedarnos solo con las que el alumno NO está inscrito
     final enrolledIds = _memberProgress.keys.toSet();
@@ -827,7 +1205,11 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
 
     if (availableDisciplines.isEmpty && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Este alumno ya está inscrito en todas las disciplinas disponibles.'))
+        const SnackBar(
+          content: Text(
+            'Este alumno ya está inscrito en todas las disciplinas disponibles.',
+          ),
+        ),
       );
       return;
     }
@@ -858,32 +1240,47 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
       // 4. Si se seleccionó una, procedemos a inscribir al alumno
       try {
         final levelsQuery = await selectedDiscipline.reference
-            .collection('levels').orderBy('order').limit(1).get();
+            .collection('levels')
+            .orderBy('order')
+            .limit(1)
+            .get();
 
         if (levelsQuery.docs.isEmpty) {
-          throw Exception('La disciplina seleccionada no tiene niveles configurados.');
+          throw Exception(
+            'La disciplina seleccionada no tiene niveles configurados.',
+          );
         }
         final initialLevelId = levelsQuery.docs.first.id;
 
         // Usamos notación de punto para añadir un nuevo campo al mapa 'progress'
-        await firestore.collection('schools').doc(widget.schoolId).collection('members').doc(widget.studentId).update({
-          'progress.${selectedDiscipline.id}': {
-            'currentLevelId': initialLevelId,
-            'enrollmentDate': FieldValue.serverTimestamp(),
-            'assignedTechniqueIds': [],
-          }
-        });
+        await firestore
+            .collection('schools')
+            .doc(widget.schoolId)
+            .collection('members')
+            .doc(widget.studentId)
+            .update({
+              'progress.${selectedDiscipline.id}': {
+                'currentLevelId': initialLevelId,
+                'enrollmentDate': FieldValue.serverTimestamp(),
+                'assignedTechniqueIds': [],
+              },
+            });
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Alumno inscrito en ${selectedDiscipline['name']} con éxito.'), backgroundColor: Colors.green),
-        );
+            SnackBar(
+              content: Text(
+                'Alumno inscrito en ${selectedDiscipline['name']} con éxito.',
+              ),
+              backgroundColor: Colors.green,
+            ),
+          );
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error al inscribir: ${e.toString()}'))
-        );
+            SnackBar(content: Text('Error al inscribir: ${e.toString()}')),
+          );
         }
       }
     }
@@ -892,11 +1289,16 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
   String _formatGender(String? genderValue) {
     if (genderValue == null || genderValue.isEmpty) return l10n.noSpecify;
     switch (genderValue) {
-      case 'masculino': return l10n.maleGender;
-      case 'femenino': return l10n.femaleGender;
-      case 'otro': return l10n.otherGender;
-      case 'prefiero_no_decirlo': return l10n.noSpecifyGender;
-      default: return genderValue;
+      case 'masculino':
+        return l10n.maleGender;
+      case 'femenino':
+        return l10n.femaleGender;
+      case 'otro':
+        return l10n.otherGender;
+      case 'prefiero_no_decirlo':
+        return l10n.noSpecifyGender;
+      default:
+        return genderValue;
     }
   }
 
@@ -904,43 +1306,85 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
     if (birthDate == null) return '';
     final today = DateTime.now();
     int age = today.year - birthDate.year;
-    if (today.month < birthDate.month || (today.month == birthDate.month && today.day < birthDate.day)) {
+    if (today.month < birthDate.month ||
+        (today.month == birthDate.month && today.day < birthDate.day)) {
       age--;
     }
     return ' ($age ${l10n.years})';
   }
 
-  Widget _buildInfoCard({required String title, required IconData icon, Color? iconColor, required List<Widget> children}) {
-    return Card(child: Padding(padding: const EdgeInsets.all(16.0), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(children: [ Icon(icon, color: iconColor ?? Theme.of(context).primaryColor), const SizedBox(width: 8), Expanded(child: Text(title, style: Theme.of(context).textTheme.titleLarge, overflow: TextOverflow.ellipsis, maxLines: 2))]),
-      const Divider(height: 20), ...children])));
+  Widget _buildInfoCard({
+    required String title,
+    required IconData icon,
+    Color? iconColor,
+    required List<Widget> children,
+  }) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: iconColor ?? Theme.of(context).primaryColor),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleLarge,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
+                  ),
+                ),
+              ],
+            ),
+            const Divider(height: 20),
+            ...children,
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildInfoRow(String label, String value) {
-    return Padding(padding: const EdgeInsets.symmetric(vertical: 4.0), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: const TextStyle(fontWeight: FontWeight.bold)), const SizedBox(width: 8),
-      Expanded(child: Text(value.isEmpty ? l10n.noSpecify : value)),
-    ]));
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(width: 8),
+          Expanded(child: Text(value.isEmpty ? l10n.noSpecify : value)),
+        ],
+      ),
+    );
   }
 
   Future<void> _deletePayment(String paymentId) async {
     try {
       await FirebaseFirestore.instance
-          .collection('schools').doc(widget.schoolId)
-          .collection('members').doc(widget.studentId)
-          .collection('payments').doc(paymentId)
+          .collection('schools')
+          .doc(widget.schoolId)
+          .collection('members')
+          .doc(widget.studentId)
+          .collection('payments')
+          .doc(paymentId)
           .delete();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.paymentDeletedSuccess), backgroundColor: Colors.green),
+          SnackBar(
+            content: Text(l10n.paymentDeletedSuccess),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.deleteError(e.toString()))),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.deleteError(e.toString()))));
       }
     }
   }
@@ -948,22 +1392,27 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> with TickerPr
   Future<void> _deleteAttendance(String attendanceRecordId) async {
     try {
       await FirebaseFirestore.instance
-          .collection('schools').doc(widget.schoolId)
-          .collection('attendanceRecords').doc(attendanceRecordId)
+          .collection('schools')
+          .doc(widget.schoolId)
+          .collection('attendanceRecords')
+          .doc(attendanceRecordId)
           .update({
-        'presentStudentIds': FieldValue.arrayRemove([widget.studentId])
-      });
+            'presentStudentIds': FieldValue.arrayRemove([widget.studentId]),
+          });
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.assistanceDelete), backgroundColor: Colors.green),
+          SnackBar(
+            content: Text(l10n.assistanceDelete),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.deleteError(e.toString()))),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.deleteError(e.toString()))));
       }
     }
   }

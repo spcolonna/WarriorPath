@@ -11,11 +11,10 @@ import 'package:warrior_path/screens/wizard_create_school_screen.dart';
 import 'package:warrior_path/l10n/app_localizations.dart';
 import '../enums/user_role.dart';
 
-
 class WizardProfileScreen extends StatefulWidget {
   final bool isExistingUser;
 
-  const WizardProfileScreen({Key? key, this.isExistingUser = false}) : super(key: key);
+  const WizardProfileScreen({super.key, this.isExistingUser = false});
 
   @override
   _WizardProfileScreenState createState() => _WizardProfileScreenState();
@@ -59,7 +58,10 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
   }
 
   Future<void> _loadExistingUserData() async {
-    final userDoc = await FirebaseFirestore.instance.collection('users').doc(_uid).get();
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(_uid)
+        .get();
     if (userDoc.exists && mounted) {
       final data = userDoc.data()!;
       setState(() {
@@ -68,7 +70,10 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
         _selectedSex = data['gender'];
         _selectedDateOfBirth = (data['dateOfBirth'] as Timestamp?)?.toDate();
         if (_selectedDateOfBirth != null) {
-          _dobController.text = DateFormat('dd/MM/yyyy', 'es_ES').format(_selectedDateOfBirth!);
+          _dobController.text = DateFormat(
+            'dd/MM/yyyy',
+            'es_ES',
+          ).format(_selectedDateOfBirth!);
         }
       });
     }
@@ -81,7 +86,10 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
   }
 
   Future<void> _pickImage() async {
-    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 50);
+    final pickedFile = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 50,
+    );
     if (pickedFile != null) {
       setState(() {
         _imageFile = File(pickedFile.path);
@@ -108,13 +116,17 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
   Future<void> _saveAndContinue() async {
     if (_nameController.text.trim().isEmpty || _selectedRole == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.nameAndMartialArtRequired)), // Texto localizado
+        SnackBar(
+          content: Text(l10n.nameAndMartialArtRequired),
+        ), // Texto localizado
       );
       return;
     }
     if (_uid == null) return;
 
-    setState(() { _isLoading = true; });
+    setState(() {
+      _isLoading = true;
+    });
 
     try {
       final user = FirebaseAuth.instance.currentUser;
@@ -122,7 +134,10 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
 
       String? photoUrl;
       if (_imageFile != null) {
-        final ref = FirebaseStorage.instance.ref().child('profile_pics').child('$_uid.jpg');
+        final ref = FirebaseStorage.instance
+            .ref()
+            .child('profile_pics')
+            .child('$_uid.jpg');
         await ref.putFile(_imageFile!);
         photoUrl = await ref.getDownloadURL();
       }
@@ -147,26 +162,38 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
 
       switch (_selectedRole) {
         case UserRole.student:
-          Navigator.of(context).push(MaterialPageRoute(builder: (context) => const SchoolSearchScreen(isFromWizard: true)));
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) =>
+                  const SchoolSearchScreen(isFromWizard: true),
+            ),
+          );
           break;
         case UserRole.teacher:
         case UserRole.both:
-          Navigator.of(context).push(MaterialPageRoute(builder: (context) => const WizardCreateSchoolScreen()));
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const WizardCreateSchoolScreen(),
+            ),
+          );
           break;
         case UserRole.parent:
-          Navigator.of(context).push(MaterialPageRoute(builder: (context) => const AddChildScreen()));
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => const AddChildScreen()),
+          );
           break;
         default:
           break;
       }
-
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.saveError(e.toString()))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.saveError(e.toString()))));
     } finally {
       if (mounted) {
-        setState(() { _isLoading = false; });
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
@@ -174,7 +201,13 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.isExistingUser ? l10n.selectProfile : 'Completa tu Perfil (Paso 1)')),
+      appBar: AppBar(
+        title: Text(
+          widget.isExistingUser
+              ? l10n.selectProfile
+              : 'Completa tu Perfil (Paso 1)',
+        ),
+      ),
       body: AbsorbPointer(
         absorbing: _isLoading,
         child: SingleChildScrollView(
@@ -188,8 +221,16 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
                     CircleAvatar(
                       radius: 60,
                       backgroundColor: Colors.grey.shade300,
-                      backgroundImage: _imageFile != null ? FileImage(_imageFile!) : null,
-                      child: _imageFile == null ? const Icon(Icons.person, size: 60, color: Colors.white) : null,
+                      backgroundImage: _imageFile != null
+                          ? FileImage(_imageFile!)
+                          : null,
+                      child: _imageFile == null
+                          ? const Icon(
+                              Icons.person,
+                              size: 60,
+                              color: Colors.white,
+                            )
+                          : null,
                     ),
                     Positioned(
                       bottom: 0,
@@ -215,13 +256,25 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _selectedSex,
+                initialValue: _selectedSex,
                 decoration: InputDecoration(labelText: l10n.gender),
                 items: [
-                  DropdownMenuItem(value: 'masculino', child: Text(l10n.maleGender)),
-                  DropdownMenuItem(value: 'femenino', child: Text(l10n.femaleGender)),
-                  DropdownMenuItem(value: 'otro', child: Text(l10n.otherGender)),
-                  DropdownMenuItem(value: 'prefiero_no_decirlo', child: Text(l10n.noSpecifyGender)),
+                  DropdownMenuItem(
+                    value: 'masculino',
+                    child: Text(l10n.maleGender),
+                  ),
+                  DropdownMenuItem(
+                    value: 'femenino',
+                    child: Text(l10n.femaleGender),
+                  ),
+                  DropdownMenuItem(
+                    value: 'otro',
+                    child: Text(l10n.otherGender),
+                  ),
+                  DropdownMenuItem(
+                    value: 'prefiero_no_decirlo',
+                    child: Text(l10n.noSpecifyGender),
+                  ),
                 ],
                 onChanged: (value) => setState(() => _selectedSex = value),
               ),
@@ -236,26 +289,65 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
                 onTap: () => _selectDateOfBirth(context),
               ),
               const SizedBox(height: 24),
-              Text('¿Cómo quieres empezar? *', style: Theme.of(context).textTheme.titleMedium),
+              Text(
+                '¿Cómo quieres empezar? *',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               const SizedBox(height: 8),
 
               SegmentedButton<UserRole>(
-                style: ButtonStyle(padding: WidgetStateProperty.all<EdgeInsets>(const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0))),
+                style: ButtonStyle(
+                  padding: WidgetStateProperty.all<EdgeInsets>(
+                    const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+                  ),
+                ),
                 segments: <ButtonSegment<UserRole>>[
                   ButtonSegment<UserRole>(
                     value: UserRole.student,
-                    label: Column(mainAxisSize: MainAxisSize.min, children: [const Icon(Icons.school, size: 20), const SizedBox(height: 4), Text(l10n.student, style: const TextStyle(fontSize: 12))]),
+                    label: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.school, size: 20),
+                        const SizedBox(height: 4),
+                        Text(
+                          l10n.student,
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    ),
                   ),
                   ButtonSegment<UserRole>(
                     value: UserRole.teacher,
-                    label: Column(mainAxisSize: MainAxisSize.min, children: [const Icon(Icons.sports_kabaddi, size: 20), const SizedBox(height: 4), Text(l10n.teacher, style: const TextStyle(fontSize: 12))]),
+                    label: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.sports_kabaddi, size: 20),
+                        const SizedBox(height: 4),
+                        Text(
+                          l10n.teacher,
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    ),
                   ),
                   ButtonSegment<UserRole>(
                     value: UserRole.parent,
-                    label: Column(mainAxisSize: MainAxisSize.min, children: [const Icon(Icons.family_restroom, size: 20), const SizedBox(height: 4), Text(l10n.iAmAParent, style: const TextStyle(fontSize: 12))]),
+                    label: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.family_restroom, size: 20),
+                        const SizedBox(height: 4),
+                        Text(
+                          l10n.iAmAParent,
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
-                selected: _selectedRole != null ? <UserRole>{_selectedRole!} : <UserRole>{},
+                selected: _selectedRole != null
+                    ? <UserRole>{_selectedRole!}
+                    : <UserRole>{},
                 onSelectionChanged: (Set<UserRole> newSelection) {
                   if (newSelection.isNotEmpty) {
                     _updateRole(newSelection.first);
@@ -265,24 +357,39 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
                 showSelectedIcon: false,
               ),
               const SizedBox(height: 16),
-              if (_selectedRole == UserRole.teacher || _selectedRole == UserRole.both)
+              if (_selectedRole == UserRole.teacher ||
+                  _selectedRole == UserRole.both)
                 Container(
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(8)),
-                  child: const Text('Al elegir "Profesor" o "Ambos", el siguiente paso será crear tu propia escuela.', textAlign: TextAlign.center), // TODO: Localizar
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    'Al elegir "Profesor" o "Ambos", el siguiente paso será crear tu propia escuela.',
+                    textAlign: TextAlign.center,
+                  ), // TODO: Localizar
                 ),
               if (_selectedRole == UserRole.parent)
                 Container(
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(8)),
-                  child: Text(l10n.parentFlowDescription, textAlign: TextAlign.center),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    l10n.parentFlowDescription,
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               const SizedBox(height: 32),
               if (_isLoading)
                 const Center(child: CircularProgressIndicator())
               else
                 ElevatedButton(
-                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
                   onPressed: _saveAndContinue,
                   child: Text(l10n.saveAndContinue),
                 ),

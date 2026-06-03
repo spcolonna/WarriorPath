@@ -47,8 +47,9 @@ class _RegisterPaymentDialogState extends State<RegisterPaymentDialog> {
 
     if (widget.assignedPlanId != null &&
         widget.allPlans.any((p) => p.id == widget.assignedPlanId)) {
-      _selectedPlan =
-          widget.allPlans.firstWhere((p) => p.id == widget.assignedPlanId);
+      _selectedPlan = widget.allPlans.firstWhere(
+        (p) => p.id == widget.assignedPlanId,
+      );
     } else if (widget.allPlans.isNotEmpty) {
       _selectedPlan = widget.allPlans.first;
     }
@@ -85,8 +86,10 @@ class _RegisterPaymentDialogState extends State<RegisterPaymentDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final dateLabel =
-        DateFormat("d 'de' MMMM yyyy", 'es_ES').format(_paymentDate);
+    final dateLabel = DateFormat(
+      "d 'de' MMMM yyyy",
+      'es_ES',
+    ).format(_paymentDate);
 
     return AlertDialog(
       title: Text(l10n.registerPayment),
@@ -124,11 +127,15 @@ class _RegisterPaymentDialogState extends State<RegisterPaymentDialog> {
             const SizedBox(height: 24),
             if (_paymentType == PaymentType.plan)
               DropdownButtonFormField<PaymentPlanModel>(
-                value: _selectedPlan,
+                initialValue: _selectedPlan,
                 hint: Text(l10n.selectPlan),
                 items: widget.allPlans
-                    .map((plan) => DropdownMenuItem(
-                        value: plan, child: Text(plan.title)))
+                    .map(
+                      (plan) => DropdownMenuItem(
+                        value: plan,
+                        child: Text(plan.title),
+                      ),
+                    )
                     .toList(),
                 onChanged: (plan) {
                   setState(() {
@@ -148,10 +155,12 @@ class _RegisterPaymentDialogState extends State<RegisterPaymentDialog> {
             TextFormField(
               controller: _amountController,
               decoration: InputDecoration(
-                  labelText: l10n.amount,
-                  prefixText: '${widget.currency} '),
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+                labelText: l10n.amount,
+                prefixText: '${widget.currency} ',
+              ),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               readOnly: _paymentType == PaymentType.plan,
             ),
             const SizedBox(height: 16),
@@ -160,10 +169,14 @@ class _RegisterPaymentDialogState extends State<RegisterPaymentDialog> {
               onTap: _pickDate,
               borderRadius: BorderRadius.circular(4),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 14,
+                ),
                 decoration: BoxDecoration(
                   border: Border.all(
-                      color: Theme.of(context).colorScheme.outline),
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Row(
@@ -177,21 +190,20 @@ class _RegisterPaymentDialogState extends State<RegisterPaymentDialog> {
                             'Fecha del pago',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
                             ),
                           ),
                           const SizedBox(height: 2),
-                          Text(dateLabel,
-                              style: const TextStyle(fontSize: 16)),
+                          Text(dateLabel, style: const TextStyle(fontSize: 16)),
                         ],
                       ),
                     ),
-                    Icon(Icons.edit_calendar_outlined,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurfaceVariant),
+                    Icon(
+                      Icons.edit_calendar_outlined,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ],
                 ),
               ),
@@ -210,8 +222,8 @@ class _RegisterPaymentDialogState extends State<RegisterPaymentDialog> {
             if (_conceptController.text.trim().isEmpty || amount <= 0) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                    content: Text(
-                        'El concepto y el monto son requeridos.')),
+                  content: Text('El concepto y el monto son requeridos.'),
+                ),
               );
               return;
             }

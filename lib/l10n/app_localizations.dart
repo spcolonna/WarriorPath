@@ -2523,6 +2523,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Português'**
   String get languagePortuguese;
+
+  /// No description provided for @schoolPendingValidationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'School pending validation'**
+  String get schoolPendingValidationTitle;
+
+  /// No description provided for @schoolPendingValidationMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your school hasn\'t been validated yet. Contact the administrator to activate access to your dashboard.'**
+  String get schoolPendingValidationMessage;
+
+  /// No description provided for @addStudent.
+  ///
+  /// In en, this message translates to:
+  /// **'Add student'**
+  String get addStudent;
+
+  /// No description provided for @addOfflineStudentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New student'**
+  String get addOfflineStudentTitle;
+
+  /// No description provided for @addOfflineStudentDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a student without an account to track their attendance, payments and progress. You\'ll be able to link them to their real account later.'**
+  String get addOfflineStudentDescription;
+
+  /// No description provided for @studentNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Student name'**
+  String get studentNameLabel;
+
+  /// No description provided for @offlineStudentBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'No app'**
+  String get offlineStudentBadge;
+
+  /// No description provided for @linkAccountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Link account'**
+  String get linkAccountTitle;
+
+  /// No description provided for @linkAccountSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Move a no-app student\'s info to their real account'**
+  String get linkAccountSubtitle;
+
+  /// No description provided for @linkAccountDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a no-app student and the real account you want to transfer all their info to (payments, progress and attendance). The no-app student will be disabled.'**
+  String get linkAccountDescription;
+
+  /// No description provided for @manualStudentsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'No-app students'**
+  String get manualStudentsLabel;
+
+  /// No description provided for @registeredStudentsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Students with account'**
+  String get registeredStudentsLabel;
+
+  /// No description provided for @selectManualStudent.
+  ///
+  /// In en, this message translates to:
+  /// **'Select the no-app student'**
+  String get selectManualStudent;
+
+  /// No description provided for @selectRegisteredStudent.
+  ///
+  /// In en, this message translates to:
+  /// **'Select the target real account'**
+  String get selectRegisteredStudent;
+
+  /// No description provided for @noManualStudents.
+  ///
+  /// In en, this message translates to:
+  /// **'You have no no-app students.'**
+  String get noManualStudents;
+
+  /// No description provided for @noRegisteredStudents.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no students with an account to link.'**
+  String get noRegisteredStudents;
+
+  /// No description provided for @linkConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm linking'**
+  String get linkConfirmTitle;
+
+  /// No description provided for @linkConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'All info from \"{manual}\" will be transferred to \"{real}\". The no-app student will be disabled. This action can\'t be undone.'**
+  String linkConfirmMessage(String manual, String real);
+
+  /// No description provided for @linkButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Link'**
+  String get linkButton;
+
+  /// No description provided for @linkInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Linking accounts...'**
+  String get linkInProgress;
+
+  /// No description provided for @linkSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Account linked successfully.'**
+  String get linkSuccess;
+
+  /// No description provided for @linkErrorMsg.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t link: {error}'**
+  String linkErrorMsg(String error);
 }
 
 class _AppLocalizationsDelegate

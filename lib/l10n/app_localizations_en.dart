@@ -1356,4 +1356,79 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get languagePortuguese => 'Português';
+
+  @override
+  String get schoolPendingValidationTitle => 'School pending validation';
+
+  @override
+  String get schoolPendingValidationMessage =>
+      'Your school hasn\'t been validated yet. Contact the administrator to activate access to your dashboard.';
+
+  @override
+  String get addStudent => 'Add student';
+
+  @override
+  String get addOfflineStudentTitle => 'New student';
+
+  @override
+  String get addOfflineStudentDescription =>
+      'Create a student without an account to track their attendance, payments and progress. You\'ll be able to link them to their real account later.';
+
+  @override
+  String get studentNameLabel => 'Student name';
+
+  @override
+  String get offlineStudentBadge => 'No app';
+
+  @override
+  String get linkAccountTitle => 'Link account';
+
+  @override
+  String get linkAccountSubtitle =>
+      'Move a no-app student\'s info to their real account';
+
+  @override
+  String get linkAccountDescription =>
+      'Pick a no-app student and the real account you want to transfer all their info to (payments, progress and attendance). The no-app student will be disabled.';
+
+  @override
+  String get manualStudentsLabel => 'No-app students';
+
+  @override
+  String get registeredStudentsLabel => 'Students with account';
+
+  @override
+  String get selectManualStudent => 'Select the no-app student';
+
+  @override
+  String get selectRegisteredStudent => 'Select the target real account';
+
+  @override
+  String get noManualStudents => 'You have no no-app students.';
+
+  @override
+  String get noRegisteredStudents =>
+      'There are no students with an account to link.';
+
+  @override
+  String get linkConfirmTitle => 'Confirm linking';
+
+  @override
+  String linkConfirmMessage(String manual, String real) {
+    return 'All info from \"$manual\" will be transferred to \"$real\". The no-app student will be disabled. This action can\'t be undone.';
+  }
+
+  @override
+  String get linkButton => 'Link';
+
+  @override
+  String get linkInProgress => 'Linking accounts...';
+
+  @override
+  String get linkSuccess => 'Account linked successfully.';
+
+  @override
+  String linkErrorMsg(String error) {
+    return 'Couldn\'t link: $error';
+  }
 }

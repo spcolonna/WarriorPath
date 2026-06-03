@@ -176,10 +176,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         final pendingApplications =
             userData['pendingApplications'] as Map<String, dynamic>?;
         if (pendingApplications != null && pendingApplications.isNotEmpty) {
-          final firstApp = pendingApplications.values.first as Map<String, dynamic>;
+          final firstApp =
+              pendingApplications.values.first as Map<String, dynamic>;
           final schoolName = firstApp['schoolName'] as String? ?? '';
-          final applicationDate =
-              (firstApp['applicationDate'] as Timestamp?)?.toDate();
+          final applicationDate = (firstApp['applicationDate'] as Timestamp?)
+              ?.toDate();
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
               builder: (context) => PendingProgressScreen(
@@ -198,7 +199,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   }
 
   Future<void> _performLogin() async {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     if (_isLoading) return;
     setState(() {
       _isLoading = true;
@@ -241,7 +242,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
   void _showErrorDialog(String title, String content) {
     if (!mounted) return;
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -269,7 +270,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   @override
   Widget build(BuildContext context) {
     // Obtenemos la instancia de l10n para usar en el build
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       backgroundColor: AppColors.backgroundGray,

@@ -1,5 +1,6 @@
 import {onSchedule} from "firebase-functions/v2/scheduler";
 import {onDocumentWritten} from "firebase-functions/v2/firestore";
+import {onCall, HttpsError} from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import * as logger from "firebase-functions/logger";
 
@@ -265,6 +266,152 @@ exports.onEventAssigned = onDocumentWritten(
       logger.error("Error enviando notificaciones de evento:", error);
     }
   });
+
+// ===============================================================================================
+// FUNCIÓN 6: VINCULAR ALUMNO SIN APP (OFFLINE) CON UNA CUENTA REAL
+// ===============================================================================================
+// Transfiere toda la info de un alumno proxy (sin cuenta) a la cuenta real de un
+// alumno ya inscripto: progreso, pagos, historial de progresión, recordatorios,
+// asistencias y eventos. El alumno offline queda deshabilitado (status 'merged').
+exports.linkOfflineStudent = onCall(async (request) => {
+  const callerUid = request.auth?.uid;
+  if (!callerUid) {
+    throw new HttpsError("unauthenticated", "Debés iniciar sesión.");
+  }
+
+  const {schoolId, offlineMemberId, targetMemberId} = request.data ?? {};
+  if (!schoolId || !offlineMemberId || !targetMemberId) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Faltan parámetros: schoolId, offlineMemberId, targetMemberId.");
+  }
+  if (offlineMemberId === targetMemberId) {
+    throw new HttpsError(
+      "invalid-argument", "No se puede vincular un alumno consigo mismo.");
+  }
+
+  const schoolRef = db.collection("schools").doc(schoolId);
+  const schoolSnap = await schoolRef.get();
+  if (!schoolSnap.exists) {
+    throw new HttpsError("not-found", "La escuela no existe.");
+  }
+  // Solo el dueño de la escuela puede vincular cuentas.
+  if (schoolSnap.data()?.ownerId !== callerUid) {
+    throw new HttpsError(
+      "permission-denied", "Solo el dueño de la escuela puede vincular cuentas.");
+  }
+
+  const offlineMemberRef = schoolRef.collection("members").doc(offlineMemberId);
+  const targetMemberRef = schoolRef.collection("members").doc(targetMemberId);
+
+  const [offlineSnap, targetSnap] = await Promise.all([
+    offlineMemberRef.get(), targetMemberRef.get(),
+  ]);
+  if (!offlineSnap.exists) {
+    throw new HttpsError("not-found", "El alumno sin app no existe.");
+  }
+  if (!targetSnap.exists) {
+    throw new HttpsError("not-found", "El alumno destino no existe.");
+  }
+
+  const offlineData = offlineSnap.data() ?? {};
+  const targetData = targetSnap.data() ?? {};
+
+  // 1) Merge de progreso: ante conflicto de disciplina, gana la del alumno
+  //    offline porque tiene el historial real de grado acumulado.
+  const targetProgress = (targetData.progress ?? {}) as Record<string, unknown>;
+  const offlineProgress =
+    (offlineData.progress ?? {}) as Record<string, unknown>;
+  const mergedProgress = {...targetProgress, ...offlineProgress};
+
+  // Buffer de operaciones; se vuelca en lotes de a 450 para no superar el
+  // límite de 500 writes por batch de Firestore.
+  const ops: Array<() => void> = [];
+  let batch = db.batch();
+  let count = 0;
+  const flushIfNeeded = async () => {
+    if (count >= 450) {
+      await batch.commit();
+      batch = db.batch();
+      count = 0;
+    }
+  };
+  const queue = (fn: (b: FirebaseFirestore.WriteBatch) => void) => {
+    ops.push(() => fn(batch));
+  };
+
+  // 2) Copiar subcolecciones del miembro offline al miembro real.
+  const subcollections = ["payments", "progressionHistory", "paymentReminders"];
+  for (const sub of subcollections) {
+    const snap = await offlineMemberRef.collection(sub).get();
+    for (const doc of snap.docs) {
+      queue((b) => b.set(targetMemberRef.collection(sub).doc(doc.id), doc.data()));
+    }
+  }
+
+  // Reemplaza offlineMemberId por targetMemberId en un array, sin duplicar.
+  const swapId = (arr: unknown): string[] => {
+    const ids = (Array.isArray(arr) ? arr : []) as string[];
+    const next = ids.filter((id) => id !== offlineMemberId);
+    if (!next.includes(targetMemberId)) next.push(targetMemberId);
+    return next;
+  };
+
+  // 3) Asistencias: reemplazar el id offline por el real en presentStudentIds.
+  const attendanceSnap = await schoolRef.collection("attendanceRecords")
+    .where("presentStudentIds", "array-contains", offlineMemberId).get();
+  for (const doc of attendanceSnap.docs) {
+    const next = swapId(doc.data().presentStudentIds);
+    queue((b) => b.update(doc.ref, {presentStudentIds: next}));
+  }
+
+  // 4) Eventos: mismo swap en invitedStudentIds.
+  const eventsSnap = await schoolRef.collection("events")
+    .where("invitedStudentIds", "array-contains", offlineMemberId).get();
+  for (const doc of eventsSnap.docs) {
+    const next = swapId(doc.data().invitedStudentIds);
+    queue((b) => b.update(doc.ref, {invitedStudentIds: next}));
+  }
+
+  // 5) Actualizar el miembro real: progreso fusionado + datos que no tenga.
+  const targetUpdate: Record<string, unknown> = {progress: mergedProgress};
+  if (!targetData.assignedPaymentPlanId && offlineData.assignedPaymentPlanId) {
+    targetUpdate.assignedPaymentPlanId = offlineData.assignedPaymentPlanId;
+  }
+  if (offlineData.achievements) {
+    targetUpdate.achievements = {
+      ...(offlineData.achievements as Record<string, unknown>),
+      ...((targetData.achievements ?? {}) as Record<string, unknown>),
+    };
+  }
+  queue((b) => b.update(targetMemberRef, targetUpdate));
+
+  // 6) Deshabilitar el alumno offline (member + perfil proxy en users).
+  queue((b) => b.update(offlineMemberRef, {
+    status: "merged",
+    mergedInto: targetMemberId,
+    mergedAt: admin.firestore.FieldValue.serverTimestamp(),
+  }));
+  queue((b) => b.update(db.collection("users").doc(offlineMemberId), {
+    isDisabled: true,
+    mergedInto: targetMemberId,
+    mergedAt: admin.firestore.FieldValue.serverTimestamp(),
+  }));
+
+  // Ejecutar todas las operaciones en lotes.
+  for (const op of ops) {
+    op();
+    count++;
+    await flushIfNeeded();
+  }
+  if (count > 0) await batch.commit();
+
+  logger.info(
+    `Vinculado offline ${offlineMemberId} -> ${targetMemberId} ` +
+    `en escuela ${schoolId} por ${callerUid}.`);
+
+  return {success: true, targetMemberId};
+});
 
 // ===============================================================================================
 // FUNCIÓN AUXILIAR: ENVIAR NOTIFICACIONES A UN USUARIO

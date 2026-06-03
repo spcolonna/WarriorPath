@@ -358,6 +358,13 @@
     "planPayment": "Pagamento de Plano",
     "specialPayment": "Pagamento Especial",
     "editEvent": "Editar Evento",
+    "monday": "Segunda-feira",
+    "tuesday": "Terça-feira",
+    "wednesday": "Quarta-feira",
+    "thursday": "Quinta-feira",
+    "friday": "Sexta-feira",
+    "saturday": "Sábado",
+    "sunday": "Domingo",
     "createNewEvent": "Criar Novo Evento",
     "eventTitle": "Título do Evento *",
     "pleaseCompleteDateTime": "Por favor, complete a data e os horários.",
@@ -403,5 +410,33 @@
     "changeLanguageSubtitle": "Español, English, Português",
     "languageSpanish": "Español",
     "languageEnglish": "English",
-    "languagePortuguese": "Português"
+    "languagePortuguese": "Português",
+    "schoolPendingValidationTitle": "Escola pendente de validação",
+    "schoolPendingValidationMessage": "Sua escola ainda não foi validada. Entre em contato com o administrador para ativar o acesso ao seu painel.",
+    "addStudent": "Adicionar aluno",
+    "addOfflineStudentTitle": "Novo aluno",
+    "addOfflineStudentDescription": "Crie um aluno sem conta para registrar presença, pagamentos e progresso. Mais tarde você poderá vinculá-lo à conta real dele.",
+    "studentNameLabel": "Nome do aluno",
+    "offlineStudentBadge": "Sem app",
+    "linkAccountTitle": "Vincular conta",
+    "linkAccountSubtitle": "Passe a info de um aluno sem app para a conta real dele",
+    "linkAccountDescription": "Escolha um aluno sem app e a conta real para a qual deseja transferir toda a info (pagamentos, progresso e presença). O aluno sem app ficará desativado.",
+    "manualStudentsLabel": "Alunos sem app",
+    "registeredStudentsLabel": "Alunos com conta",
+    "selectManualStudent": "Selecione o aluno sem app",
+    "selectRegisteredStudent": "Selecione a conta real de destino",
+    "noManualStudents": "Você não tem alunos sem app.",
+    "noRegisteredStudents": "Não há alunos com conta para vincular.",
+    "linkConfirmTitle": "Confirmar vinculação",
+    "linkConfirmMessage": "Toda a info de \"{manual}\" será transferida para \"{real}\". O aluno sem app ficará desativado. Esta ação não pode ser desfeita.",
+    "@linkConfirmMessage": {
+        "placeholders": { "manual": {"type": "String"}, "real": {"type": "String"} }
+    },
+    "linkButton": "Vincular",
+    "linkInProgress": "Vinculando contas...",
+    "linkSuccess": "Conta vinculada com sucesso.",
+    "linkErrorMsg": "Não foi possível vincular: {error}",
+    "@linkErrorMsg": {
+        "placeholders": { "error": {"type": "String"} }
+    }
 }

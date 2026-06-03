@@ -20,8 +20,7 @@ class AttendanceChecklistScreen extends StatefulWidget {
       _AttendanceChecklistScreenState();
 }
 
-class _AttendanceChecklistScreenState
-    extends State<AttendanceChecklistScreen> {
+class _AttendanceChecklistScreenState extends State<AttendanceChecklistScreen> {
   final _db = FirebaseFirestore.instance;
 
   String? _recordId;
@@ -51,8 +50,8 @@ class _AttendanceChecklistScreenState
         .get();
     final docs = snap.docs.toList()
       ..sort((a, b) {
-        final aName = (a.data() as Map<String, dynamic>)['displayName'] as String? ?? '';
-        final bName = (b.data() as Map<String, dynamic>)['displayName'] as String? ?? '';
+        final aName = (a.data())['displayName'] as String? ?? '';
+        final bName = (b.data())['displayName'] as String? ?? '';
         return aName.compareTo(bName);
       });
     if (mounted) setState(() => _students = docs);
@@ -68,8 +67,7 @@ class _AttendanceChecklistScreenState
         .doc(widget.schoolId)
         .collection('attendanceRecords')
         .where('scheduleTitle', isEqualTo: widget.scheduleTitle)
-        .where('date',
-            isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
         .where('date', isLessThan: Timestamp.fromDate(endOfDay))
         .limit(1)
         .get();
@@ -79,17 +77,18 @@ class _AttendanceChecklistScreenState
       final data = doc.data();
       _recordId = doc.id;
       _presentIds = Set<String>.from(
-          (data['presentStudentIds'] as List<dynamic>?) ?? []);
+        (data['presentStudentIds'] as List<dynamic>?) ?? [],
+      );
     } else {
       final ref = await _db
           .collection('schools')
           .doc(widget.schoolId)
           .collection('attendanceRecords')
           .add({
-        'date': Timestamp.now(),
-        'scheduleTitle': widget.scheduleTitle,
-        'presentStudentIds': <String>[],
-      });
+            'date': Timestamp.now(),
+            'scheduleTitle': widget.scheduleTitle,
+            'presentStudentIds': <String>[],
+          });
       _recordId = ref.id;
     }
   }
@@ -110,10 +109,10 @@ class _AttendanceChecklistScreenState
         .collection('attendanceRecords')
         .doc(_recordId)
         .update({
-      'presentStudentIds': wasPresent
-          ? FieldValue.arrayRemove([studentId])
-          : FieldValue.arrayUnion([studentId]),
-    });
+          'presentStudentIds': wasPresent
+              ? FieldValue.arrayRemove([studentId])
+              : FieldValue.arrayUnion([studentId]),
+        });
   }
 
   List<QueryDocumentSnapshot> get _filtered {
@@ -121,10 +120,11 @@ class _AttendanceChecklistScreenState
     if (_search.isNotEmpty) {
       final q = _search.toLowerCase();
       list = list
-          .where((d) =>
-              (d.data()['displayName'] as String? ?? '')
-                  .toLowerCase()
-                  .contains(q))
+          .where(
+            (d) => (d.data()['displayName'] as String? ?? '')
+                .toLowerCase()
+                .contains(q),
+          )
           .toList();
     }
     if (_filter == _Filter.present) {
@@ -184,7 +184,9 @@ class _AttendanceChecklistScreenState
                           Text(
                             widget.scheduleTime,
                             style: const TextStyle(
-                                color: Colors.white70, fontSize: 13),
+                              color: Colors.white70,
+                              fontSize: 13,
+                            ),
                           ),
                         const SizedBox(height: 14),
                         if (_ready) ...[
@@ -204,7 +206,9 @@ class _AttendanceChecklistScreenState
                               Text(
                                 ' / $total presentes',
                                 style: const TextStyle(
-                                    color: Colors.white70, fontSize: 18),
+                                  color: Colors.white70,
+                                  fontSize: 18,
+                                ),
                               ),
                             ],
                           ),
@@ -215,7 +219,8 @@ class _AttendanceChecklistScreenState
                               value: ratio,
                               backgroundColor: Colors.white24,
                               valueColor: const AlwaysStoppedAnimation<Color>(
-                                  Colors.white),
+                                Colors.white,
+                              ),
                               minHeight: 6,
                             ),
                           ),
@@ -224,7 +229,9 @@ class _AttendanceChecklistScreenState
                             height: 24,
                             width: 24,
                             child: CircularProgressIndicator(
-                                color: Colors.white, strokeWidth: 2),
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
                           ),
                       ],
                     ),
@@ -245,8 +252,11 @@ class _AttendanceChecklistScreenState
                     decoration: InputDecoration(
                       hintText: 'Buscar alumno...',
                       hintStyle: TextStyle(color: Colors.grey[400]),
-                      prefixIcon:
-                          Icon(Icons.search, size: 20, color: Colors.grey[400]),
+                      prefixIcon: Icon(
+                        Icons.search,
+                        size: 20,
+                        color: Colors.grey[400],
+                      ),
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
@@ -254,7 +264,9 @@ class _AttendanceChecklistScreenState
                         borderSide: BorderSide.none,
                       ),
                       contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       isDense: true,
                     ),
                     onChanged: (v) => setState(() => _search = v),
@@ -267,8 +279,7 @@ class _AttendanceChecklistScreenState
                         _Chip(
                           label: 'Todos ($total)',
                           selected: _filter == _Filter.all,
-                          onTap: () =>
-                              setState(() => _filter = _Filter.all),
+                          onTap: () => setState(() => _filter = _Filter.all),
                         ),
                         const SizedBox(width: 8),
                         _Chip(
@@ -283,8 +294,7 @@ class _AttendanceChecklistScreenState
                           label: 'Ausentes (${total - present})',
                           selected: _filter == _Filter.absent,
                           selectedColor: Colors.red[400]!,
-                          onTap: () =>
-                              setState(() => _filter = _Filter.absent),
+                          onTap: () => setState(() => _filter = _Filter.absent),
                         ),
                       ],
                     ),
@@ -308,15 +318,17 @@ class _AttendanceChecklistScreenState
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.person_search,
-                          size: 56, color: Colors.grey[400]),
+                      Icon(
+                        Icons.person_search,
+                        size: 56,
+                        color: Colors.grey[400],
+                      ),
                       const SizedBox(height: 12),
                       Text(
                         _search.isNotEmpty
                             ? 'Sin resultados para "$_search"'
                             : 'No hay alumnos en este filtro',
-                        style:
-                            TextStyle(color: Colors.grey[600], fontSize: 15),
+                        style: TextStyle(color: Colors.grey[600], fontSize: 15),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -363,8 +375,9 @@ class _Chip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color =
-        selected ? (selectedColor ?? Theme.of(context).primaryColor) : null;
+    final color = selected
+        ? (selectedColor ?? Theme.of(context).primaryColor)
+        : null;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -373,9 +386,7 @@ class _Chip extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected ? color : Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: selected ? color! : Colors.grey[300]!,
-          ),
+          border: Border.all(color: selected ? color! : Colors.grey[300]!),
         ),
         child: Text(
           label,
@@ -426,8 +437,7 @@ class _StudentCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           onTap: onToggle,
           child: Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
             child: Row(
               children: [
                 // Avatar
@@ -447,10 +457,12 @@ class _StudentCard extends StatelessWidget {
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 200),
                     child: isPresent
-                        ? const Icon(Icons.check,
+                        ? const Icon(
+                            Icons.check,
                             color: Colors.white,
                             size: 22,
-                            key: ValueKey('chk'))
+                            key: ValueKey('chk'),
+                          )
                         : Text(
                             initials,
                             key: const ValueKey('ini'),
@@ -469,8 +481,9 @@ class _StudentCard extends StatelessWidget {
                     name,
                     style: TextStyle(
                       fontSize: 15,
-                      fontWeight:
-                          isPresent ? FontWeight.w600 : FontWeight.normal,
+                      fontWeight: isPresent
+                          ? FontWeight.w600
+                          : FontWeight.normal,
                       color: isPresent ? color : Colors.black87,
                     ),
                   ),
@@ -484,28 +497,39 @@ class _StudentCard extends StatelessWidget {
                       ? Container(
                           key: const ValueKey('p'),
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 5),
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
                           decoration: BoxDecoration(
                             color: color,
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: const Text('Presente',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700)),
+                          child: const Text(
+                            'Presente',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         )
                       : Container(
                           key: const ValueKey('a'),
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 5),
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.grey[200],
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: Text('Ausente',
-                              style: TextStyle(
-                                  color: Colors.grey[600], fontSize: 11)),
+                          child: Text(
+                            'Ausente',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 11,
+                            ),
+                          ),
                         ),
                 ),
               ],

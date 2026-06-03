@@ -122,6 +122,7 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab_home_attendance',
         onPressed: () async {
           final today = DateTime.now().weekday;
           final snapshot = await FirebaseFirestore.instance

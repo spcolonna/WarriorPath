@@ -649,25 +649,25 @@ class AppLocalizationsEs extends AppLocalizations {
   String get applicationRejected => 'Solicitud rechazada.';
 
   @override
-  String get monday => 'Monday';
+  String get monday => 'Lunes';
 
   @override
-  String get tuesday => 'Tuesday';
+  String get tuesday => 'Martes';
 
   @override
-  String get wednesday => 'Wednesday';
+  String get wednesday => 'Miércoles';
 
   @override
-  String get thursday => 'Thursday';
+  String get thursday => 'Jueves';
 
   @override
-  String get friday => 'Friday';
+  String get friday => 'Viernes';
 
   @override
-  String get saturday => 'Saturday';
+  String get saturday => 'Sábado';
 
   @override
-  String get sunday => 'Sunday';
+  String get sunday => 'Domingo';
 
   @override
   String get noSchedulesDefined =>
@@ -1361,4 +1361,78 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get languagePortuguese => 'Português';
+
+  @override
+  String get schoolPendingValidationTitle => 'Escuela pendiente de validación';
+
+  @override
+  String get schoolPendingValidationMessage =>
+      'Tu escuela todavía no fue validada. Contactá al administrador para activar el acceso a tu panel.';
+
+  @override
+  String get addStudent => 'Agregar alumno';
+
+  @override
+  String get addOfflineStudentTitle => 'Nuevo alumno';
+
+  @override
+  String get addOfflineStudentDescription =>
+      'Creá un alumno sin cuenta para llevarle asistencia, pagos y progreso. Más adelante vas a poder vincularlo a su cuenta real.';
+
+  @override
+  String get studentNameLabel => 'Nombre del alumno';
+
+  @override
+  String get offlineStudentBadge => 'Sin app';
+
+  @override
+  String get linkAccountTitle => 'Vincular cuenta';
+
+  @override
+  String get linkAccountSubtitle =>
+      'Pasá la info de un alumno sin app a su cuenta real';
+
+  @override
+  String get linkAccountDescription =>
+      'Elegí un alumno sin app y la cuenta real a la que querés transferir toda su info (pagos, progreso y asistencias). El alumno sin app quedará deshabilitado.';
+
+  @override
+  String get manualStudentsLabel => 'Alumnos sin app';
+
+  @override
+  String get registeredStudentsLabel => 'Alumnos con cuenta';
+
+  @override
+  String get selectManualStudent => 'Seleccioná el alumno sin app';
+
+  @override
+  String get selectRegisteredStudent => 'Seleccioná la cuenta real de destino';
+
+  @override
+  String get noManualStudents => 'No tenés alumnos sin app.';
+
+  @override
+  String get noRegisteredStudents => 'No hay alumnos con cuenta para vincular.';
+
+  @override
+  String get linkConfirmTitle => 'Confirmar vinculación';
+
+  @override
+  String linkConfirmMessage(String manual, String real) {
+    return 'Se transferirá toda la info de \"$manual\" a \"$real\". El alumno sin app quedará deshabilitado. Esta acción no se puede deshacer.';
+  }
+
+  @override
+  String get linkButton => 'Vincular';
+
+  @override
+  String get linkInProgress => 'Vinculando cuentas...';
+
+  @override
+  String get linkSuccess => 'Cuenta vinculada con éxito.';
+
+  @override
+  String linkErrorMsg(String error) {
+    return 'No se pudo vincular: $error';
+  }
 }

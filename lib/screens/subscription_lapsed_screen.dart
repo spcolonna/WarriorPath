@@ -3,9 +3,12 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:warrior_path/l10n/app_localizations.dart';
 
 class SubscriptionLapsedScreen extends StatelessWidget {
-  const SubscriptionLapsedScreen({Key? key}) : super(key: key);
+  const SubscriptionLapsedScreen({super.key});
 
-  Future<void> _contactSupport(BuildContext context, AppLocalizations l10n) async {
+  Future<void> _contactSupport(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) async {
     final Uri emailLaunchUri = Uri(
       scheme: 'mailto',
       path: 'tu-email-de-contacto@ejemplo.com',
@@ -15,15 +18,15 @@ class SubscriptionLapsedScreen extends StatelessWidget {
     try {
       if (!await launchUrl(emailLaunchUri)) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(l10n.mailError))
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(l10n.mailError)));
         }
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.mailLaunchError(e.toString())))
+          SnackBar(content: Text(l10n.mailLaunchError(e.toString()))),
         );
       }
     }
@@ -49,9 +52,9 @@ class SubscriptionLapsedScreen extends StatelessWidget {
             Text(
               l10n.subscriptionExpired,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             Text(
@@ -64,7 +67,7 @@ class SubscriptionLapsedScreen extends StatelessWidget {
               icon: const Icon(Icons.email_outlined),
               label: Text(l10n.contactAdmin),
               style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16)
+                padding: const EdgeInsets.symmetric(vertical: 16),
               ),
               onPressed: () => _contactSupport(context, l10n),
             ),

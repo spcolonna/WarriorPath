@@ -36,14 +36,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final password = _passwordController.text.trim();
 
     if (email.isEmpty || password.isEmpty) {
-      _showErrorDialog(l10n!.errorTitle, l10n.registrationErrorContent);
+      _showErrorDialog(l10n.errorTitle, l10n.registrationErrorContent);
       return;
     }
 
     setState(() => _isLoading = true);
 
     try {
-      final userModel = await _authService.signUpWithEmailPassword(email, password);
+      final userModel = await _authService.signUpWithEmailPassword(
+        email,
+        password,
+      );
       if (userModel != null) {
         final user = FirebaseAuth.instance.currentUser;
         if (user != null && mounted) {
@@ -52,7 +55,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
           );
         }
       } else {
-        _showErrorDialog(l10n.registrationErrorTitle, l10n.registrationErrorContent);
+        _showErrorDialog(
+          l10n.registrationErrorTitle,
+          l10n.registrationErrorContent,
+        );
       }
     } on FirebaseAuthException catch (e) {
       String msg;
@@ -142,7 +148,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     top: 0,
                     left: 0,
                     child: IconButton(
-                      icon: const Icon(Icons.arrow_back, color: AppColors.textWhite),
+                      icon: const Icon(
+                        Icons.arrow_back,
+                        color: AppColors.textWhite,
+                      ),
                       onPressed: () => Navigator.of(context).pop(),
                     ),
                   ),
@@ -178,7 +187,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     if (_isLoading)
                       const Center(
                         child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryColor),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            AppColors.primaryColor,
+                          ),
                         ),
                       )
                     else
