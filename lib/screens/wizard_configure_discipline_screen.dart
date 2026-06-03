@@ -11,10 +11,10 @@ class WizardConfigureDisciplineScreen extends StatefulWidget {
   final DocumentSnapshot disciplineDoc;
 
   const WizardConfigureDisciplineScreen({
-    Key? key,
+    super.key,
     required this.schoolId,
     required this.disciplineDoc,
-  }) : super(key: key);
+  });
 
   @override
   State<WizardConfigureDisciplineScreen> createState() => _WizardConfigureDisciplineScreenState();
@@ -38,7 +38,7 @@ class _WizardConfigureDisciplineScreenState extends State<WizardConfigureDiscipl
   // Estado para Técnicas
   final _categoryController = TextEditingController();
   List<String> _categories = [];
-  List<TechniqueModel> _techniques = [];
+  final List<TechniqueModel> _techniques = [];
   int _nextTechniqueId = 0;
 
   // Datos de la Disciplina
@@ -124,7 +124,9 @@ class _WizardConfigureDisciplineScreenState extends State<WizardConfigureDiscipl
       // Guardar datos de Niveles
       batch.update(disciplineRef, {'progressionSystemName': _systemNameController.text.trim()});
       final oldLevels = await disciplineRef.collection('levels').get();
-      for (final doc in oldLevels.docs) batch.delete(doc.reference);
+      for (final doc in oldLevels.docs) {
+        batch.delete(doc.reference);
+      }
       for (int i = 0; i < _levels.length; i++) {
         _levels[i].order = i;
         final levelRef = disciplineRef.collection('levels').doc();
@@ -134,7 +136,9 @@ class _WizardConfigureDisciplineScreenState extends State<WizardConfigureDiscipl
       // Guardar datos de Técnicas
       batch.update(disciplineRef, {'techniqueCategories': _categories});
       final oldTechniques = await disciplineRef.collection('techniques').get();
-      for (final doc in oldTechniques.docs) batch.delete(doc.reference);
+      for (final doc in oldTechniques.docs) {
+        batch.delete(doc.reference);
+      }
       for (final technique in _techniques) {
         final techniqueRef = disciplineRef.collection('techniques').doc();
         batch.set(techniqueRef, technique.toJson());
@@ -358,7 +362,7 @@ class _WizardConfigureDisciplineScreenState extends State<WizardConfigureDiscipl
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
-                      value: technique.category.isNotEmpty && _categories.contains(technique.category)
+                      initialValue: technique.category.isNotEmpty && _categories.contains(technique.category)
                           ? technique.category
                           : null,
                       hint: Text(l10n.selectCategory),

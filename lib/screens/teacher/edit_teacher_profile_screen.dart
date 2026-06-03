@@ -176,7 +176,7 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
                   const SizedBox(height: 16),
 
                   DropdownButtonFormField<String>(
-                    value: isValueValid ? _selectedGender : null,
+                    initialValue: isValueValid ? _selectedGender : null,
                     decoration: InputDecoration(labelText: l10n.gender, border: const OutlineInputBorder()),
                     items: genderOptions.entries.map((entry) {
                       return DropdownMenuItem(value: entry.key, child: Text(entry.value));

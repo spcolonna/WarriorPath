@@ -9,10 +9,10 @@ class PaymentsTabScreen extends StatelessWidget {
   final String memberId;
 
   const PaymentsTabScreen({
-    Key? key,
+    super.key,
     required this.schoolId,
     required this.memberId,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

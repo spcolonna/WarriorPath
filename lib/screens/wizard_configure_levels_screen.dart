@@ -10,10 +10,10 @@ class WizardConfigureLevelsScreen extends StatefulWidget {
   final DocumentSnapshot disciplineDoc;
 
   const WizardConfigureLevelsScreen({
-    Key? key,
+    super.key,
     required this.schoolId,
     required this.disciplineDoc,
-  }) : super(key: key);
+  });
 
   @override
   _WizardConfigureLevelsScreenState createState() => _WizardConfigureLevelsScreenState();

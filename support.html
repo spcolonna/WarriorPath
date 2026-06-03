@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Soporte — Warrior Path</title>
+  <meta name="description" content="Centro de soporte y ayuda de Warrior Path, la app de gestión de escuelas de artes marciales." />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red:    #C01A1A;
+      --dark:   #1a1a1a;
+      --light:  #f5f5f5;
+      --gray:   #6b7280;
+      --border: #e5e7eb;
+      --white:  #ffffff;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--light);
+      color: var(--dark);
+      line-height: 1.6;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--dark);
+      color: var(--white);
+      padding: 2rem 1.5rem;
+      text-align: center;
+    }
+    header img {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 1rem;
+    }
+    header h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: 3px;
+      color: #FFD700;
+    }
+    header p {
+      margin-top: .4rem;
+      color: rgba(255,255,255,.65);
+      font-size: .95rem;
+    }
+
+    /* ── Nav ── */
+    nav {
+      background: var(--red);
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: .25rem;
+    }
+    nav a {
+      color: var(--white);
+      text-decoration: none;
+      padding: .75rem 1.25rem;
+      font-size: .9rem;
+      font-weight: 500;
+      opacity: .9;
+      transition: opacity .2s;
+    }
+    nav a:hover { opacity: 1; background: rgba(255,255,255,.1); }
+
+    /* ── Layout ── */
+    main {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem 4rem;
+    }
+
+    /* ── Sections ── */
+    section { margin-bottom: 3rem; }
+
+    section h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--red);
+      border-bottom: 2px solid var(--border);
+      padding-bottom: .5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    /* ── FAQ ── */
+    details {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: .75rem;
+      overflow: hidden;
+    }
+    summary {
+      padding: 1rem 1.25rem;
+      font-weight: 600;
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+    }
+    summary::-webkit-details-marker { display: none; }
+    summary::after {
+      content: "＋";
+      font-size: 1.1rem;
+      color: var(--red);
+      flex-shrink: 0;
+      margin-left: .75rem;
+    }
+    details[open] summary::after { content: "－"; }
+    details p {
+      padding: 0 1.25rem 1.25rem;
+      color: var(--gray);
+      font-size: .95rem;
+    }
+
+    /* ── Steps ── */
+    ol.steps { padding-left: 1.5rem; }
+    ol.steps li {
+      margin-bottom: .6rem;
+      font-size: .95rem;
+      color: #374151;
+    }
+
+    /* ── Contact card ── */
+    .contact-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 2rem;
+      text-align: center;
+    }
+    .contact-card p { color: var(--gray); margin-bottom: 1.25rem; font-size: .95rem; }
+    .contact-card a.btn {
+      display: inline-block;
+      background: var(--red);
+      color: var(--white);
+      text-decoration: none;
+      padding: .85rem 2rem;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 1rem;
+      transition: opacity .2s;
+    }
+    .contact-card a.btn:hover { opacity: .88; }
+    .contact-card .email-plain {
+      display: block;
+      margin-top: 1rem;
+      color: var(--gray);
+      font-size: .88rem;
+    }
+
+    /* ── Response time badge ── */
+    .badge {
+      display: inline-block;
+      background: #fef3c7;
+      color: #92400e;
+      font-size: .78rem;
+      font-weight: 600;
+      padding: .25rem .75rem;
+      border-radius: 99px;
+      margin-top: 1rem;
+    }
+
+    /* ── Info grid ── */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    .info-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem;
+    }
+    .info-card .icon { font-size: 1.6rem; margin-bottom: .5rem; }
+    .info-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: .25rem; }
+    .info-card p { font-size: .875rem; color: var(--gray); }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: var(--gray);
+      font-size: .82rem;
+      border-top: 1px solid var(--border);
+    }
+    footer a { color: var(--red); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header>
+  <h1>WARRIOR PATH</h1>
+  <p>Centro de soporte y ayuda</p>
+</header>
+
+<!-- ── Nav ── -->
+<nav>
+  <a href="#faq">Preguntas frecuentes</a>
+  <a href="#primeros-pasos">Primeros pasos</a>
+  <a href="#problemas">Problemas comunes</a>
+  <a href="#contacto">Contacto</a>
+</nav>
+
+<main>
+
+  <!-- ── Intro cards ── -->
+  <section style="margin-top:2rem">
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="icon">🥋</div>
+        <h3>Para maestros</h3>
+        <p>Gestioná tu dojo: alumnos, asistencia, pagos y progreso de cinturón.</p>
+      </div>
+      <div class="info-card">
+        <div class="icon">🎯</div>
+        <h3>Para alumnos</h3>
+        <p>Encontrá tu escuela en el mapa, postulate y seguí tu progreso.</p>
+      </div>
+      <div class="info-card">
+        <div class="icon">📱</div>
+        <h3>Disponible en iOS</h3>
+        <p>Descargala gratis desde la App Store. Próximamente en Android.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Primeros pasos ── -->
+  <section id="primeros-pasos">
+    <h2>Primeros pasos</h2>
+
+    <details>
+      <summary>Soy maestro — ¿cómo creo mi escuela?</summary>
+      <p>
+        Creá tu cuenta en la app y elegí el rol "Maestro". Completá tu perfil y
+        seguí el asistente de configuración: nombre de la escuela, disciplinas y
+        horarios. Una vez finalizado, tu panel de gestión estará listo.<br/><br/>
+        <strong>Nota:</strong> el acceso al panel requiere validación por parte del
+        administrador de la plataforma. Si no podés entrar luego de crear tu escuela,
+        escribinos a <a href="mailto:spcolonna@gmail.com">spcolonna@gmail.com</a>.
+      </p>
+    </details>
+
+    <details>
+      <summary>Soy alumno — ¿cómo me uno a una escuela?</summary>
+      <p>
+        Creá tu cuenta, completá tu perfil y elegí el rol "Alumno". Usá el mapa para
+        encontrar escuelas cerca tuyo o buscá por nombre. Tocá la escuela y enviá tu
+        solicitud de ingreso. El maestro recibirá una notificación y podrá aceptarte
+        desde su panel.
+      </p>
+    </details>
+
+    <details>
+      <summary>¿Cómo agrego a mi hijo/a si no tiene cuenta?</summary>
+      <p>
+        Si sos padre o tutor, elegí el rol "Padre/Tutor" al registrarte. Desde tu
+        panel podés crear un perfil para tu hijo/a (sin que él/ella necesite una cuenta
+        propia) y postularlo a una escuela en su nombre.
+      </p>
+    </details>
+
+    <details>
+      <summary>¿Cómo cambio el idioma de la app?</summary>
+      <p>
+        En la pantalla de inicio de sesión hay un selector de idioma en la esquina
+        superior derecha. La app está disponible en español, inglés y portugués.
+      </p>
+    </details>
+  </section>
+
+  <!-- ── FAQ ── -->
+  <section id="faq">
+    <h2>Preguntas frecuentes</h2>
+
+    <details>
+      <summary>¿La app es gratuita?</summary>
+      <p>
+        Sí, Warrior Path es gratuita para alumnos y padres. Para maestros que crean
+        escuelas, el acceso al panel de gestión requiere validación. Escribinos para
+        conocer las condiciones actuales.
+      </p>
+    </details>
+
+    <details>
+      <summary>¿Mis datos están seguros?</summary>
+      <p>
+        Sí. Warrior Path usa Firebase de Google para el almacenamiento de datos, con
+        autenticación segura y cifrado en tránsito. No compartimos ni vendemos
+        información personal a terceros.
+      </p>
+    </details>
+
+    <details>
+      <summary>¿Cómo elimino mi cuenta?</summary>
+      <p>
+        Podés solicitar la eliminación de tu cuenta y todos tus datos enviando un
+        correo a <a href="mailto:spcolonna@gmail.com">spcolonna@gmail.com</a> con el
+        asunto "Eliminar cuenta". Procesamos la solicitud en un plazo de 7 días hábiles.
+      </p>
+    </details>
+
+    <details>
+      <summary>¿Cuándo sale la versión para Android?</summary>
+      <p>
+        Warrior Path está disponible actualmente en iOS. La versión para Android está
+        en desarrollo. Escribinos para que te avisemos cuando esté disponible.
+      </p>
+    </details>
+
+    <details>
+      <summary>No recibo notificaciones. ¿Qué hago?</summary>
+      <p>
+        Verificá que las notificaciones estén habilitadas en Configuración → Warrior Path
+        → Notificaciones. Si el problema persiste, cerrá sesión, volvé a ingresar y
+        asegurate de aceptar el permiso de notificaciones cuando la app lo solicite.
+      </p>
+    </details>
+
+    <details>
+      <summary>Olvidé mi contraseña. ¿Cómo la recupero?</summary>
+      <p>
+        En la pantalla de inicio de sesión, tocá "¿Olvidaste tu contraseña?". Ingresá
+        tu correo electrónico y te enviaremos un link para restablecerla.
+      </p>
+    </details>
+  </section>
+
+  <!-- ── Problemas comunes ── -->
+  <section id="problemas">
+    <h2>Problemas comunes</h2>
+
+    <details>
+      <summary>La app me muestra "Escuela pendiente de validación"</summary>
+      <p>
+        Esto significa que tu escuela aún no fue habilitada por el administrador de
+        Warrior Path. Escribinos a <a href="mailto:spcolonna@gmail.com">spcolonna@gmail.com</a>
+        con el nombre de tu escuela y te activamos el acceso a la brevedad.
+      </p>
+    </details>
+
+    <details>
+      <summary>Mi solicitud de ingreso fue enviada pero no recibo respuesta</summary>
+      <p>
+        La aceptación depende del maestro de la escuela. Te recomendamos contactarte
+        directamente con la escuela. Si enviaste la solicitud por error, podés buscar
+        otra escuela desde la pantalla "Tu progreso".
+      </p>
+    </details>
+
+    <details>
+      <summary>No puedo inscribirme en ninguna disciplina</summary>
+      <p>
+        Verificá con tu maestro que la escuela tenga disciplinas configuradas. Si el
+        problema persiste, cerrá y volvé a abrir la app.
+      </p>
+    </details>
+
+    <details>
+      <summary>La app se cierra o no carga correctamente</summary>
+      <p>
+        Intentá cerrar la app completamente y volvé a abrirla. Si el problema
+        continúa, desinstalá y volvé a instalar la app desde la App Store. Si nada
+        funciona, escribinos indicando tu dispositivo y versión de iOS.
+      </p>
+    </details>
+  </section>
+
+  <!-- ── Contacto ── -->
+  <section id="contacto">
+    <h2>Contacto</h2>
+    <div class="contact-card">
+      <p>
+        ¿No encontraste lo que buscabas? Estamos para ayudarte.<br/>
+        Respondemos todos los mensajes en español, inglés y portugués.
+      </p>
+      <a class="btn" href="mailto:spcolonna@gmail.com?subject=Soporte%20Warrior%20Path">
+        ✉️ &nbsp;Enviar consulta
+      </a>
+      <span class="email-plain">spcolonna@gmail.com</span>
+      <div class="badge">⏱ Tiempo de respuesta: 24–48 hs hábiles</div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ── Footer ── -->
+<footer>
+  <p>© 2025 Warrior Path · Todos los derechos reservados</p>
+  <p style="margin-top:.4rem">
+    Desarrollado por SPC &nbsp;·&nbsp;
+    <a href="mailto:spcolonna@gmail.com">spcolonna@gmail.com</a>
+  </p>
+</footer>
+
+</body>
+</html>

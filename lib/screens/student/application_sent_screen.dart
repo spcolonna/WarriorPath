@@ -5,7 +5,7 @@ import 'package:warrior_path/screens/student/school_search_screen.dart';
 
 class ApplicationSentScreen extends StatelessWidget {
   final String schoolName;
-  const ApplicationSentScreen({Key? key, required this.schoolName}) : super(key: key);
+  const ApplicationSentScreen({super.key, required this.schoolName});
 
   @override
   Widget build(BuildContext context) {

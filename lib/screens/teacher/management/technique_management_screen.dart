@@ -7,8 +7,7 @@ import 'package:warrior_path/models/technique_model.dart';
 
 class TechniqueManagementScreen extends StatefulWidget {
   final String schoolId;
-  const TechniqueManagementScreen({Key? key, required this.schoolId})
-      : super(key: key);
+  const TechniqueManagementScreen({super.key, required this.schoolId});
 
   @override
   State<TechniqueManagementScreen> createState() =>

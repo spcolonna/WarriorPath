@@ -7,11 +7,11 @@ class InviteStudentsScreen extends StatefulWidget {
   final List<String> alreadyInvitedIds;
 
   const InviteStudentsScreen({
-    Key? key,
+    super.key,
     required this.schoolId,
     required this.eventId,
     required this.alreadyInvitedIds,
-  }) : super(key: key);
+  });
 
   @override
   _InviteStudentsScreenState createState() => _InviteStudentsScreenState();

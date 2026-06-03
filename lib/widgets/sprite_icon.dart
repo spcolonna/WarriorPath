@@ -81,7 +81,7 @@ class _SpriteIconState extends State<SpriteIcon> {
       (info, _) {
         if (mounted) setState(() => _image = info.image);
       },
-      onError: (_, __) {
+      onError: (_, _) {
         if (mounted) setState(() => _failed = true);
       },
     );

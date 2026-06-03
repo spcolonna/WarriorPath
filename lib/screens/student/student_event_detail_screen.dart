@@ -11,10 +11,10 @@ class StudentEventDetailScreen extends StatefulWidget {
   final String eventId;
 
   const StudentEventDetailScreen({
-    Key? key,
+    super.key,
     required this.schoolId,
     required this.eventId,
-  }) : super(key: key);
+  });
 
   @override
   _StudentEventDetailScreenState createState() => _StudentEventDetailScreenState();
@@ -40,7 +40,7 @@ class _StudentEventDetailScreenState extends State<StudentEventDetailScreen> {
       await FirebaseFirestore.instance
           .collection('schools').doc(widget.schoolId)
           .collection('events').doc(widget.eventId)
-          .update({'attendeeStatus.${_studentId}': status});
+          .update({'attendeeStatus.$_studentId': status});
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

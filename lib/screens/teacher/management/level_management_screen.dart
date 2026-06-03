@@ -5,7 +5,7 @@ import 'package:warrior_path/models/level_model.dart'; // Asegúrate que la ruta
 
 class LevelManagementScreen extends StatefulWidget {
   final String schoolId;
-  const LevelManagementScreen({Key? key, required this.schoolId}) : super(key: key);
+  const LevelManagementScreen({super.key, required this.schoolId});
 
   @override
   State<LevelManagementScreen> createState() => _LevelManagementScreenState();

@@ -7,7 +7,7 @@ import '../l10n/app_localizations.dart';
 
 class WizardDisciplineHubScreen extends StatefulWidget {
   final String schoolId;
-  const WizardDisciplineHubScreen({Key? key, required this.schoolId}) : super(key: key);
+  const WizardDisciplineHubScreen({super.key, required this.schoolId});
 
   @override
   State<WizardDisciplineHubScreen> createState() => _WizardDisciplineHubScreenState();

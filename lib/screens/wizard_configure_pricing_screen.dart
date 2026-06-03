@@ -32,7 +32,7 @@ class _WizardConfigurePricingScreenState extends State<WizardConfigurePricingScr
   String _selectedCurrency = 'UYU';
   final List<String> _currencies = ['UYU', 'USD', 'ARS', 'EUR', 'MXN'];
 
-  List<PaymentPlanModel> _plans = [];
+  final List<PaymentPlanModel> _plans = [];
   bool _isLoading = false;
   Color _primaryColor = Colors.blue;
 
@@ -147,7 +147,7 @@ class _WizardConfigurePricingScreenState extends State<WizardConfigurePricingScr
               Text(l10n.uniqueCostsAndCurrency, style: Theme.of(context).textTheme.titleLarge, textAlign: TextAlign.center),
               const SizedBox(height: 24),
               DropdownButtonFormField<String>(
-                value: _selectedCurrency,
+                initialValue: _selectedCurrency,
                 decoration: InputDecoration(labelText: l10n.currency, border: const OutlineInputBorder()),
                 items: _currencies.map((c) => DropdownMenuItem<String>(value: c, child: Text(c))).toList(),
                 onChanged: (v) => setState(() => _selectedCurrency = v!),

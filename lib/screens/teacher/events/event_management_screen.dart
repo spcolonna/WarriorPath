@@ -8,7 +8,7 @@ import 'event_detail_screen.dart';
 
 class EventManagementScreen extends StatefulWidget {
   final String schoolId;
-  const EventManagementScreen({Key? key, required this.schoolId}) : super(key: key);
+  const EventManagementScreen({super.key, required this.schoolId});
 
   @override
   State<EventManagementScreen> createState() => _EventManagementScreenState();

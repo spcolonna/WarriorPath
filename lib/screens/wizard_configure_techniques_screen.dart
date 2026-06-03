@@ -9,10 +9,10 @@ class WizardConfigureTechniquesScreen extends StatefulWidget {
   final DocumentSnapshot disciplineDoc;
 
   const WizardConfigureTechniquesScreen({
-    Key? key,
+    super.key,
     required this.schoolId,
     required this.disciplineDoc,
-  }) : super(key: key);
+  });
 
   @override
   _WizardConfigureTechniquesScreenState createState() => _WizardConfigureTechniquesScreenState();
@@ -29,7 +29,7 @@ class _WizardConfigureTechniquesScreenState extends State<WizardConfigureTechniq
   final _categoryController = TextEditingController();
 
   List<String> _categories = [];
-  List<TechniqueModel> _techniques = [];
+  final List<TechniqueModel> _techniques = [];
   bool _isLoading = false;
   int _nextTechniqueId = 0;
   Color _primaryColor = Colors.blue;

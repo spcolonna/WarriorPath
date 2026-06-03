@@ -12,7 +12,7 @@ class AddEditEventScreen extends StatefulWidget {
   final String schoolId;
   final EventModel? event;
 
-  const AddEditEventScreen({Key? key, required this.schoolId, this.event}) : super(key: key);
+  const AddEditEventScreen({super.key, required this.schoolId, this.event});
 
   @override
   State<AddEditEventScreen> createState() => _AddEditEventScreenState();
@@ -208,8 +208,8 @@ class _AddEditEventScreenState extends State<AddEditEventScreen> {
                 const SizedBox(height: 32),
                 if (_isLoading) const Center(child: CircularProgressIndicator()) else ElevatedButton(
                   onPressed: _saveEvent,
-                  child: Text(_isEditing ? l10n.saveChanges : l10n.saveAndContinue),
                   style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+                  child: Text(_isEditing ? l10n.saveChanges : l10n.saveAndContinue),
                 ),
               ],
             ),

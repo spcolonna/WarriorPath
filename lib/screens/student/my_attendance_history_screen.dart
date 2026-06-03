@@ -7,10 +7,10 @@ class MyAttendanceHistoryScreen extends StatelessWidget {
   final String studentId;
 
   const MyAttendanceHistoryScreen({
-    Key? key,
+    super.key,
     required this.schoolId,
     required this.studentId,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

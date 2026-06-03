@@ -157,7 +157,7 @@ class _AddEditScheduleScreenState extends State<AddEditScheduleScreen> {
 
                     // --- CAMBIO: Nuevo Dropdown para seleccionar la disciplina ---
                     DropdownButtonFormField<String>(
-                      value: _selectedDisciplineId,
+                      initialValue: _selectedDisciplineId,
                       hint: Text(l10n.selectDiscipline),
                       decoration: InputDecoration(border: const UnderlineInputBorder()),
                       items: disciplines.map((doc) {
