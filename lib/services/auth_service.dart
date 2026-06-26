@@ -1,10 +1,21 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import '../models/user_model.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  /// Elimina por completo la cuenta del usuario actual: sus datos en Firestore
+  /// (membresías, hijos, guardianías, documento de usuario) y la cuenta de
+  /// Firebase Auth, todo del lado servidor para no depender del login reciente.
+  /// Cumple con la Guideline 5.1.1(v) de la App Store.
+  Future<void> deleteAccount() async {
+    final callable = FirebaseFunctions.instance.httpsCallable('deleteMyAccount');
+    await callable.call();
+    await _auth.signOut();
+  }
 
   Future<UserModel?> signUpWithEmailPassword(String email, String password) async {
     try {

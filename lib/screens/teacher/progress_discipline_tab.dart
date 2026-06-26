@@ -151,18 +151,20 @@ class _ProgressDisciplineTabState extends State<ProgressDisciplineTab> {
 
       await batch.commit();
       widget.confettiController.play();
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(l10n.studentSuccessPromotion),
             backgroundColor: Colors.green,
           ),
         );
+      }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l10n.promotionError(e.toString()))),
         );
+      }
     }
   }
 
@@ -202,26 +204,29 @@ class _ProgressDisciplineTabState extends State<ProgressDisciplineTab> {
             .orderBy('order')
             .limit(1)
             .get();
-        if (levelsSnap.docs.isNotEmpty)
+        if (levelsSnap.docs.isNotEmpty) {
           newCurrentLevelId = levelsSnap.docs.first.id;
+        }
       }
 
       await memberRef.update({
         'progress.${widget.discipline.id}.currentLevelId': newCurrentLevelId,
       });
 
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(l10n.successRevertPromotion),
             backgroundColor: Colors.green,
           ),
         );
+      }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l10n.errorToRevert(e.toString()))),
         );
+      }
     }
   }
 
@@ -236,18 +241,20 @@ class _ProgressDisciplineTabState extends State<ProgressDisciplineTab> {
         'progress.${widget.discipline.id}.assignedTechniqueIds':
             FieldValue.arrayRemove([techniqueId]),
       });
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(l10n.techniqueUnassignedSuccess),
             backgroundColor: Colors.green,
           ),
         );
+      }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(l10n.saveError(e.toString()))));
+      }
     }
   }
 
@@ -296,16 +303,19 @@ class _ProgressDisciplineTabState extends State<ProgressDisciplineTab> {
                 FutureBuilder<List<QueryDocumentSnapshot>>(
                   future: _fetchLevelsForDiscipline(),
                   builder: (context, levelsSnapshot) {
-                    if (!levelsSnapshot.hasData)
+                    if (!levelsSnapshot.hasData) {
                       return const Center(child: CircularProgressIndicator());
-                    if (levelsSnapshot.data!.isEmpty)
+                    }
+                    if (levelsSnapshot.data!.isEmpty) {
                       return Center(
                         child: Text(l10n.noProgressSystemForDiscipline),
                       );
+                    }
 
                     final allLevels = levelsSnapshot.data!;
-                    if (currentLevelId == null)
+                    if (currentLevelId == null) {
                       return Center(child: Text(l10n.noLevelAssignedYet));
+                    }
 
                     final levelToUse =
                         allLevels.firstWhereOrNull(
@@ -380,12 +390,14 @@ class _ProgressDisciplineTabState extends State<ProgressDisciplineTab> {
                       .orderBy('date', descending: true)
                       .snapshots(),
                   builder: (context, snapshot) {
-                    if (!snapshot.hasData)
+                    if (!snapshot.hasData) {
                       return const Center(child: CircularProgressIndicator());
-                    if (snapshot.data!.docs.isEmpty)
+                    }
+                    if (snapshot.data!.docs.isEmpty) {
                       return Center(
                         child: Text(l10n.noPromotionsRegisteredYet),
                       );
+                    }
 
                     return Column(
                       children: snapshot.data!.docs.map((doc) {
@@ -523,8 +535,9 @@ class _ProgressDisciplineTabState extends State<ProgressDisciplineTab> {
                         )
                         .snapshots(),
                     builder: (context, techSnapshot) {
-                      if (!techSnapshot.hasData)
+                      if (!techSnapshot.hasData) {
                         return const Center(child: CircularProgressIndicator());
+                      }
                       return Column(
                         children: techSnapshot.data!.docs.map((doc) {
                           final tech = TechniqueModel.fromFirestore(doc);

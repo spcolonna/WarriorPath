@@ -9,6 +9,7 @@ import 'package:warrior_path/screens/WelcomeScreen.dart';
 import 'package:warrior_path/screens/student/edit_profile_screen.dart';
 import 'package:warrior_path/screens/student/school_search_screen.dart';
 import 'package:warrior_path/screens/wizard_create_school_screen.dart';
+import 'package:warrior_path/widgets/delete_account_flow.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../parent/add_child_screen.dart';
 
@@ -392,47 +393,7 @@ class _ProfileBody extends StatelessWidget {
   }
 
   Future<void> _confirmDeleteAccount(BuildContext context) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Eliminar cuenta'),
-        content: const Text(
-          'Se eliminarán tus datos de acceso. Esta acción no se puede deshacer.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !context.mounted) return;
-
-    try {
-      await FirebaseAuth.instance.currentUser?.delete();
-      if (context.mounted) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const WelcomeScreen()),
-          (route) => false,
-        );
-      }
-    } on FirebaseAuthException catch (e) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            e.code == 'requires-recent-login'
-                ? 'Por seguridad, cerrá sesión, volvé a iniciarla y luego eliminá la cuenta.'
-                : 'Error: ${e.message}',
-          ),
-        ),
-      );
-    }
+    await deleteAccountFlow(context);
   }
 
   void _showLanguagePicker(BuildContext context, AppLocalizations l10n) {

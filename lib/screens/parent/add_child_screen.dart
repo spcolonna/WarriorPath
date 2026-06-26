@@ -150,10 +150,11 @@ class _AddChildScreenState extends State<AddChildScreen> {
         SnackBar(content: Text(l10n.childProfileCreatedError(e.toString()))),
       );
     } finally {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _isLoading = false;
         });
+      }
     }
   }
 

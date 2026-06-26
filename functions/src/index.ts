@@ -414,6 +414,63 @@ exports.linkOfflineStudent = onCall(async (request) => {
 });
 
 // ===============================================================================================
+// FUNCIÓN 7: ELIMINAR LA PROPIA CUENTA (App Store Guideline 5.1.1(v))
+// ===============================================================================================
+// Borra la cuenta del usuario que la invoca: su documento en users, sus
+// membresías en cada escuela, sus perfiles de hijos (proxy) y guardianías, y
+// por último la cuenta de Firebase Auth vía Admin SDK (no requiere login
+// reciente, evitando el error requires-recent-login del lado del cliente).
+exports.deleteMyAccount = onCall(async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) {
+    throw new HttpsError("unauthenticated", "Debés iniciar sesión.");
+  }
+
+  const userRef = db.collection("users").doc(uid);
+  const userSnap = await userRef.get();
+  const userData = userSnap.data() ?? {};
+
+  const batch = db.batch();
+
+  // Quitar las membresías del usuario en cada escuela.
+  const memberships =
+    (userData.activeMemberships ?? {}) as Record<string, unknown>;
+  for (const schoolId of Object.keys(memberships)) {
+    batch.delete(
+      db.collection("schools").doc(schoolId).collection("members").doc(uid));
+  }
+
+  // Eliminar guardianías de este usuario y los perfiles proxy de sus hijos.
+  const guardianshipsSnap = await db.collection("guardianships")
+    .where("guardianId", "==", uid).get();
+  for (const g of guardianshipsSnap.docs) {
+    const childId = g.data().childId as string | undefined;
+    if (childId) {
+      const childSnap = await db.collection("users").doc(childId).get();
+      const childMemberships =
+        (childSnap.data()?.activeMemberships ?? {}) as Record<string, unknown>;
+      for (const schoolId of Object.keys(childMemberships)) {
+        batch.delete(db.collection("schools").doc(schoolId)
+          .collection("members").doc(childId));
+      }
+      batch.delete(db.collection("users").doc(childId));
+    }
+    batch.delete(g.ref);
+  }
+
+  // Eliminar el documento del propio usuario.
+  batch.delete(userRef);
+
+  await batch.commit();
+
+  // Borrar la cuenta de autenticación (Admin SDK, sin login reciente).
+  await admin.auth().deleteUser(uid);
+
+  logger.info(`Cuenta eliminada: ${uid}`);
+  return {success: true};
+});
+
+// ===============================================================================================
 // FUNCIÓN AUXILIAR: ENVIAR NOTIFICACIONES A UN USUARIO
 // ===============================================================================================
 /**

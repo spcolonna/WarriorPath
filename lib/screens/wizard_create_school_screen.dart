@@ -190,10 +190,11 @@ class _WizardCreateSchoolScreenState extends State<WizardCreateSchoolScreen> {
         SnackBar(content: Text(l10n.createSchoolError(e.toString()))),
       );
     } finally {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _isLoading = false;
         });
+      }
     }
   }
 
@@ -202,8 +203,9 @@ class _WizardCreateSchoolScreenState extends State<WizardCreateSchoolScreen> {
       source: ImageSource.gallery,
       imageQuality: 80,
     );
-    if (pickedFile != null)
+    if (pickedFile != null) {
       setState(() => _logoImageFile = File(pickedFile.path));
+    }
   }
 
   Future<void> _searchSchools(String query) async {

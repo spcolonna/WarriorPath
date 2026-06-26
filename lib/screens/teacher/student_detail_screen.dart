@@ -417,18 +417,20 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
 
       await memberRef.update({'progress.$disciplineId.role': newRole});
 
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(l10n.updateRolSuccess),
             backgroundColor: Colors.green,
           ),
         );
+      }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l10n.updateRolError(e.toString()))),
         );
+      }
     }
   }
 
@@ -552,15 +554,17 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
           'presentStudentIds': FieldValue.arrayUnion([widget.studentId]),
         });
       }
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(l10n.successAssistance)));
+      }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(l10n.saveError(e.toString()))));
+      }
     }
   }
 
@@ -571,8 +575,9 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
           .doc(widget.studentId)
           .snapshots(),
       builder: (context, userSnapshot) {
-        if (!userSnapshot.hasData)
+        if (!userSnapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
+        }
         final userData =
             userSnapshot.data?.data() as Map<String, dynamic>? ?? {};
         final String? gender = userData['gender'];
@@ -833,10 +838,12 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
                 .orderBy('date', descending: true)
                 .snapshots(),
             builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting)
+              if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
-              if (!snapshot.hasData || snapshot.data!.docs.isEmpty)
+              }
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                 return Center(child: Text(l10n.noRegisterAssitance));
+              }
 
               final groupedAttendances = groupBy<QueryDocumentSnapshot, String>(
                 snapshot.data!.docs,
@@ -980,10 +987,12 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
                 .orderBy('paymentDate', descending: true)
                 .snapshots(),
             builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting)
+              if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
-              if (!snapshot.hasData || snapshot.data!.docs.isEmpty)
+              }
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                 return Center(child: Text(l10n.noPayment));
+              }
 
               final groupedPayments = groupBy<QueryDocumentSnapshot, String>(
                 snapshot.data!.docs,
@@ -1172,18 +1181,20 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
             'studentName': _studentName,
           });
 
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(l10n.successPayment),
             backgroundColor: Colors.green,
           ),
         );
+      }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l10n.paymentError(e.toString()))),
         );
+      }
     }
   }
 
