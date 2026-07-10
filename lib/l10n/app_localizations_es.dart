@@ -693,6 +693,36 @@ class AppLocalizationsEs extends AppLocalizations {
   String get noPaymentsRegisteredYet => 'Aún no tienes pagos registrados.';
 
   @override
+  String get paymentStatusUpToDate => 'Estás al día';
+
+  @override
+  String get paymentStatusPending => 'Pago pendiente';
+
+  @override
+  String nextPaymentDue(String date) {
+    return 'Próximo vencimiento: $date';
+  }
+
+  @override
+  String get pendingPaymentContactTeacher =>
+      'Contactá a tu profesor para regularizar este pago.';
+
+  @override
+  String get noPaymentPlanAssigned =>
+      'Todavía no tenés un plan de pago asignado. Consultá con tu profesor.';
+
+  @override
+  String get currentPlan => 'Plan actual';
+
+  @override
+  String get paymentHistory => 'Historial de pagos';
+
+  @override
+  String paidOn(String date) {
+    return 'Pagado el $date';
+  }
+
+  @override
   String paymentDetails(String concept, String date) {
     return '$concept\nPagado el $date';
   }
@@ -1435,4 +1465,74 @@ class AppLocalizationsEs extends AppLocalizations {
   String linkErrorMsg(String error) {
     return 'No se pudo vincular: $error';
   }
+
+  @override
+  String get verifyEmailTitle => 'Verificá tu correo';
+
+  @override
+  String verifyEmailMessage(String email) {
+    return 'Te enviamos un correo de verificación a $email. Abrilo y tocá el enlace para activar tu cuenta. Después volvé acá y tocá \"Ya confirmé\".';
+  }
+
+  @override
+  String get verifyEmailConfirmedButton => 'Ya confirmé';
+
+  @override
+  String get verifyEmailResendButton => 'Reenviar correo';
+
+  @override
+  String verifyEmailResendIn(int seconds) {
+    return 'Reenviar en ${seconds}s';
+  }
+
+  @override
+  String get verifyEmailResent => 'Correo de verificación reenviado.';
+
+  @override
+  String get verifyEmailNotYet =>
+      'Todavía no detectamos la verificación. Revisá tu correo.';
+
+  @override
+  String get verifyEmailBackToLogin => 'Cerrar sesión';
+
+  @override
+  String get continueWithGoogle => 'Continuar con Google';
+
+  @override
+  String get continueWithApple => 'Continuar con Apple';
+
+  @override
+  String get powerLevel => 'Nivel de Poder';
+
+  @override
+  String get tierNovice => 'Novato';
+
+  @override
+  String get tierWarrior => 'Guerrero';
+
+  @override
+  String get tierVeteran => 'Veterano';
+
+  @override
+  String get tierMaster => 'Maestro';
+
+  @override
+  String pointsToNextTier(int points) {
+    return '$points para el próximo nivel';
+  }
+
+  @override
+  String get maxTierReached => 'Nivel máximo alcanzado';
+
+  @override
+  String get schoolRanking => 'Ranking de la escuela';
+
+  @override
+  String get viewFullRanking => 'Ver ranking completo';
+
+  @override
+  String get rankingEmpty => 'Todavía no hay guerreros en el ranking';
+
+  @override
+  String get rankingYou => 'Vos';
 }

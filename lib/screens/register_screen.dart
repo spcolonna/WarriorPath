@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:warrior_path/screens/wizard_profile_screen.dart';
+import 'package:warrior_path/screens/verify_email_screen.dart';
 import 'package:warrior_path/services/auth_service.dart';
 import 'package:warrior_path/theme/AppColors.dart';
 import 'package:warrior_path/widgets/CustomInputField.dart';
@@ -43,21 +43,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final userModel = await _authService.signUpWithEmailPassword(
-        email,
-        password,
-      );
-      if (userModel != null) {
-        final user = FirebaseAuth.instance.currentUser;
-        if (user != null && mounted) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const WizardProfileScreen()),
-          );
-        }
-      } else {
-        _showErrorDialog(
-          l10n.registrationErrorTitle,
-          l10n.registrationErrorContent,
+      final user = await _authService.signUpWithEmailPassword(email, password);
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => VerifyEmailScreen(email: user.email ?? email),
+          ),
         );
       }
     } on FirebaseAuthException catch (e) {

@@ -116,6 +116,8 @@ class _SchoolSearchScreenState extends State<SchoolSearchScreen> {
 
                 batch.set(memberRef, {
                   'userId': _activeProfileId, 'displayName': displayName, 'status': 'pending', 'applicationDate': FieldValue.serverTimestamp(),
+                  'gender': userDoc.data()?['gender'],
+                  'powerLevel': 0,
                 });
 
                 final Map<String, dynamic> userDataToUpdate = {

@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
 import 'package:provider/provider.dart';
 import 'package:warrior_path/providers/locale_provider.dart';
 import 'package:warrior_path/providers/session_provider.dart';
@@ -8,6 +8,7 @@ import 'package:warrior_path/services/notification_service.dart';
 import 'package:warrior_path/services/remote_config_service.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'firebase_options.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:warrior_path/widgets/ad_banner_widget.dart';
@@ -20,6 +21,22 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+
+    // App Check: rechaza requests que no provengan de la app real (frena
+    // bots/scripts). En debug usa el provider de debug (requiere registrar el
+    // token de debug en la consola); en release usa App Attest (iOS) y Play
+    // Integrity (Android).
+    try {
+      await FirebaseAppCheck.instance.activate(
+        appleProvider:
+            kDebugMode ? AppleProvider.debug : AppleProvider.appAttest,
+        androidProvider:
+            kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+      );
+    } catch (e) {
+      print('AppCheck error: $e');
+    }
+
     MobileAds.instance.initialize();
     
     try {

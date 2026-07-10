@@ -368,6 +368,24 @@
     "myPayments": "My Payments",
     "errorLoadingPaymentHistory": "Error loading your payment history.",
     "noPaymentsRegisteredYet": "You have no registered payments yet.",
+    "paymentStatusUpToDate": "You're up to date",
+    "paymentStatusPending": "Payment pending",
+    "nextPaymentDue": "Next payment due {date}",
+    "@nextPaymentDue": {
+        "placeholders": {
+            "date": { "type": "String" }
+        }
+    },
+    "pendingPaymentContactTeacher": "Contact your teacher to settle this payment.",
+    "noPaymentPlanAssigned": "No payment plan assigned yet. Check with your teacher.",
+    "currentPlan": "Current plan",
+    "paymentHistory": "Payment history",
+    "paidOn": "Paid on {date}",
+    "@paidOn": {
+        "placeholders": {
+            "date": { "type": "String" }
+        }
+    },
     "paymentDetails": "{concept}\nPaid on {date}",
     "@paymentDetails": {
         "placeholders": {
@@ -716,5 +734,37 @@
     "linkErrorMsg": "Couldn't link: {error}",
     "@linkErrorMsg": {
         "placeholders": { "error": {"type": "String"} }
-    }
+    },
+    "verifyEmailTitle": "Verify your email",
+    "verifyEmailMessage": "We sent a verification email to {email}. Open it and tap the link to activate your account. Then come back here and tap \"I confirmed\".",
+    "@verifyEmailMessage": {
+        "placeholders": { "email": {"type": "String"} }
+    },
+    "verifyEmailConfirmedButton": "I confirmed",
+    "verifyEmailResendButton": "Resend email",
+    "verifyEmailResendIn": "Resend in {seconds}s",
+    "@verifyEmailResendIn": {
+        "placeholders": { "seconds": {"type": "int"} }
+    },
+    "verifyEmailResent": "Verification email resent.",
+    "verifyEmailNotYet": "We haven't detected the verification yet. Check your email.",
+    "verifyEmailBackToLogin": "Sign out",
+    "continueWithGoogle": "Continue with Google",
+    "continueWithApple": "Continue with Apple",
+    "powerLevel": "Power Level",
+    "tierNovice": "Novice",
+    "tierWarrior": "Warrior",
+    "tierVeteran": "Veteran",
+    "tierMaster": "Master",
+    "pointsToNextTier": "{points} to next level",
+    "@pointsToNextTier": {
+        "placeholders": {
+            "points": { "type": "int" }
+        }
+    },
+    "maxTierReached": "Max level reached",
+    "schoolRanking": "School Ranking",
+    "viewFullRanking": "View full ranking",
+    "rankingEmpty": "No warriors ranked yet",
+    "rankingYou": "You"
 }

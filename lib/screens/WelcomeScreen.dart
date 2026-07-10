@@ -1,25 +1,15 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:warrior_path/screens/parent/add_child_screen.dart';
-import 'package:warrior_path/screens/parent/guardian_dashboard_screen.dart';
-import 'package:warrior_path/screens/role_selector_screen.dart';
-import 'package:warrior_path/screens/student/pending_progress_screen.dart';
-import 'package:warrior_path/screens/student/school_search_screen.dart';
-import 'package:warrior_path/screens/student/student_dashboard_screen.dart';
-import 'package:warrior_path/screens/teacher_dashboard_screen.dart';
 import 'package:warrior_path/screens/register_screen.dart';
-import 'package:warrior_path/screens/wizard_create_school_screen.dart';
-import 'package:warrior_path/screens/wizard_discipline_hub_screen.dart';
-import 'package:warrior_path/screens/wizard_profile_screen.dart';
+import 'package:warrior_path/services/auth_service.dart';
+import 'package:warrior_path/services/post_auth_navigator.dart';
 import 'package:warrior_path/theme/AppColors.dart';
 import 'package:warrior_path/widgets/CustomInputField.dart';
 import 'package:warrior_path/widgets/CustomPasswordField.dart';
 import 'package:warrior_path/widgets/PrimaryButton.dart';
 import 'package:warrior_path/widgets/SecondaryButton.dart';
 import '../l10n/app_localizations.dart';
-import '../providers/session_provider.dart';
 import '../widgets/language_switcher.dart';
 import 'forgot_password_screen.dart';
 
@@ -33,170 +23,11 @@ class WelcomeScreen extends StatefulWidget {
 class _WelcomeScreenState extends State<WelcomeScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final AuthService _authService = AuthService();
   bool _isLoading = false;
 
-  Future<void> _navigateAfterAuth(User user) async {
-    final userProfileDoc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid)
-        .get();
-
-    if (!mounted) return;
-
-    if (!userProfileDoc.exists) {
-      final newUserProfile = {
-        'uid': user.uid,
-        'email': user.email,
-        'wizardStep': 0,
-        'createdAt': FieldValue.serverTimestamp(),
-        'displayName': user.displayName ?? '',
-        'photoUrl': user.photoURL ?? '',
-      };
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .set(newUserProfile);
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const WizardProfileScreen()),
-      );
-      return;
-    }
-
-    final userData = userProfileDoc.data()!;
-    final int wizardStep = userData['wizardStep'] ?? 0;
-    final String? userRole = userData['role']; // Leemos el rol del usuario
-
-    // --- LÓGICA DE NAVEGACIÓN CORREGIDA ---
-    if (wizardStep < 99) {
-      // Si el wizard no está completo, redirigimos al paso correcto
-      switch (wizardStep) {
-        case 0: // Aún no ha completado el perfil inicial
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (context) => const WizardProfileScreen(),
-            ),
-          );
-          break;
-        case 1: // Ya completó el perfil, ahora decidimos a dónde va según su ROL
-          switch (userRole) {
-            case 'student':
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(
-                  builder: (context) =>
-                      const SchoolSearchScreen(isFromWizard: true),
-                ),
-              );
-              break;
-            case 'parent':
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (context) => const AddChildScreen()),
-              );
-              break;
-            case 'teacher':
-            case 'both':
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(
-                  builder: (context) => const WizardCreateSchoolScreen(),
-                ),
-              );
-              break;
-            default: // Si no tiene rol (caso raro), lo mandamos a completar el perfil de nuevo
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(
-                  builder: (context) => const WizardProfileScreen(),
-                ),
-              );
-          }
-          break;
-
-        // Los pasos 2, 3, 4 y 5 son para maestros que crean su escuela
-        case 2:
-        case 3:
-        case 4:
-        case 5:
-          final memberships =
-              userData['activeMemberships'] as Map<String, dynamic>? ?? {};
-          if (memberships.isNotEmpty) {
-            final schoolId = memberships.keys.first;
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (context) =>
-                    WizardDisciplineHubScreen(schoolId: schoolId),
-              ),
-            );
-          } else {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (context) => const WizardCreateSchoolScreen(),
-              ),
-            );
-          }
-          break;
-
-        default:
-          // Si es un paso desconocido, por seguridad lo mandamos al principio del wizard
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (context) => const WizardProfileScreen(),
-            ),
-          );
-      }
-    } else {
-      // Si el wizard está completo (wizardStep == 99), aplicamos la lógica de usuario activo
-      final memberships =
-          userData['activeMemberships'] as Map<String, dynamic>? ?? {};
-
-      if (userRole == 'parent' && memberships.isEmpty) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => const GuardianDashboardScreen(),
-          ),
-        );
-      } else if (memberships.isNotEmpty) {
-        if (memberships.length == 1 &&
-            (userRole == 'student' || userRole == 'teacher')) {
-          final schoolId = memberships.keys.first;
-          final role = memberships.values.first;
-          Provider.of<SessionProvider>(
-            context,
-            listen: false,
-          ).setFullActiveSession(schoolId, role, user.uid);
-          Widget destination = (role == 'maestro')
-              ? const TeacherDashboardScreen()
-              : const StudentDashboardScreen();
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => destination),
-          );
-        } else {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const RoleSelectorScreen()),
-          );
-        }
-      } else {
-        final pendingApplications =
-            userData['pendingApplications'] as Map<String, dynamic>?;
-        if (pendingApplications != null && pendingApplications.isNotEmpty) {
-          final firstApp =
-              pendingApplications.values.first as Map<String, dynamic>;
-          final schoolName = firstApp['schoolName'] as String? ?? '';
-          final applicationDate = (firstApp['applicationDate'] as Timestamp?)
-              ?.toDate();
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (context) => PendingProgressScreen(
-                schoolName: schoolName,
-                applicationDate: applicationDate,
-              ),
-            ),
-          );
-        } else {
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => const SchoolSearchScreen()),
-          );
-        }
-      }
-    }
-  }
+  Future<void> _navigateAfterAuth(User user) =>
+      navigateAfterAuth(context, user);
 
   Future<void> _performLogin() async {
     final l10n = AppLocalizations.of(context);
@@ -236,6 +67,29 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         setState(() {
           _isLoading = false;
         });
+      }
+    }
+  }
+
+  Future<void> _handleSocialLogin(Future<User?> Function() signIn) async {
+    final l10n = AppLocalizations.of(context);
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+    try {
+      final user = await signIn();
+      if (user != null && mounted) {
+        await _navigateAfterAuth(user);
+      }
+    } catch (e) {
+      if (mounted) {
+        _showErrorDialog(
+          l10n.errorTitle,
+          l10n.genericErrorContent(e.toString()),
+        );
+      }
+    } finally {
+      if (mounted && _isLoading) {
+        setState(() => _isLoading = false);
       }
     }
   }
@@ -382,6 +236,40 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                             },
                             child: Text(l10n.forgotPasswordLink),
                           ),
+                          const SizedBox(height: 8.0),
+                          Row(
+                            children: [
+                              const Expanded(child: Divider()),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
+                                child: Text(
+                                  'o',
+                                  style: TextStyle(color: Colors.grey.shade500),
+                                ),
+                              ),
+                              const Expanded(child: Divider()),
+                            ],
+                          ),
+                          const SizedBox(height: 16.0),
+                          _SocialButton(
+                            label: l10n.continueWithGoogle,
+                            icon: Icons.g_mobiledata,
+                            iconColor: const Color(0xFF4285F4),
+                            onPressed: () =>
+                                _handleSocialLogin(_authService.signInWithGoogle),
+                          ),
+                          if (Platform.isIOS) ...[
+                            const SizedBox(height: 12.0),
+                            _SocialButton(
+                              label: l10n.continueWithApple,
+                              icon: Icons.apple,
+                              dark: true,
+                              onPressed: () =>
+                                  _handleSocialLogin(_authService.signInWithApple),
+                            ),
+                          ],
                         ],
                       ),
                   ],
@@ -391,6 +279,51 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           ),
           _SpcFooter(),
         ],
+      ),
+    );
+  }
+}
+
+class _SocialButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color? iconColor;
+  final bool dark;
+  final VoidCallback onPressed;
+
+  const _SocialButton({
+    required this.label,
+    required this.icon,
+    required this.onPressed,
+    this.iconColor,
+    this.dark = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = dark ? Colors.black : Colors.white;
+    final fg = dark ? Colors.white : Colors.black87;
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        icon: Icon(icon, color: iconColor ?? fg, size: 26),
+        label: Text(
+          label,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: fg,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          backgroundColor: bg,
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          side: BorderSide(color: Colors.grey.shade300),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        onPressed: onPressed,
       ),
     );
   }

@@ -7,6 +7,7 @@ import 'package:warrior_path/models/level_model.dart';
 import 'package:warrior_path/models/technique_model.dart';
 import 'package:warrior_path/services/achievement_engine.dart';
 import 'package:warrior_path/widgets/achievements_section.dart';
+import 'package:warrior_path/widgets/school_ranking_preview.dart';
 import 'package:collection/collection.dart';
 import '../../../l10n/app_localizations.dart';
 import '../my_attendance_history_screen.dart';
@@ -82,6 +83,7 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            _buildSchoolRankingSection(),
             if (_enrolledDisciplines.length > 1) _buildDisciplineSelector(),
             _buildCurrentLevelHeader(),
             const Divider(height: 32, indent: 16, endIndent: 16),
@@ -134,6 +136,16 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
           ],
         ),
       )),
+    );
+  }
+
+  Widget _buildSchoolRankingSection() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: SchoolRankingPreview(
+        schoolId: widget.schoolId,
+        memberId: widget.memberId,
+      ),
     );
   }
 

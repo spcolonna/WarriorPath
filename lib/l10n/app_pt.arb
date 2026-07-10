@@ -199,6 +199,24 @@
     "myPayments": "Meus Pagamentos",
     "errorLoadingPaymentHistory": "Erro ao carregar seu histórico de pagamentos.",
     "noPaymentsRegisteredYet": "Você ainda não tem pagamentos registrados.",
+    "paymentStatusUpToDate": "Você está em dia",
+    "paymentStatusPending": "Pagamento pendente",
+    "nextPaymentDue": "Próximo vencimento: {date}",
+    "@nextPaymentDue": {
+        "placeholders": {
+            "date": { "type": "String" }
+        }
+    },
+    "pendingPaymentContactTeacher": "Fale com seu professor para regularizar este pagamento.",
+    "noPaymentPlanAssigned": "Você ainda não tem um plano de pagamento atribuído. Consulte seu professor.",
+    "currentPlan": "Plano atual",
+    "paymentHistory": "Histórico de pagamentos",
+    "paidOn": "Pago em {date}",
+    "@paidOn": {
+        "placeholders": {
+            "date": { "type": "String" }
+        }
+    },
     "paymentDetails": "{concept}\nPago em {date}",
     "myProgress": "Meu Progresso",
     "yourPath": "Seu Caminho",
@@ -438,5 +456,37 @@
     "linkErrorMsg": "Não foi possível vincular: {error}",
     "@linkErrorMsg": {
         "placeholders": { "error": {"type": "String"} }
-    }
+    },
+    "verifyEmailTitle": "Verifique seu e-mail",
+    "verifyEmailMessage": "Enviamos um e-mail de verificação para {email}. Abra-o e toque no link para ativar sua conta. Depois volte aqui e toque em \"Já confirmei\".",
+    "@verifyEmailMessage": {
+        "placeholders": { "email": {"type": "String"} }
+    },
+    "verifyEmailConfirmedButton": "Já confirmei",
+    "verifyEmailResendButton": "Reenviar e-mail",
+    "verifyEmailResendIn": "Reenviar em {seconds}s",
+    "@verifyEmailResendIn": {
+        "placeholders": { "seconds": {"type": "int"} }
+    },
+    "verifyEmailResent": "E-mail de verificação reenviado.",
+    "verifyEmailNotYet": "Ainda não detectamos a verificação. Verifique seu e-mail.",
+    "verifyEmailBackToLogin": "Sair",
+    "continueWithGoogle": "Continuar com Google",
+    "continueWithApple": "Continuar com Apple",
+    "powerLevel": "Nível de Poder",
+    "tierNovice": "Novato",
+    "tierWarrior": "Guerreiro",
+    "tierVeteran": "Veterano",
+    "tierMaster": "Mestre",
+    "pointsToNextTier": "{points} para o próximo nível",
+    "@pointsToNextTier": {
+        "placeholders": {
+            "points": { "type": "int" }
+        }
+    },
+    "maxTierReached": "Nível máximo alcançado",
+    "schoolRanking": "Ranking da escola",
+    "viewFullRanking": "Ver ranking completo",
+    "rankingEmpty": "Ainda não há guerreiros no ranking",
+    "rankingYou": "Você"
 }

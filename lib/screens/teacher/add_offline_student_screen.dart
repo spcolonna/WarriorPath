@@ -99,6 +99,8 @@ class _AddOfflineStudentScreenState extends State<AddOfflineStudentScreen> {
         'displayName': displayName,
         'status': 'active',
         'isOfflineStudent': true,
+        'gender': _selectedSex,
+        'powerLevel': 0,
         'joinDate': FieldValue.serverTimestamp(),
         'progress': {},
       });

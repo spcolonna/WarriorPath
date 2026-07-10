@@ -692,6 +692,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noPaymentsRegisteredYet => 'You have no registered payments yet.';
 
   @override
+  String get paymentStatusUpToDate => 'You\'re up to date';
+
+  @override
+  String get paymentStatusPending => 'Payment pending';
+
+  @override
+  String nextPaymentDue(String date) {
+    return 'Next payment due $date';
+  }
+
+  @override
+  String get pendingPaymentContactTeacher =>
+      'Contact your teacher to settle this payment.';
+
+  @override
+  String get noPaymentPlanAssigned =>
+      'No payment plan assigned yet. Check with your teacher.';
+
+  @override
+  String get currentPlan => 'Current plan';
+
+  @override
+  String get paymentHistory => 'Payment history';
+
+  @override
+  String paidOn(String date) {
+    return 'Paid on $date';
+  }
+
+  @override
   String paymentDetails(String concept, String date) {
     return '$concept\nPaid on $date';
   }
@@ -1431,4 +1461,74 @@ class AppLocalizationsEn extends AppLocalizations {
   String linkErrorMsg(String error) {
     return 'Couldn\'t link: $error';
   }
+
+  @override
+  String get verifyEmailTitle => 'Verify your email';
+
+  @override
+  String verifyEmailMessage(String email) {
+    return 'We sent a verification email to $email. Open it and tap the link to activate your account. Then come back here and tap \"I confirmed\".';
+  }
+
+  @override
+  String get verifyEmailConfirmedButton => 'I confirmed';
+
+  @override
+  String get verifyEmailResendButton => 'Resend email';
+
+  @override
+  String verifyEmailResendIn(int seconds) {
+    return 'Resend in ${seconds}s';
+  }
+
+  @override
+  String get verifyEmailResent => 'Verification email resent.';
+
+  @override
+  String get verifyEmailNotYet =>
+      'We haven\'t detected the verification yet. Check your email.';
+
+  @override
+  String get verifyEmailBackToLogin => 'Sign out';
+
+  @override
+  String get continueWithGoogle => 'Continue with Google';
+
+  @override
+  String get continueWithApple => 'Continue with Apple';
+
+  @override
+  String get powerLevel => 'Power Level';
+
+  @override
+  String get tierNovice => 'Novice';
+
+  @override
+  String get tierWarrior => 'Warrior';
+
+  @override
+  String get tierVeteran => 'Veteran';
+
+  @override
+  String get tierMaster => 'Master';
+
+  @override
+  String pointsToNextTier(int points) {
+    return '$points to next level';
+  }
+
+  @override
+  String get maxTierReached => 'Max level reached';
+
+  @override
+  String get schoolRanking => 'School Ranking';
+
+  @override
+  String get viewFullRanking => 'View full ranking';
+
+  @override
+  String get rankingEmpty => 'No warriors ranked yet';
+
+  @override
+  String get rankingYou => 'You';
 }

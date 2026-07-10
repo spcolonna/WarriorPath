@@ -3,8 +3,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:warrior_path/providers/session_provider.dart';
+import 'package:warrior_path/screens/dashboard/tabs/students_tab_screen.dart';
 import 'package:warrior_path/screens/role_selector_screen.dart';
 import 'package:warrior_path/screens/teacher/attendance_checklist_screen.dart';
+import 'package:warrior_path/services/student_application_service.dart';
+import 'package:warrior_path/widgets/school_ranking_preview.dart';
 import '../../../l10n/app_localizations.dart';
 
 class HomeTabScreen extends StatefulWidget {
@@ -112,13 +115,17 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
           ),
           const SizedBox(height: 24),
 
-          _buildStatsGrid(schoolId),
+          _buildStatsAndPending(schoolId),
+
+          const SizedBox(height: 24),
+          SchoolRankingPreview(schoolId: schoolId, memberId: user.uid),
 
           const SizedBox(height: 24),
           Text(l10n.todayClass, style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 8),
 
           _buildTodaySchedules(schoolId),
+          const SizedBox(height: 80), // aire para el FAB
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -193,7 +200,15 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
     );
   }
 
-  Widget _buildStatsGrid(String schoolId) {
+  void _openStudentsList(int tabIndex) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => StudentsTabScreen(initialTabIndex: tabIndex),
+      ),
+    );
+  }
+
+  Widget _buildStatsAndPending(String schoolId) {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance.collection('schools').doc(schoolId).collection('members').snapshots(),
       builder: (context, snapshot) {
@@ -201,26 +216,132 @@ class _HomeTabScreenState extends State<HomeTabScreen> {
 
         final allMembers = snapshot.data!.docs;
         final activeStudents = allMembers.where((doc) => doc['status'] == 'active').length;
-        final pendingRequests = allMembers.where((doc) => doc['status'] == 'pending').length;
+        final pendingDocs = allMembers.where((doc) => doc['status'] == 'pending').toList();
+        final pendingRequests = pendingDocs.length;
 
-        return GridView.count(
-          crossAxisCount: 2,
-          crossAxisSpacing: 16, mainAxisSpacing: 16,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildStatCard(title: l10n.activeStudents, value: activeStudents.toString(), icon: Icons.groups, color: Colors.blue),
-            _buildStatCard(
-              title: l10n.pendingApplication, value: pendingRequests.toString(),
-              icon: Icons.person_add,
-              color: pendingRequests > 0 ? Colors.orange : Colors.green,
-              onTap: () {
-                // TODO: Navegar directamente a la pestaña de pendientes. Por ahora, esto es un placeholder.
-              },
+            GridView.count(
+              crossAxisCount: 2,
+              crossAxisSpacing: 16, mainAxisSpacing: 16,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              children: [
+                _buildStatCard(
+                  title: l10n.activeStudents,
+                  value: activeStudents.toString(),
+                  icon: Icons.groups,
+                  color: Colors.blue,
+                  onTap: () => _openStudentsList(0),
+                ),
+                _buildStatCard(
+                  title: l10n.pendingApplication, value: pendingRequests.toString(),
+                  icon: Icons.person_add,
+                  color: pendingRequests > 0 ? Colors.orange : Colors.green,
+                  onTap: () => _openStudentsList(1),
+                ),
+              ],
             ),
+            if (pendingRequests > 0) ...[
+              const SizedBox(height: 20),
+              _buildPendingSection(pendingDocs, schoolId),
+            ],
           ],
         );
       },
+    );
+  }
+
+  // ── Solicitudes pendientes con aceptar/rechazar inline ──────────────────────
+
+  Widget _buildPendingSection(List<QueryDocumentSnapshot> pendingDocs, String schoolId) {
+    return Card(
+      elevation: 0,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Colors.orange.withValues(alpha: 0.45)),
+      ),
+      color: Colors.orange.withValues(alpha: 0.06),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.notifications_active, color: Colors.orange, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  l10n.pendingApplication,
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            ...pendingDocs.map((doc) {
+              final data = doc.data() as Map<String, dynamic>;
+              final applicationDate =
+                  (data['applicationDate'] as Timestamp?)?.toDate();
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  children: [
+                    const CircleAvatar(radius: 18, child: Icon(Icons.person, size: 20)),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            data['displayName'] ?? l10n.noName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          if (applicationDate != null)
+                            Text(
+                              l10n.applicationDate(
+                                  applicationDate.toLocal().toString().substring(0, 10)),
+                              style: TextStyle(
+                                  fontSize: 11, color: Colors.grey.shade600),
+                            ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: l10n.reject,
+                      icon: const Icon(Icons.close, color: Colors.red),
+                      onPressed: () => StudentApplicationService.reject(
+                        context,
+                        schoolId: schoolId,
+                        userId: doc.id,
+                      ),
+                    ),
+                    FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      onPressed: () => StudentApplicationService.accept(
+                        context,
+                        schoolId: schoolId,
+                        userId: doc.id,
+                      ),
+                      child: Text(l10n.accept),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+        ),
+      ),
     );
   }
 

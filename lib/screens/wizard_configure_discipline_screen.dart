@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:warrior_path/data/martial_art_defaults.dart';
 import 'package:warrior_path/models/level_model.dart';
 import 'package:warrior_path/models/technique_model.dart';
 
@@ -65,8 +66,6 @@ class _WizardConfigureDisciplineScreenState extends State<WizardConfigureDiscipl
     final levelsSnap = await widget.disciplineDoc.reference.collection('levels').orderBy('order').get();
     if (levelsSnap.docs.isNotEmpty) {
       _levels.addAll(levelsSnap.docs.map((doc) => LevelModel.fromFirestore(doc)));
-    } else {
-      _addLevel(); // Añadir uno por defecto si no hay
     }
 
     final techSnap = await widget.disciplineDoc.reference.collection('techniques').get();
@@ -74,7 +73,35 @@ class _WizardConfigureDisciplineScreenState extends State<WizardConfigureDiscipl
       _techniques.addAll(techSnap.docs.map((doc) => TechniqueModel.fromFirestore(doc)));
     }
 
+    // Si la disciplina todavía no fue configurada (sin niveles guardados),
+    // precargamos los valores típicos del arte marcial como sugerencia editable.
+    // El profesor puede editarlos/borrarlos; recién se guardan al confirmar.
+    if (_levels.isEmpty) {
+      _prefillFromMartialArtDefaults();
+    }
+
     if (mounted) setState(() => _isLoading = false);
+  }
+
+  void _prefillFromMartialArtDefaults() {
+    final defaults = martialArtDefaults[_disciplineName];
+    if (defaults == null) {
+      _addLevel(); // arte sin defaults: un nivel en blanco (comportamiento previo)
+      return;
+    }
+    if (_systemNameController.text.trim().isEmpty) {
+      _systemNameController.text = defaults.progressionSystemName;
+    }
+    _levels.addAll(defaults.toLevels());
+    if (_levels.isEmpty) _addLevel();
+    if (_categories.isEmpty) {
+      _categories = List<String>.from(defaults.categories);
+    }
+    if (_techniques.isEmpty) {
+      final techs = defaults.toTechniques(_nextTechniqueId);
+      _nextTechniqueId += techs.length;
+      _techniques.addAll(techs);
+    }
   }
 
   @override

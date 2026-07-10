@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:warrior_path/providers/session_provider.dart';
 import 'package:warrior_path/screens/role_selector_screen.dart';
 import 'package:warrior_path/models/event_model.dart';
+import 'package:warrior_path/widgets/power_level_card.dart';
 import '../../../l10n/app_localizations.dart';
 import '../student_event_detail_screen.dart';
 
@@ -36,6 +37,9 @@ class SchoolInfoTabScreen extends StatelessWidget {
           final address       = rawAddress.replaceAll(RegExp(r'^,+|,+$'), '').trim();
           final phone         = data['phone'] as String?;
 
+          final memberId = Provider.of<SessionProvider>(context, listen: false)
+              .activeProfileId;
+
           return CustomScrollView(
             slivers: [
               // ── Header ─────────────────────────────────────────────────
@@ -46,6 +50,12 @@ class SchoolInfoTabScreen extends StatelessWidget {
                   discipline: discipline,
                 ),
               ),
+
+              // ── Avatar + Nivel de Poder (hero) ─────────────────────────
+              if (memberId != null)
+                SliverToBoxAdapter(
+                  child: PowerLevelCard(schoolId: schoolId, memberId: memberId),
+                ),
 
               // ── Clase de hoy ────────────────────────────────────────────
               SliverToBoxAdapter(

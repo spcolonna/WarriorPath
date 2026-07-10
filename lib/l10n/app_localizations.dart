@@ -1342,6 +1342,54 @@ abstract class AppLocalizations {
   /// **'You have no registered payments yet.'**
   String get noPaymentsRegisteredYet;
 
+  /// No description provided for @paymentStatusUpToDate.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re up to date'**
+  String get paymentStatusUpToDate;
+
+  /// No description provided for @paymentStatusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment pending'**
+  String get paymentStatusPending;
+
+  /// No description provided for @nextPaymentDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Next payment due {date}'**
+  String nextPaymentDue(String date);
+
+  /// No description provided for @pendingPaymentContactTeacher.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact your teacher to settle this payment.'**
+  String get pendingPaymentContactTeacher;
+
+  /// No description provided for @noPaymentPlanAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'No payment plan assigned yet. Check with your teacher.'**
+  String get noPaymentPlanAssigned;
+
+  /// No description provided for @currentPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'Current plan'**
+  String get currentPlan;
+
+  /// No description provided for @paymentHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment history'**
+  String get paymentHistory;
+
+  /// No description provided for @paidOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid on {date}'**
+  String paidOn(String date);
+
   /// No description provided for @paymentDetails.
   ///
   /// In en, this message translates to:
@@ -2655,6 +2703,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t link: {error}'**
   String linkErrorMsg(String error);
+
+  /// No description provided for @verifyEmailTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify your email'**
+  String get verifyEmailTitle;
+
+  /// No description provided for @verifyEmailMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'We sent a verification email to {email}. Open it and tap the link to activate your account. Then come back here and tap \"I confirmed\".'**
+  String verifyEmailMessage(String email);
+
+  /// No description provided for @verifyEmailConfirmedButton.
+  ///
+  /// In en, this message translates to:
+  /// **'I confirmed'**
+  String get verifyEmailConfirmedButton;
+
+  /// No description provided for @verifyEmailResendButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend email'**
+  String get verifyEmailResendButton;
+
+  /// No description provided for @verifyEmailResendIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend in {seconds}s'**
+  String verifyEmailResendIn(int seconds);
+
+  /// No description provided for @verifyEmailResent.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification email resent.'**
+  String get verifyEmailResent;
+
+  /// No description provided for @verifyEmailNotYet.
+  ///
+  /// In en, this message translates to:
+  /// **'We haven\'t detected the verification yet. Check your email.'**
+  String get verifyEmailNotYet;
+
+  /// No description provided for @verifyEmailBackToLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get verifyEmailBackToLogin;
+
+  /// No description provided for @continueWithGoogle.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Google'**
+  String get continueWithGoogle;
+
+  /// No description provided for @continueWithApple.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Apple'**
+  String get continueWithApple;
+
+  /// No description provided for @powerLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Power Level'**
+  String get powerLevel;
+
+  /// No description provided for @tierNovice.
+  ///
+  /// In en, this message translates to:
+  /// **'Novice'**
+  String get tierNovice;
+
+  /// No description provided for @tierWarrior.
+  ///
+  /// In en, this message translates to:
+  /// **'Warrior'**
+  String get tierWarrior;
+
+  /// No description provided for @tierVeteran.
+  ///
+  /// In en, this message translates to:
+  /// **'Veteran'**
+  String get tierVeteran;
+
+  /// No description provided for @tierMaster.
+  ///
+  /// In en, this message translates to:
+  /// **'Master'**
+  String get tierMaster;
+
+  /// No description provided for @pointsToNextTier.
+  ///
+  /// In en, this message translates to:
+  /// **'{points} to next level'**
+  String pointsToNextTier(int points);
+
+  /// No description provided for @maxTierReached.
+  ///
+  /// In en, this message translates to:
+  /// **'Max level reached'**
+  String get maxTierReached;
+
+  /// No description provided for @schoolRanking.
+  ///
+  /// In en, this message translates to:
+  /// **'School Ranking'**
+  String get schoolRanking;
+
+  /// No description provided for @viewFullRanking.
+  ///
+  /// In en, this message translates to:
+  /// **'View full ranking'**
+  String get viewFullRanking;
+
+  /// No description provided for @rankingEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No warriors ranked yet'**
+  String get rankingEmpty;
+
+  /// No description provided for @rankingYou.
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get rankingYou;
 }
 
 class _AppLocalizationsDelegate

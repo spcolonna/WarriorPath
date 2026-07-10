@@ -7,6 +7,7 @@ import 'package:warrior_path/screens/WelcomeScreen.dart';
 import 'package:warrior_path/screens/landing_screen.dart';
 import 'package:warrior_path/screens/student/student_dashboard_screen.dart';
 import 'package:warrior_path/screens/teacher_dashboard_screen.dart';
+import 'package:warrior_path/screens/verify_email_screen.dart';
 
 class AppSplashScreen extends StatefulWidget {
   final bool showLanding;
@@ -108,6 +109,10 @@ class _AppSplashScreenState extends State<AppSplashScreen>
         destination = saved.role == 'maestro'
             ? const TeacherDashboardScreen()
             : const StudentDashboardScreen();
+      } else if (!currentUser.emailVerified) {
+        // Cuenta creada pero sin verificar el mail y sin sesión previa: la
+        // mandamos a completar la verificación (anti-spam).
+        destination = VerifyEmailScreen(email: currentUser.email ?? '');
       } else {
         destination =
             widget.showLanding ? const LandingScreen() : const WelcomeScreen();

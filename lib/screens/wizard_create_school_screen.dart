@@ -165,6 +165,7 @@ class _WizardCreateSchoolScreenState extends State<WizardCreateSchoolScreen> {
         'displayName': user.displayName ?? 'Maestro',
         'status': 'active', // El maestro siempre está activo
         'role': 'maestro',
+        'powerLevel': 0,
         'joinDate': FieldValue.serverTimestamp(),
         'progress': {}, // Mapa de progreso vacío inicialmente
       });

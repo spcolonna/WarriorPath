@@ -200,6 +200,24 @@
     "myPayments": "Mis Pagos",
     "errorLoadingPaymentHistory": "Error al cargar tu historial de pagos.",
     "noPaymentsRegisteredYet": "Aún no tienes pagos registrados.",
+    "paymentStatusUpToDate": "Estás al día",
+    "paymentStatusPending": "Pago pendiente",
+    "nextPaymentDue": "Próximo vencimiento: {date}",
+    "@nextPaymentDue": {
+        "placeholders": {
+            "date": { "type": "String" }
+        }
+    },
+    "pendingPaymentContactTeacher": "Contactá a tu profesor para regularizar este pago.",
+    "noPaymentPlanAssigned": "Todavía no tenés un plan de pago asignado. Consultá con tu profesor.",
+    "currentPlan": "Plan actual",
+    "paymentHistory": "Historial de pagos",
+    "paidOn": "Pagado el {date}",
+    "@paidOn": {
+        "placeholders": {
+            "date": { "type": "String" }
+        }
+    },
     "paymentDetails": "{concept}\nPagado el {date}",
     "myProgress": "Mi Progreso",
     "yourPath": "Tu Camino",
@@ -440,5 +458,37 @@
     "linkErrorMsg": "No se pudo vincular: {error}",
     "@linkErrorMsg": {
         "placeholders": { "error": {"type": "String"} }
-    }
+    },
+    "verifyEmailTitle": "Verificá tu correo",
+    "verifyEmailMessage": "Te enviamos un correo de verificación a {email}. Abrilo y tocá el enlace para activar tu cuenta. Después volvé acá y tocá \"Ya confirmé\".",
+    "@verifyEmailMessage": {
+        "placeholders": { "email": {"type": "String"} }
+    },
+    "verifyEmailConfirmedButton": "Ya confirmé",
+    "verifyEmailResendButton": "Reenviar correo",
+    "verifyEmailResendIn": "Reenviar en {seconds}s",
+    "@verifyEmailResendIn": {
+        "placeholders": { "seconds": {"type": "int"} }
+    },
+    "verifyEmailResent": "Correo de verificación reenviado.",
+    "verifyEmailNotYet": "Todavía no detectamos la verificación. Revisá tu correo.",
+    "verifyEmailBackToLogin": "Cerrar sesión",
+    "continueWithGoogle": "Continuar con Google",
+    "continueWithApple": "Continuar con Apple",
+    "powerLevel": "Nivel de Poder",
+    "tierNovice": "Novato",
+    "tierWarrior": "Guerrero",
+    "tierVeteran": "Veterano",
+    "tierMaster": "Maestro",
+    "pointsToNextTier": "{points} para el próximo nivel",
+    "@pointsToNextTier": {
+        "placeholders": {
+            "points": { "type": "int" }
+        }
+    },
+    "maxTierReached": "Nivel máximo alcanzado",
+    "schoolRanking": "Ranking de la escuela",
+    "viewFullRanking": "Ver ranking completo",
+    "rankingEmpty": "Todavía no hay guerreros en el ranking",
+    "rankingYou": "Vos"
 }

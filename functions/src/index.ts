@@ -1,11 +1,43 @@
 import {onSchedule} from "firebase-functions/v2/scheduler";
-import {onDocumentWritten} from "firebase-functions/v2/firestore";
+import {
+  onDocumentCreated,
+  onDocumentWritten,
+} from "firebase-functions/v2/firestore";
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import * as logger from "firebase-functions/logger";
 
 admin.initializeApp();
 const db = admin.firestore();
+
+// ── Nivel de Poder: puntos otorgados por cada acción ─────────────────────────
+// Mantener sincronizado con lib/config/power_config.dart (sólo UI).
+const POINTS_PER_CLASS = 10;
+const POINTS_PER_EVENT = 25;
+const POINTS_PER_PROMOTION = 50;
+
+/**
+ * Suma poder a un conjunto de miembros de una escuela.
+ * Usa set+merge para no abortar el batch si algún member no existiera.
+ * @param {string} schoolId Id de la escuela.
+ * @param {string[]} memberIds Ids de los miembros premiados.
+ * @param {number} points Puntos a sumar a cada uno.
+ * @param {FirebaseFirestore.WriteBatch} batch Batch donde encolar las sumas.
+ */
+function awardPower(
+  schoolId: string,
+  memberIds: string[],
+  points: number,
+  batch: FirebaseFirestore.WriteBatch,
+) {
+  for (const memberId of memberIds) {
+    const memberRef = db.collection("schools").doc(schoolId)
+      .collection("members").doc(memberId);
+    batch.set(memberRef, {
+      powerLevel: admin.firestore.FieldValue.increment(points),
+    }, {merge: true});
+  }
+}
 
 // ===============================================================================================
 // FUNCIÓN 1: GENERAR RECORDATORIOS DE PAGO MENSUALES
@@ -205,16 +237,50 @@ exports.onPaymentCreated = onDocumentWritten(
 exports.onAttendanceUpdated = onDocumentWritten(
   "/schools/{schoolId}/attendanceRecords/{recordId}",
   async (event) => {
-    if (!event.data?.before.exists || !event.data?.after.exists) return;
-    const beforeData = event.data.before.data();
+    // Sólo ignoramos borrados. Las CREACIONES sí se procesan: el auto
+    // check-in del alumno crea el registro con su id ya incluido en
+    // presentStudentIds (school_info_tab_screen), y antes ese camino no
+    // otorgaba poder ni notificaba.
+    if (!event.data?.after.exists) return;
     const afterData = event.data.after.data();
-    if (!beforeData || !afterData) return;
+    if (!afterData) return;
 
-    const beforeStudentIds = new Set(beforeData.presentStudentIds ?? []);
+    const beforeData = event.data.before.exists ?
+      event.data.before.data() : undefined;
+    const beforeStudentIds = new Set(beforeData?.presentStudentIds ?? []);
     const afterStudentIds = afterData.presentStudentIds ?? [];
     const newStudentIds: string[] = afterStudentIds
       .filter((id: string) => !beforeStudentIds.has(id));
     if (newStudentIds.length === 0) return;
+
+    logger.info(
+      `Asistencia ${event.params.recordId} (${afterData.scheduleTitle}): ` +
+      `nuevos presentes [${newStudentIds.join(", ")}]`);
+
+    // ── Nivel de Poder: sumar puntos a los recién-presentes ──────────────────
+    // Idempotente: sólo se otorga a ids que todavía no están en
+    // `awardedPowerStudentIds`, y se los agrega al array en la misma escritura.
+    // Así desmarcar/re-marcar NO vuelve a sumar. El re-trigger que provoca este
+    // update no re-otorga (presentStudentIds no cambia → newStudentIds vacío).
+    const schoolId = event.params.schoolId;
+    const alreadyAwarded =
+      new Set<string>(afterData.awardedPowerStudentIds ?? []);
+    const toAward = newStudentIds.filter((id) => !alreadyAwarded.has(id));
+    if (toAward.length > 0) {
+      const batch = db.batch();
+      awardPower(schoolId, toAward, POINTS_PER_CLASS, batch);
+      batch.set(event.data.after.ref, {
+        awardedPowerStudentIds:
+          admin.firestore.FieldValue.arrayUnion(...toAward),
+      }, {merge: true});
+      try {
+        await batch.commit();
+        logger.info(
+          `Poder otorgado (+${POINTS_PER_CLASS}) a: ${toAward.join(", ")}`);
+      } catch (error) {
+        logger.error("Error otorgando poder por asistencia:", error);
+      }
+    }
 
     const scheduleTitle = afterData.scheduleTitle ?? "una clase";
     const payload = {
@@ -234,7 +300,30 @@ exports.onAttendanceUpdated = onDocumentWritten(
   });
 
 // ===============================================================================================
-// FUNCIÓN 5: NOTIFICAR SOBRE ASIGNACIÓN DE EVENTO
+// FUNCIÓN 4B: PREMIAR PROMOCIONES DE NIVEL CON PODER
+// ===============================================================================================
+// El maestro promueve creando un doc en progressionHistory (progress_discipline_tab).
+// onDocumentCreated dispara una sola vez por doc, así que es naturalmente idempotente.
+exports.onPromotionCreated = onDocumentCreated(
+  "/schools/{schoolId}/members/{memberId}/progressionHistory/{promoId}",
+  async (event) => {
+    const data = event.data?.data();
+    if (!data || data.type !== "level_promotion") return;
+
+    const {schoolId, memberId} = event.params;
+    const batch = db.batch();
+    awardPower(schoolId, [memberId], POINTS_PER_PROMOTION, batch);
+    try {
+      await batch.commit();
+      logger.info(
+        `Promoción de ${memberId}: poder +${POINTS_PER_PROMOTION}`);
+    } catch (error) {
+      logger.error("Error otorgando poder por promoción:", error);
+    }
+  });
+
+// ===============================================================================================
+// FUNCIÓN 5: EVENTOS — NOTIFICAR INVITACIONES Y PREMIAR CONFIRMACIONES
 // ===============================================================================================
 exports.onEventAssigned = onDocumentWritten(
   "/schools/{schoolId}/events/{eventId}",
@@ -244,6 +333,39 @@ exports.onEventAssigned = onDocumentWritten(
     const afterData = event.data.after.data();
     if (!beforeData || !afterData) return;
 
+    // ── Nivel de Poder: premiar a quienes recién confirman asistencia ────────
+    // El alumno escribe attendeeStatus.{uid} = 'confirmado' al aceptar.
+    // Idempotente vía powerAwardedIds en el propio evento: confirmar →
+    // rechazar → confirmar no vuelve a sumar.
+    const beforeStatus: Record<string, string> =
+      beforeData.attendeeStatus ?? {};
+    const afterStatus: Record<string, string> = afterData.attendeeStatus ?? {};
+    const alreadyAwarded =
+      new Set<string>(afterData.powerAwardedIds ?? []);
+    const newlyConfirmed = Object.keys(afterStatus).filter((uid) =>
+      afterStatus[uid] === "confirmado" &&
+      beforeStatus[uid] !== "confirmado" &&
+      !alreadyAwarded.has(uid));
+
+    if (newlyConfirmed.length > 0) {
+      const batch = db.batch();
+      awardPower(
+        event.params.schoolId, newlyConfirmed, POINTS_PER_EVENT, batch);
+      batch.set(event.data.after.ref, {
+        powerAwardedIds:
+          admin.firestore.FieldValue.arrayUnion(...newlyConfirmed),
+      }, {merge: true});
+      try {
+        await batch.commit();
+        logger.info(
+          `Evento ${event.params.eventId}: poder (+${POINTS_PER_EVENT}) ` +
+          `a confirmados [${newlyConfirmed.join(", ")}]`);
+      } catch (error) {
+        logger.error("Error otorgando poder por evento:", error);
+      }
+    }
+
+    // ── Notificaciones de invitación (comportamiento original) ───────────────
     const beforeInvitedIds = new Set(beforeData.invitedStudentIds ?? []);
     const afterInvitedIds = afterData.invitedStudentIds ?? [];
     const newStudentIds: string[] = afterInvitedIds

@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(awk '/^  google_sign_in:/{f=1} f&&/version:/{print; exit}' pubspec.lock)",
+      "Bash(awk '/^  sign_in_with_apple:/{f=1} f&&/version:/{print; exit}' pubspec.lock)",
+      "Skill(artifact-design)",
+      "Skill(artifact-design:*)",
+      "Bash(awk '/^  webview_flutter:/{f=1} f&&/version:/{print; exit}' pubspec.lock)",
+      "Bash(pod repo *)",
+      "Bash(pod install *)",
+      "Bash(firebase functions:list --project warriorpath-89a85)",
+      "Bash(firebase functions:log --project warriorpath-89a85 --only onAttendanceUpdated -n 50)",
+      "Bash(gcloud functions *)",
+      "Bash(firebase functions:log --project warriorpath-89a85 --only onAttendanceUpdated -n 80)",
+      "Bash(gcloud firestore *)",
+      "Bash(python3 -c ' *)",
+      "Bash(gcloud auth *)",
+      "Bash(curl -s -H 'Authorization: Bearer __CMDSUB_OUTPUT__' 'https://firestore.googleapis.com/v1/projects/warriorpath-89a85/databases/\\(default\\)/documents/schools?pageSize=10&mask.fieldPaths=name&mask.fieldPaths=ownerId')",
+      "Bash(curl -s -X POST -H 'Authorization: Bearer __CMDSUB_OUTPUT__' -H 'Content-Type: application/json' 'https://firestore.googleapis.com/v1/projects/warriorpath-89a85/databases/\\(default\\)/documents/schools/KEXHHIop4OhK0j4xap6c:runQuery' -d '{\"structuredQuery\":{\"from\":[{\"collectionId\":\"attendanceRecords\"}],\"orderBy\":[{\"field\":{\"fieldPath\":\"date\"},\"direction\":\"DESCENDING\"}],\"limit\":6}}')",
+      "Bash(gcloud logging *)",
+      "Bash(npm run *)",
+      "Bash(python3 \"/private/tmp/claude-502/-Users-sebastianperez-Documents-Personal-WarriorPath/5d972c64-4a46-429e-881d-fbe43ce17ba2/scratchpad/backfill_power.py\")"
+    ]
+  }
+}

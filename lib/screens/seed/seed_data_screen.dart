@@ -2,11 +2,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../../config/power_config.dart';
+
 // ── Static definition helpers ─────────────────────────────────────────────────
 
 class _StudentDef {
   final String name;
   final String emailPrefix;
+  final String gender; // 'masculino' | 'femenino' | 'otro' | 'prefiero_no_decirlo'
   final int levelIndex; // 0=Blanca … 7=Negra
   final String planKey; // 'basic' | 'intermediate' | 'advanced'
   final int techCount; // how many techniques from index 0
@@ -17,6 +20,7 @@ class _StudentDef {
   const _StudentDef(
     this.name,
     this.emailPrefix,
+    this.gender,
     this.levelIndex,
     this.planKey,
     this.techCount,
@@ -167,6 +171,99 @@ class _SeedDataScreenState extends State<SeedDataScreen> {
 
   void _add(_StepResult r) => setState(() => _results.add(r));
   void _status(String msg) => setState(() => _currentStep = msg);
+
+  // ── Backfill: avatar (gender) + Nivel de Poder para alumnos ya cargados ────
+  //
+  // Corrige miembros creados antes de existir estos campos (p.ej. por una
+  // corrida anterior de este mismo seed): completa `gender` desde su doc de
+  // `users`, e inicializa `powerLevel` contando su asistencia histórica real
+  // (mismo patrón que `achievements_section.dart`). Idempotente: sólo toca
+  // los campos que faltan, así que es seguro correrlo más de una vez.
+  Future<void> _runBackfill() async {
+    setState(() {
+      _running = true;
+      _done = false;
+      _results.clear();
+    });
+
+    try {
+      _status('Buscando escuela...');
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) throw Exception('No hay usuario autenticado');
+
+      final schoolSnap = await _db
+          .collection('schools')
+          .where('ownerId', isEqualTo: user.uid)
+          .limit(1)
+          .get();
+      if (schoolSnap.docs.isEmpty) {
+        throw Exception('No se encontró ninguna escuela para este usuario');
+      }
+      final schoolId = schoolSnap.docs.first.id;
+
+      _status('Revisando alumnos activos...');
+      final membersSnap = await _db
+          .collection('schools')
+          .doc(schoolId)
+          .collection('members')
+          .where('status', isEqualTo: 'active')
+          .get();
+
+      int genderFixed = 0;
+      int powerFixed = 0;
+      final batch = _db.batch();
+      bool hasWrites = false;
+
+      for (final memberDoc in membersSnap.docs) {
+        final data = memberDoc.data();
+        final memberId = memberDoc.id;
+        final updates = <String, dynamic>{};
+
+        if (data['gender'] == null) {
+          _status('Completando género de ${data['displayName'] ?? memberId}...');
+          final userDoc = await _db.collection('users').doc(memberId).get();
+          final gender = userDoc.data()?['gender'];
+          if (gender != null) {
+            updates['gender'] = gender;
+            genderFixed++;
+          }
+        }
+
+        if (data['powerLevel'] == null) {
+          _status('Calculando poder de ${data['displayName'] ?? memberId}...');
+          final attendanceSnap = await _db
+              .collection('schools')
+              .doc(schoolId)
+              .collection('attendanceRecords')
+              .where('presentStudentIds', arrayContains: memberId)
+              .get();
+          updates['powerLevel'] = attendanceSnap.docs.length * kPointsPerClass;
+          powerFixed++;
+        }
+
+        if (updates.isNotEmpty) {
+          batch.update(memberDoc.reference, updates);
+          hasWrites = true;
+        }
+      }
+
+      if (hasWrites) await batch.commit();
+
+      _add(_StepResult.success(
+        'Reparación de alumnos existentes',
+        '${membersSnap.docs.length} alumnos revisados · '
+            '$genderFixed con género completado · '
+            '$powerFixed con poder inicializado',
+      ));
+    } catch (e) {
+      _add(_StepResult.failure('Reparación de alumnos existentes', e.toString()));
+    }
+
+    setState(() {
+      _running = false;
+      _done = true;
+    });
+  }
 
   // ── Step 1: Find school ──────────────────────────────────────────────────
 
@@ -387,6 +484,7 @@ class _SeedDataScreenState extends State<SeedDataScreen> {
         'activeMemberships': {ctx.schoolId: 'alumno'},
         'createdAt': Timestamp.fromDate(joinDate),
         'role': 'alumno',
+        'gender': def.gender,
       });
 
       // Member document
@@ -400,6 +498,8 @@ class _SeedDataScreenState extends State<SeedDataScreen> {
         'displayName': def.name,
         'status': 'active',
         'role': 'alumno',
+        'gender': def.gender,
+        'powerLevel': 0,
         'joinDate': Timestamp.fromDate(joinDate),
         'assignedPaymentPlanId': planId,
         'hasUnseenPromotion': false,
@@ -494,6 +594,10 @@ class _SeedDataScreenState extends State<SeedDataScreen> {
 
     final now = DateTime.now();
     int total = 0;
+    // Cuenta cuántas veces asistió cada alumno, para inicializar su
+    // Nivel de Poder (los `.add()` de este seed no disparan la Cloud
+    // Function `onAttendanceUpdated`, así que el poder se calcula acá).
+    final attendanceCounts = <String, int>{};
 
     for (int dBack = 1; dBack <= 60; dBack++) {
       final date = now.subtract(Duration(days: dBack));
@@ -524,8 +628,27 @@ class _SeedDataScreenState extends State<SeedDataScreen> {
           'presentStudentIds': present,
         });
         total++;
+
+        for (final uid in present) {
+          attendanceCounts[uid] = (attendanceCounts[uid] ?? 0) + 1;
+        }
       }
     }
+
+    final batch = _db.batch();
+    for (final s in ctx.students) {
+      final count = attendanceCounts[s.uid] ?? 0;
+      if (count == 0) continue;
+      final memberRef = _db
+          .collection('schools')
+          .doc(ctx.schoolId)
+          .collection('members')
+          .doc(s.uid);
+      batch.update(memberRef, {
+        'powerLevel': FieldValue.increment(count * kPointsPerClass),
+      });
+    }
+    await batch.commit();
 
     _add(_StepResult.success('Asistencias', '$total registros en 60 días históricos'));
   }
@@ -627,26 +750,29 @@ class _SeedDataScreenState extends State<SeedDataScreen> {
     ('Chi Kung Matutino', 6, '08:00', '09:00'),
   ];
 
+  // Género real por nombre, salvo Nicolás e Isabella: forzados a 'otro' /
+  // 'prefiero_no_decirlo' a propósito para cubrir en la demo las 3 variantes
+  // del avatar (masculino, femenino, neutro).
   static const _kStudentDefs = [
-    _StudentDef('Carlos Rodríguez', 'carlos.rodriguez', 3, 'intermediate', 8,
+    _StudentDef('Carlos Rodríguez', 'carlos.rodriguez', 'masculino', 3, 'intermediate', 8,
         ['weekly_bronze', 'monthly_silver', 'first_technique', 'techniques_10'], 18, true),
-    _StudentDef('Ana García', 'ana.garcia', 4, 'advanced', 12,
+    _StudentDef('Ana García', 'ana.garcia', 'femenino', 4, 'advanced', 12,
         ['weekly_bronze', 'monthly_silver', 'yearly_gold', 'first_technique', 'techniques_10'], 20, true),
-    _StudentDef('Martín López', 'martin.lopez', 2, 'basic', 5,
+    _StudentDef('Martín López', 'martin.lopez', 'masculino', 2, 'basic', 5,
         ['first_technique'], 12, false),
-    _StudentDef('Sofía Martínez', 'sofia.martinez', 0, 'basic', 2,
+    _StudentDef('Sofía Martínez', 'sofia.martinez', 'femenino', 0, 'basic', 2,
         [], 3, false),
-    _StudentDef('Diego Fernández', 'diego.fernandez', 1, 'basic', 3,
+    _StudentDef('Diego Fernández', 'diego.fernandez', 'masculino', 1, 'basic', 3,
         ['first_technique', 'early_bird'], 8, false),
-    _StudentDef('Valentina Pérez', 'valentina.perez', 3, 'intermediate', 8,
+    _StudentDef('Valentina Pérez', 'valentina.perez', 'femenino', 3, 'intermediate', 8,
         ['weekly_bronze', 'first_technique', 'techniques_10'], 15, true),
-    _StudentDef('Lucas González', 'lucas.gonzalez', 6, 'advanced', 17,
+    _StudentDef('Lucas González', 'lucas.gonzalez', 'masculino', 6, 'advanced', 17,
         ['weekly_bronze', 'monthly_silver', 'yearly_gold', 'first_technique', 'techniques_10', 'techniques_25'], 24, true),
-    _StudentDef('Camila Álvarez', 'camila.alvarez', 5, 'advanced', 14,
+    _StudentDef('Camila Álvarez', 'camila.alvarez', 'femenino', 5, 'advanced', 14,
         ['monthly_silver', 'first_technique', 'techniques_10', 'techniques_25'], 22, true),
-    _StudentDef('Nicolás Torres', 'nicolas.torres', 2, 'basic', 4,
+    _StudentDef('Nicolás Torres', 'nicolas.torres', 'otro', 2, 'basic', 4,
         ['first_technique', 'night_owl'], 6, false),
-    _StudentDef('Isabella Díaz', 'isabella.diaz', 1, 'basic', 3,
+    _StudentDef('Isabella Díaz', 'isabella.diaz', 'prefiero_no_decirlo', 1, 'basic', 3,
         ['weekly_bronze'], 4, false),
   ];
 
@@ -751,6 +877,40 @@ class _SeedDataScreenState extends State<SeedDataScreen> {
               'Este proceso puede tardar 1-2 minutos',
               style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.35), fontSize: 12),
+            ),
+          ),
+          const SizedBox(height: 28),
+          Divider(color: Colors.white.withValues(alpha: 0.08)),
+          const SizedBox(height: 16),
+          Text('Mantenimiento',
+              style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.5),
+                  fontSize: 12,
+                  letterSpacing: 1,
+                  fontWeight: FontWeight.w600)),
+          const SizedBox(height: 10),
+          Text(
+            'Completa género y Nivel de Poder en alumnos ya cargados que no '
+            'los tengan (p. ej. de una carga anterior a esta funcionalidad). '
+            'No duplica datos: sólo completa lo que falta.',
+            style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.45), fontSize: 12),
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _runBackfill,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: _gold,
+                side: const BorderSide(color: _gold),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+              icon: const Icon(Icons.auto_fix_high_rounded),
+              label: const Text('Reparar avatar y poder de alumnos existentes',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
             ),
           ),
         ],
