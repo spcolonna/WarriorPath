@@ -101,9 +101,17 @@ class _AppSplashScreenState extends State<AppSplashScreen>
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser != null) {
       final saved = await savedFuture;
-      if (saved != null && mounted) {
+      // La sesión guardada sólo es válida si pertenece al usuario realmente
+      // autenticado ahora. Sin esto, cerrar sesión y entrar con otra cuenta
+      // restauraba silenciosamente la sesión (y el rol) del usuario anterior.
+      final savedBelongsToCurrentUser =
+          saved != null && saved.authUid == currentUser.uid;
+      if (saved != null && !savedBelongsToCurrentUser && mounted) {
+        Provider.of<SessionProvider>(context, listen: false).clearSession();
+      }
+      if (savedBelongsToCurrentUser && mounted) {
         Provider.of<SessionProvider>(context, listen: false)
-            .setFullActiveSession(saved.schoolId, saved.role, saved.profileId);
+            .setFullActiveSession(saved.schoolId, saved.role, saved.profileId, authUid: currentUser.uid);
         Provider.of<ThemeProvider>(context, listen: false)
             .loadThemeFromSchool(saved.schoolId);
         destination = saved.role == 'maestro'

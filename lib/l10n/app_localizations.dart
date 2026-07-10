@@ -1708,6 +1708,36 @@ abstract class AppLocalizations {
   /// **'No City'**
   String get noCity;
 
+  /// No description provided for @applicationStatusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Application pending'**
+  String get applicationStatusPending;
+
+  /// No description provided for @resendApplication.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend application'**
+  String get resendApplication;
+
+  /// No description provided for @confirmResendTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend Application'**
+  String get confirmResendTitle;
+
+  /// No description provided for @confirmResendMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you want to resend your application to \"{schoolName}\"?'**
+  String confirmResendMessage(String schoolName);
+
+  /// No description provided for @applicationResentSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Application to \"{schoolName}\" resent!'**
+  String applicationResentSuccess(String schoolName);
+
   /// No description provided for @manageProfiles.
   ///
   /// In en, this message translates to:

@@ -905,6 +905,25 @@ class AppLocalizationsEs extends AppLocalizations {
   String get noCity => 'Sin Ciudad';
 
   @override
+  String get applicationStatusPending => 'Solicitud pendiente';
+
+  @override
+  String get resendApplication => 'Reenviar solicitud';
+
+  @override
+  String get confirmResendTitle => 'Reenviar Solicitud';
+
+  @override
+  String confirmResendMessage(String schoolName) {
+    return '¿Querés reenviar tu solicitud a \"$schoolName\"?';
+  }
+
+  @override
+  String applicationResentSuccess(String schoolName) {
+    return '¡Solicitud a \"$schoolName\" reenviada!';
+  }
+
+  @override
   String get manageProfiles => 'Gestionar Perfiles';
 
   @override

@@ -57,7 +57,8 @@ class _RoleSelectorScreenState extends State<RoleSelectorScreen> {
     final role = profile['role'];
     final profileId = profile['profileId'];
 
-    sessionProvider.setFullActiveSession(schoolId, role, profileId);
+    final authUid = FirebaseAuth.instance.currentUser!.uid;
+    sessionProvider.setFullActiveSession(schoolId, role, profileId, authUid: authUid);
     themeProvider.loadThemeFromSchool(schoolId);
 
     Widget destination;

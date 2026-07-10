@@ -108,7 +108,7 @@ class _WizardReviewScreenState extends State<WizardReviewScreen> {
       Provider.of<SessionProvider>(
         context,
         listen: false,
-      ).setFullActiveSession(widget.schoolId, 'maestro', user.uid);
+      ).setFullActiveSession(widget.schoolId, 'maestro', user.uid, authUid: user.uid);
 
       if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(

@@ -269,6 +269,21 @@
     "noNewSchoolsFound": "Nenhuma nova escola encontrada.",
     "apply": "Inscrever-se",
     "noCity": "Sem Cidade",
+    "applicationStatusPending": "Solicitação pendente",
+    "resendApplication": "Reenviar solicitação",
+    "confirmResendTitle": "Reenviar Solicitação",
+    "confirmResendMessage": "Deseja reenviar sua solicitação para \"{schoolName}\"?",
+    "@confirmResendMessage": {
+        "placeholders": {
+            "schoolName": { "type": "String" }
+        }
+    },
+    "applicationResentSuccess": "Solicitação para \"{schoolName}\" reenviada!",
+    "@applicationResentSuccess": {
+        "placeholders": {
+            "schoolName": { "type": "String" }
+        }
+    },
     "manageProfiles": "Gerenciar Perfis",
     "myUser": "Meu Usuário",
     "associatedWith": "Associada a: {schoolName}",

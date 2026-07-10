@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:warrior_path/providers/locale_provider.dart';
+import 'package:warrior_path/providers/session_provider.dart';
 import 'package:warrior_path/screens/WelcomeScreen.dart';
 import 'package:warrior_path/widgets/delete_account_flow.dart';
 import 'package:warrior_path/screens/role_selector_screen.dart';
@@ -27,6 +28,11 @@ class ProfileTabScreen extends StatelessWidget {
             icon: const Icon(Icons.logout),
             tooltip: l10n.logOut,
             onPressed: () async {
+              // Guardamos la referencia ANTES de navegar: tras el signOut,
+              // este dashboard sigue montado y escucha SessionProvider, así
+              // que limpiar la sesión antes de reemplazar la pantalla dispara
+              // un rebuild con "no hay sesión activa" a mitad del logout.
+              final sessionProvider = Provider.of<SessionProvider>(context, listen: false);
               await FirebaseAuth.instance.signOut();
               if (context.mounted) {
                 Navigator.of(context).pushAndRemoveUntil(
@@ -34,6 +40,9 @@ class ProfileTabScreen extends StatelessWidget {
                       (route) => false,
                 );
               }
+              // Recién ahora, con el dashboard fuera del árbol: evita que
+              // quede persistida una sesión de un usuario que ya cerró sesión.
+              sessionProvider.clearSession();
             },
           )
         ],

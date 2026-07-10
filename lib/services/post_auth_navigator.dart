@@ -145,7 +145,7 @@ Future<void> navigateAfterAuth(BuildContext context, User user) async {
         final schoolId = memberships.keys.first;
         final role = memberships.values.first;
         Provider.of<SessionProvider>(context, listen: false)
-            .setFullActiveSession(schoolId, role, user.uid);
+            .setFullActiveSession(schoolId, role, user.uid, authUid: user.uid);
         Widget destination = (role == 'maestro')
             ? const TeacherDashboardScreen()
             : const StudentDashboardScreen();

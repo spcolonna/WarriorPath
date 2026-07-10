@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:warrior_path/providers/locale_provider.dart';
+import 'package:warrior_path/providers/session_provider.dart';
 import 'package:warrior_path/screens/WelcomeScreen.dart';
 import 'package:warrior_path/screens/student/edit_profile_screen.dart';
 import 'package:warrior_path/screens/student/school_search_screen.dart';
@@ -76,6 +77,11 @@ class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
       ),
     );
     if (confirmed == true && mounted) {
+      // Guardamos la referencia ANTES de navegar: tras el signOut, este
+      // dashboard sigue montado y escucha SessionProvider, así que limpiar la
+      // sesión antes de reemplazar la pantalla dispara un rebuild con "no hay
+      // sesión activa" a mitad del logout.
+      final sessionProvider = Provider.of<SessionProvider>(context, listen: false);
       await FirebaseAuth.instance.signOut();
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
@@ -83,6 +89,9 @@ class _StudentProfileTabScreenState extends State<StudentProfileTabScreen> {
           (_) => false,
         );
       }
+      // Recién ahora, con el dashboard fuera del árbol: evita que quede
+      // persistida una sesión de un usuario que ya cerró sesión.
+      sessionProvider.clearSession();
     }
   }
 

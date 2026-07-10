@@ -85,8 +85,10 @@ class StudentApplicationService {
         .doc(schoolId)
         .collection('members')
         .doc(userId));
+    // Sólo la entrada de ESTA escuela: si el alumno tiene otra postulación
+    // pendiente en paralelo, no se debe perder (bug anterior borraba el mapa entero).
     batch.update(firestore.collection('users').doc(userId),
-        {'pendingApplications': FieldValue.delete()});
+        {'pendingApplications.$schoolId': FieldValue.delete()});
     await batch.commit();
     if (context.mounted) {
       ScaffoldMessenger.of(context)

@@ -19,7 +19,8 @@
       "Bash(curl -s -X POST -H 'Authorization: Bearer __CMDSUB_OUTPUT__' -H 'Content-Type: application/json' 'https://firestore.googleapis.com/v1/projects/warriorpath-89a85/databases/\\(default\\)/documents/schools/KEXHHIop4OhK0j4xap6c:runQuery' -d '{\"structuredQuery\":{\"from\":[{\"collectionId\":\"attendanceRecords\"}],\"orderBy\":[{\"field\":{\"fieldPath\":\"date\"},\"direction\":\"DESCENDING\"}],\"limit\":6}}')",
       "Bash(gcloud logging *)",
       "Bash(npm run *)",
-      "Bash(python3 \"/private/tmp/claude-502/-Users-sebastianperez-Documents-Personal-WarriorPath/5d972c64-4a46-429e-881d-fbe43ce17ba2/scratchpad/backfill_power.py\")"
+      "Bash(python3 \"/private/tmp/claude-502/-Users-sebastianperez-Documents-Personal-WarriorPath/5d972c64-4a46-429e-881d-fbe43ce17ba2/scratchpad/backfill_power.py\")",
+      "Bash(python3 \"/private/tmp/claude-502/-Users-sebastianperez-Documents-Personal-WarriorPath/5d972c64-4a46-429e-881d-fbe43ce17ba2/scratchpad/verify_email.py\" mati@mail.com)"
     ]
   }
 }

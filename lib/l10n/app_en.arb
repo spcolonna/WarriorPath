@@ -484,6 +484,21 @@
     "noNewSchoolsFound": "No new schools found.",
     "apply": "Apply",
     "noCity": "No City",
+    "applicationStatusPending": "Application pending",
+    "resendApplication": "Resend application",
+    "confirmResendTitle": "Resend Application",
+    "confirmResendMessage": "Do you want to resend your application to \"{schoolName}\"?",
+    "@confirmResendMessage": {
+        "placeholders": {
+            "schoolName": { "type": "String" }
+        }
+    },
+    "applicationResentSuccess": "Application to \"{schoolName}\" resent!",
+    "@applicationResentSuccess": {
+        "placeholders": {
+            "schoolName": { "type": "String" }
+        }
+    },
     "manageProfiles": "Manage Profiles",
     "myUser": "My User",
     "associatedWith": "Associated with: {schoolName}",

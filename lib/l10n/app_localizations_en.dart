@@ -903,6 +903,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noCity => 'No City';
 
   @override
+  String get applicationStatusPending => 'Application pending';
+
+  @override
+  String get resendApplication => 'Resend application';
+
+  @override
+  String get confirmResendTitle => 'Resend Application';
+
+  @override
+  String confirmResendMessage(String schoolName) {
+    return 'Do you want to resend your application to \"$schoolName\"?';
+  }
+
+  @override
+  String applicationResentSuccess(String schoolName) {
+    return 'Application to \"$schoolName\" resent!';
+  }
+
+  @override
   String get manageProfiles => 'Manage Profiles';
 
   @override
