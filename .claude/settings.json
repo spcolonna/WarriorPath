@@ -36,7 +36,8 @@
       "Bash(python3 -c \"import jwt; print\\('PyJWT OK'\\)\")",
       "Bash(awk '/^  firebase_auth:/{f=1} f&&/version:/{print \"firebase_auth\", $2; f=0}' pubspec.lock)",
       "Bash(awk '/^  sign_in_with_apple:/{f=1} f&&/version:/{print \"sign_in_with_apple\", $2; f=0}' pubspec.lock)",
-      "Bash(awk '/^  firebase_core:/{f=1} f&&/version:/{print \"firebase_core\", $2; f=0}' pubspec.lock)"
+      "Bash(awk '/^  firebase_core:/{f=1} f&&/version:/{print \"firebase_core\", $2; f=0}' pubspec.lock)",
+      "Bash(grep -v \"Python\\\\|reinstall\\\\|CLOUDSDK\\\\|^$\")"
     ]
   }
 }

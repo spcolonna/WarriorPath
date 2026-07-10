@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
@@ -28,26 +27,17 @@ class AuthService {
   ///
   /// Se usa `signInWithProvider(AppleAuthProvider)` en vez de construir la
   /// credencial a mano con `OAuthProvider('apple.com').credential(...)`:
-  /// diagnosticamos que el token de Apple era válido y el backend lo aceptaba
-  /// vía REST, pero el camino manual fallaba con "Invalid OAuth response from
-  /// apple.com". Este método deja que Firebase maneje token/nonce internamente.
+  /// el camino manual fallaba con "Invalid OAuth response from apple.com"
+  /// aunque el token de Apple era válido. Este método deja que Firebase
+  /// maneje token/nonce internamente.
   Future<User?> signInWithApple() async {
     final appleProvider = AppleAuthProvider()
       ..addScope('email')
       ..addScope('name');
 
-    try {
-      final userCredential = await _auth.signInWithProvider(appleProvider);
-      _debugApple('signInWithProvider OK, uid=${userCredential.user?.uid}');
-      return userCredential.user;
-    } on FirebaseAuthException catch (e) {
-      _debugApple('FirebaseAuthException code=${e.code} message=${e.message}');
-      rethrow;
-    }
+    final userCredential = await _auth.signInWithProvider(appleProvider);
+    return userCredential.user;
   }
-
-  // Helper de diagnóstico (temporal, quitar antes del release).
-  void _debugApple(String msg) => debugPrint('APPLE_SIGNIN: $msg');
 
   /// Elimina por completo la cuenta del usuario actual: sus datos en Firestore
   /// (membresías, hijos, guardianías, documento de usuario) y la cuenta de
