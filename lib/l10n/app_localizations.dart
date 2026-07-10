@@ -1390,6 +1390,42 @@ abstract class AppLocalizations {
   /// **'Paid on {date}'**
   String paidOn(String date);
 
+  /// No description provided for @templateLoadedBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'We loaded the {art} template ({levels} levels · {techniques} techniques). Edit or remove anything you like.'**
+  String templateLoadedBanner(String art, int levels, int techniques);
+
+  /// No description provided for @startFromBlank.
+  ///
+  /// In en, this message translates to:
+  /// **'Start from scratch'**
+  String get startFromBlank;
+
+  /// No description provided for @applyTemplate.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply template'**
+  String get applyTemplate;
+
+  /// No description provided for @applyTemplateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply {art} template'**
+  String applyTemplateTitle(String art);
+
+  /// No description provided for @applyTemplateBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This will add the levels, categories and techniques from the {art} template that you don\'t have yet. Nothing you\'ve already added is removed or reordered, so students with an assigned level aren\'t affected. Review the changes and tap \"Save all changes\" to keep them.'**
+  String applyTemplateBody(String art);
+
+  /// No description provided for @templateApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'Template added. Review and save your changes.'**
+  String get templateApplied;
+
   /// No description provided for @paymentDetails.
   ///
   /// In en, this message translates to:

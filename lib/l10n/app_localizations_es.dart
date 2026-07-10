@@ -723,6 +723,31 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String templateLoadedBanner(String art, int levels, int techniques) {
+    return 'Cargamos la plantilla de $art ($levels niveles · $techniques técnicas). Editá o borrá lo que quieras.';
+  }
+
+  @override
+  String get startFromBlank => 'Empezar en blanco';
+
+  @override
+  String get applyTemplate => 'Aplicar plantilla';
+
+  @override
+  String applyTemplateTitle(String art) {
+    return 'Aplicar plantilla de $art';
+  }
+
+  @override
+  String applyTemplateBody(String art) {
+    return 'Se agregarán los niveles, categorías y técnicas de la plantilla de $art que todavía no tengas. No se borra ni reordena nada de lo que ya cargaste, así que los alumnos con nivel asignado no se ven afectados. Revisá los cambios y tocá \"Guardar todos los cambios\" para conservarlos.';
+  }
+
+  @override
+  String get templateApplied =>
+      'Plantilla agregada. Revisá y guardá tus cambios.';
+
+  @override
   String paymentDetails(String concept, String date) {
     return '$concept\nPagado el $date';
   }

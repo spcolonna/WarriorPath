@@ -27,6 +27,21 @@ class MartialArtDefaults {
     this.techniques = const [],
   });
 
+  /// Cantidad de niveles/cinturones de la plantilla (para mostrar en la UI).
+  int get levelCount => belts.length;
+
+  /// Cantidad de técnicas de ejemplo de la plantilla (para mostrar en la UI).
+  int get techniqueCount => techniques.length;
+
+  /// ¿Existe una plantilla para este arte marcial? La clave es el `name`
+  /// exacto del [MartialArtTheme] (ver lib/theme/martial_art_themes.dart).
+  static bool hasTemplate(String artName) =>
+      martialArtDefaults.containsKey(artName);
+
+  /// Plantilla para un arte marcial, o null si no hay.
+  static MartialArtDefaults? templateFor(String artName) =>
+      martialArtDefaults[artName];
+
   List<LevelModel> toLevels() {
     return [
       for (int i = 0; i < belts.length; i++)

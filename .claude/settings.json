@@ -20,7 +20,23 @@
       "Bash(gcloud logging *)",
       "Bash(npm run *)",
       "Bash(python3 \"/private/tmp/claude-502/-Users-sebastianperez-Documents-Personal-WarriorPath/5d972c64-4a46-429e-881d-fbe43ce17ba2/scratchpad/backfill_power.py\")",
-      "Bash(python3 \"/private/tmp/claude-502/-Users-sebastianperez-Documents-Personal-WarriorPath/5d972c64-4a46-429e-881d-fbe43ce17ba2/scratchpad/verify_email.py\" mati@mail.com)"
+      "Bash(python3 \"/private/tmp/claude-502/-Users-sebastianperez-Documents-Personal-WarriorPath/5d972c64-4a46-429e-881d-fbe43ce17ba2/scratchpad/verify_email.py\" mati@mail.com)",
+      "Bash(flutter doctor *)",
+      "Bash(/usr/bin/pgrep oahd *)",
+      "Bash(\"/Users/sebastianperez/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/llvm-strip\" --version)",
+      "Bash(env)",
+      "Bash(brew --version)",
+      "Bash(brew info *)",
+      "Bash(brew install *)",
+      "Bash(brew list *)",
+      "Read(//opt/homebrew/share/android-commandlinetools/cmdline-tools/latest/bin/**)",
+      "Bash(yes)",
+      "Bash(python3 \"/private/tmp/claude-502/-Users-sebastianperez-Documents-Personal-WarriorPath/5d972c64-4a46-429e-881d-fbe43ce17ba2/scratchpad/verify_email.py\" seba@mail.com)",
+      "Bash(python3 -c \"import cryptography; print\\('cryptography OK', cryptography.__version__\\)\")",
+      "Bash(python3 -c \"import jwt; print\\('PyJWT OK'\\)\")",
+      "Bash(awk '/^  firebase_auth:/{f=1} f&&/version:/{print \"firebase_auth\", $2; f=0}' pubspec.lock)",
+      "Bash(awk '/^  sign_in_with_apple:/{f=1} f&&/version:/{print \"sign_in_with_apple\", $2; f=0}' pubspec.lock)",
+      "Bash(awk '/^  firebase_core:/{f=1} f&&/version:/{print \"firebase_core\", $2; f=0}' pubspec.lock)"
     ]
   }
 }

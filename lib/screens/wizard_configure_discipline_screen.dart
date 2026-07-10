@@ -46,6 +46,11 @@ class _WizardConfigureDisciplineScreenState extends State<WizardConfigureDiscipl
   Color _primaryColor = Colors.blue;
   String _disciplineName = '';
 
+  // Estado de la plantilla precargada (para el banner + "empezar en blanco").
+  bool _templateApplied = false;
+  int _templateLevelCount = 0;
+  int _templateTechniqueCount = 0;
+
   @override
   void initState() {
     super.initState();
@@ -102,6 +107,19 @@ class _WizardConfigureDisciplineScreenState extends State<WizardConfigureDiscipl
       _nextTechniqueId += techs.length;
       _techniques.addAll(techs);
     }
+    _templateApplied = true;
+    _templateLevelCount = defaults.levelCount;
+    _templateTechniqueCount = defaults.techniqueCount;
+  }
+
+  void _startFromBlank() {
+    setState(() {
+      _levels.clear();
+      _categories.clear();
+      _techniques.clear();
+      _addLevel();
+      _templateApplied = false;
+    });
   }
 
   @override
@@ -226,7 +244,11 @@ class _WizardConfigureDisciplineScreenState extends State<WizardConfigureDiscipl
       },
       child: Scaffold(
         appBar: AppBar(title: Text('${l10n.configureDiscipline}: $_disciplineName'), backgroundColor: _primaryColor),
-        body: Stepper(
+        body: Column(
+          children: [
+            if (_templateApplied) _buildTemplateBanner(),
+            Expanded(
+              child: Stepper(
           currentStep: _currentStep,
           onStepContinue: _onStepContinue,
           onStepCancel: _onStepCancel,
@@ -275,6 +297,39 @@ class _WizardConfigureDisciplineScreenState extends State<WizardConfigureDiscipl
               title: Text(l10n.step2Techniques),
               isActive: _currentStep >= 1,
               content: _buildTechniquesStep(),
+            ),
+          ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTemplateBanner() {
+    return Material(
+      color: _primaryColor.withValues(alpha: 0.08),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
+        child: Row(
+          children: [
+            Icon(Icons.auto_awesome, color: _primaryColor, size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                l10n.templateLoadedBanner(
+                  _disciplineName,
+                  _templateLevelCount,
+                  _templateTechniqueCount,
+                ),
+                style: const TextStyle(fontSize: 12.5, height: 1.3),
+              ),
+            ),
+            const SizedBox(width: 8),
+            TextButton(
+              onPressed: _startFromBlank,
+              child: Text(l10n.startFromBlank),
             ),
           ],
         ),

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:warrior_path/data/martial_art_defaults.dart';
 import 'package:warrior_path/models/level_model.dart';
 import 'package:warrior_path/models/technique_model.dart';
 
@@ -83,6 +84,73 @@ class _DisciplineDetailScreenState extends State<DisciplineDetailScreen> with Si
     _systemNameController.dispose();
     _categoryController.dispose();
     super.dispose();
+  }
+
+  /// Agrega (sin borrar ni reordenar) los niveles, categorías y técnicas de la
+  /// plantilla del arte que todavía no estén presentes. Es aditivo a propósito:
+  /// los niveles existentes conservan su `id`, así que ningún alumno con
+  /// `currentLevelId` asignado queda colgado. El profe revisa y confirma con
+  /// "Guardar todos los cambios" (que ya es diff-based por id).
+  Future<void> _applyTemplate() async {
+    final template = MartialArtDefaults.templateFor(_disciplineName);
+    if (template == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.applyTemplateTitle(_disciplineName)),
+        content: Text(l10n.applyTemplateBody(_disciplineName)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(l10n.applyTemplate),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    final existingLevelNames =
+        _levels.map((l) => l.name.trim().toLowerCase()).toSet();
+    final existingTechNames =
+        _techniques.map((t) => t.name.trim().toLowerCase()).toSet();
+
+    setState(() {
+      // Niveles nuevos (id == null → se crearán al guardar, sin tocar los que ya hay).
+      for (final level in template.toLevels()) {
+        if (!existingLevelNames.contains(level.name.trim().toLowerCase())) {
+          _levels.add(level);
+        }
+      }
+      // Categorías: unión sin duplicar.
+      for (final cat in template.categories) {
+        if (!_categories.contains(cat)) _categories.add(cat);
+      }
+      // Técnicas nuevas.
+      for (final tech in template.toTechniques(0)) {
+        if (!existingTechNames.contains(tech.name.trim().toLowerCase())) {
+          _techniques.add(TechniqueModel(
+            name: tech.name,
+            category: tech.category,
+            complexity: tech.complexity,
+          ));
+        }
+      }
+      // Si el sistema de progresión estaba vacío, tomamos el de la plantilla.
+      if (_systemNameController.text.trim().isEmpty) {
+        _systemNameController.text = template.progressionSystemName;
+      }
+    });
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.templateApplied)),
+      );
+    }
   }
 
   Future<void> _saveAllChanges() async {
@@ -280,6 +348,14 @@ class _DisciplineDetailScreenState extends State<DisciplineDetailScreen> with Si
       appBar: AppBar(
         title: Text(l10n.curriculumFor(_disciplineName)),
         backgroundColor: _primaryColor,
+        actions: [
+          if (MartialArtDefaults.hasTemplate(_disciplineName))
+            IconButton(
+              icon: const Icon(Icons.auto_awesome),
+              tooltip: l10n.applyTemplate,
+              onPressed: _isSaving ? null : _applyTemplate,
+            ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: Colors.white,

@@ -217,6 +217,29 @@
             "date": { "type": "String" }
         }
     },
+    "templateLoadedBanner": "Carregamos o modelo de {art} ({levels} níveis · {techniques} técnicas). Edite ou remova o que quiser.",
+    "@templateLoadedBanner": {
+        "placeholders": {
+            "art": { "type": "String" },
+            "levels": { "type": "int" },
+            "techniques": { "type": "int" }
+        }
+    },
+    "startFromBlank": "Começar do zero",
+    "applyTemplate": "Aplicar modelo",
+    "applyTemplateTitle": "Aplicar modelo de {art}",
+    "@applyTemplateTitle": {
+        "placeholders": {
+            "art": { "type": "String" }
+        }
+    },
+    "applyTemplateBody": "Serão adicionados os níveis, categorias e técnicas do modelo de {art} que você ainda não tem. Nada do que você já adicionou é removido ou reordenado, então os alunos com nível atribuído não são afetados. Revise as mudanças e toque em \"Salvar todas as alterações\" para mantê-las.",
+    "@applyTemplateBody": {
+        "placeholders": {
+            "art": { "type": "String" }
+        }
+    },
+    "templateApplied": "Modelo adicionado. Revise e salve suas alterações.",
     "paymentDetails": "{concept}\nPago em {date}",
     "myProgress": "Meu Progresso",
     "yourPath": "Seu Caminho",

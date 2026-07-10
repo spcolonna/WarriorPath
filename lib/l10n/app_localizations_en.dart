@@ -722,6 +722,30 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String templateLoadedBanner(String art, int levels, int techniques) {
+    return 'We loaded the $art template ($levels levels · $techniques techniques). Edit or remove anything you like.';
+  }
+
+  @override
+  String get startFromBlank => 'Start from scratch';
+
+  @override
+  String get applyTemplate => 'Apply template';
+
+  @override
+  String applyTemplateTitle(String art) {
+    return 'Apply $art template';
+  }
+
+  @override
+  String applyTemplateBody(String art) {
+    return 'This will add the levels, categories and techniques from the $art template that you don\'t have yet. Nothing you\'ve already added is removed or reordered, so students with an assigned level aren\'t affected. Review the changes and tap \"Save all changes\" to keep them.';
+  }
+
+  @override
+  String get templateApplied => 'Template added. Review and save your changes.';
+
+  @override
   String paymentDetails(String concept, String date) {
     return '$concept\nPaid on $date';
   }

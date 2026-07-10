@@ -725,6 +725,31 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String templateLoadedBanner(String art, int levels, int techniques) {
+    return 'Carregamos o modelo de $art ($levels níveis · $techniques técnicas). Edite ou remova o que quiser.';
+  }
+
+  @override
+  String get startFromBlank => 'Começar do zero';
+
+  @override
+  String get applyTemplate => 'Aplicar modelo';
+
+  @override
+  String applyTemplateTitle(String art) {
+    return 'Aplicar modelo de $art';
+  }
+
+  @override
+  String applyTemplateBody(String art) {
+    return 'Serão adicionados os níveis, categorias e técnicas do modelo de $art que você ainda não tem. Nada do que você já adicionou é removido ou reordenado, então os alunos com nível atribuído não são afetados. Revise as mudanças e toque em \"Salvar todas as alterações\" para mantê-las.';
+  }
+
+  @override
+  String get templateApplied =>
+      'Modelo adicionado. Revise e salve suas alterações.';
+
+  @override
   String paymentDetails(String concept, String date) {
     return '$concept\nPago em $date';
   }

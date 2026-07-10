@@ -1,11 +1,8 @@
-import 'dart:convert';
-import 'dart:math';
-import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../models/user_model.dart';
 
 class AuthService {
@@ -27,49 +24,30 @@ class AuthService {
     return userCredential.user;
   }
 
-  /// Inicia sesión con Apple (Sign in with Apple). Devuelve el [User].
+  /// Inicia sesión con Apple usando el flujo nativo gestionado por Firebase.
+  ///
+  /// Se usa `signInWithProvider(AppleAuthProvider)` en vez de construir la
+  /// credencial a mano con `OAuthProvider('apple.com').credential(...)`:
+  /// diagnosticamos que el token de Apple era válido y el backend lo aceptaba
+  /// vía REST, pero el camino manual fallaba con "Invalid OAuth response from
+  /// apple.com". Este método deja que Firebase maneje token/nonce internamente.
   Future<User?> signInWithApple() async {
-    final rawNonce = _generateNonce();
-    final nonce = sha256.convert(utf8.encode(rawNonce)).toString();
+    final appleProvider = AppleAuthProvider()
+      ..addScope('email')
+      ..addScope('name');
 
-    final appleCredential = await SignInWithApple.getAppleIDCredential(
-      scopes: [
-        AppleIDAuthorizationScopes.email,
-        AppleIDAuthorizationScopes.fullName,
-      ],
-      nonce: nonce,
-    );
-
-    final oauthCredential = OAuthProvider('apple.com').credential(
-      idToken: appleCredential.identityToken,
-      rawNonce: rawNonce,
-    );
-
-    final userCredential = await _auth.signInWithCredential(oauthCredential);
-
-    // Apple solo entrega el nombre en el primer login; lo guardamos en Auth.
-    final user = userCredential.user;
-    if (user != null &&
-        (user.displayName == null || user.displayName!.isEmpty)) {
-      final given = appleCredential.givenName ?? '';
-      final family = appleCredential.familyName ?? '';
-      final fullName = '$given $family'.trim();
-      if (fullName.isNotEmpty) {
-        await user.updateDisplayName(fullName);
-      }
+    try {
+      final userCredential = await _auth.signInWithProvider(appleProvider);
+      _debugApple('signInWithProvider OK, uid=${userCredential.user?.uid}');
+      return userCredential.user;
+    } on FirebaseAuthException catch (e) {
+      _debugApple('FirebaseAuthException code=${e.code} message=${e.message}');
+      rethrow;
     }
-    return user;
   }
 
-  String _generateNonce([int length = 32]) {
-    const charset =
-        '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-._';
-    final random = Random.secure();
-    return List.generate(
-      length,
-      (_) => charset[random.nextInt(charset.length)],
-    ).join();
-  }
+  // Helper de diagnóstico (temporal, quitar antes del release).
+  void _debugApple(String msg) => debugPrint('APPLE_SIGNIN: $msg');
 
   /// Elimina por completo la cuenta del usuario actual: sus datos en Firestore
   /// (membresías, hijos, guardianías, documento de usuario) y la cuenta de
