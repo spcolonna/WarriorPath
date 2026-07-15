@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:warrior_path/models/school_model.dart';
 import 'package:warrior_path/screens/wizard_discipline_hub_screen.dart';
+import 'package:warrior_path/services/school_setup_service.dart';
 import 'package:warrior_path/theme/martial_art_themes.dart';
 import 'package:warrior_path/widgets/location_picker_map.dart';
 import '../l10n/app_localizations.dart';
@@ -257,6 +258,14 @@ class _WizardCreateSchoolScreenState extends State<WizardCreateSchoolScreen> {
       appBar: AppBar(
         title: Text(l10n.crateSchoolStep2),
         backgroundColor: primaryColor,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.close),
+            tooltip: l10n.exitAndDiscard,
+            // Todavía no se creó la escuela: sólo resetea el estado del wizard.
+            onPressed: () => SchoolSetupService.exitAndDiscard(context),
+          ),
+        ],
       ),
       body: AbsorbPointer(
         absorbing: _isLoading,

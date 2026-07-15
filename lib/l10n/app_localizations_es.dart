@@ -1546,6 +1546,16 @@ class AppLocalizationsEs extends AppLocalizations {
   String get continueWithApple => 'Continuar con Apple';
 
   @override
+  String get exitAndDiscard => 'Salir y descartar';
+
+  @override
+  String get exitAndDiscardConfirmTitle => '¿Salir de la creación de escuela?';
+
+  @override
+  String get exitAndDiscardConfirmBody =>
+      'Vas a perder todo lo que cargaste para esta escuela. Esta acción no se puede deshacer.';
+
+  @override
   String get powerLevel => 'Nivel de Poder';
 
   @override

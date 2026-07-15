@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:warrior_path/providers/session_provider.dart';
 import 'package:warrior_path/screens/teacher_dashboard_screen.dart';
+import 'package:warrior_path/services/school_setup_service.dart';
 
 import '../l10n/app_localizations.dart';
 
@@ -131,6 +132,16 @@ class _WizardReviewScreenState extends State<WizardReviewScreen> {
       appBar: AppBar(
         title: Text(l10n.reviewAndFinalizeStep6),
         backgroundColor: _primaryColor,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.close),
+            tooltip: l10n.exitAndDiscard,
+            onPressed: () => SchoolSetupService.exitAndDiscard(
+              context,
+              schoolId: widget.schoolId,
+            ),
+          ),
+        ],
       ),
       body: FutureBuilder<Map<String, dynamic>>(
         future: _schoolDataFuture,

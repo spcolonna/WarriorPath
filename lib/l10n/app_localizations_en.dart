@@ -1541,6 +1541,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get continueWithApple => 'Continue with Apple';
 
   @override
+  String get exitAndDiscard => 'Exit and discard';
+
+  @override
+  String get exitAndDiscardConfirmTitle => 'Exit school setup?';
+
+  @override
+  String get exitAndDiscardConfirmBody =>
+      'You\'ll lose everything you set up for this school. This can\'t be undone.';
+
+  @override
   String get powerLevel => 'Power Level';
 
   @override

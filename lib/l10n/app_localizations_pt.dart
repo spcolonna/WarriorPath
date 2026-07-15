@@ -1548,6 +1548,16 @@ class AppLocalizationsPt extends AppLocalizations {
   String get continueWithApple => 'Continuar com Apple';
 
   @override
+  String get exitAndDiscard => 'Sair e descartar';
+
+  @override
+  String get exitAndDiscardConfirmTitle => 'Sair da criação de escola?';
+
+  @override
+  String get exitAndDiscardConfirmBody =>
+      'Você vai perder tudo o que configurou para esta escola. Esta ação não pode ser desfeita.';
+
+  @override
   String get powerLevel => 'Nível de Poder';
 
   @override

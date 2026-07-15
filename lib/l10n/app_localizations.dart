@@ -2830,6 +2830,24 @@ abstract class AppLocalizations {
   /// **'Continue with Apple'**
   String get continueWithApple;
 
+  /// No description provided for @exitAndDiscard.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit and discard'**
+  String get exitAndDiscard;
+
+  /// No description provided for @exitAndDiscardConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit school setup?'**
+  String get exitAndDiscardConfirmTitle;
+
+  /// No description provided for @exitAndDiscardConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ll lose everything you set up for this school. This can\'t be undone.'**
+  String get exitAndDiscardConfirmBody;
+
   /// No description provided for @powerLevel.
   ///
   /// In en, this message translates to:

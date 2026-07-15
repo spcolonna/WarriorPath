@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:warrior_path/models/payment_plan_model.dart';
 import 'package:warrior_path/screens/wizard_review_screen.dart';
+import 'package:warrior_path/services/school_setup_service.dart';
 
 import '../l10n/app_localizations.dart';
 
@@ -136,6 +137,16 @@ class _WizardConfigurePricingScreenState extends State<WizardConfigurePricingScr
       appBar: AppBar(
         title: Text(l10n.configurePricingStep5),
         backgroundColor: _primaryColor,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.close),
+            tooltip: l10n.exitAndDiscard,
+            onPressed: () => SchoolSetupService.exitAndDiscard(
+              context,
+              schoolId: widget.schoolId,
+            ),
+          ),
+        ],
       ),
       body: AbsorbPointer(
         absorbing: _isLoading,

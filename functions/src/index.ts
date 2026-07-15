@@ -42,71 +42,89 @@ function awardPower(
 // ===============================================================================================
 // FUNCIÓN 1: GENERAR RECORDATORIOS DE PAGO MENSUALES
 // ===============================================================================================
+// Corre TODOS los días 09:00 (Montevideo). Para cada escuela genera el
+// recordatorio de pago sólo el día que coincide con su `financials.paymentDueDay`
+// (ej. el 10). Antes corría el 1 e ignoraba el día configurado; además la query
+// collectionGroup con `!=` moría por falta de índice compuesto (nunca generaba
+// nada). Este rediseño usa queries de un solo campo (sin índice compuesto).
 exports.generateMonthlyPaymentReminders = onSchedule(
   {
-    schedule: "0 9 1 * *",
+    schedule: "0 9 * * *",
     timeZone: "America/Montevideo",
   },
-  async (_event) => { // Corregido: 'event' a '_event' para 'unused-vars'
-    logger.info("Iniciando la generación de recordatorios de pago mensuales...");
+  async (_event) => {
+    // Día del mes y período (YYYY-MM) en Montevideo — dentro de la función
+    // `new Date()` es UTC, así que lo derivamos con Intl en la zona correcta.
+    const tz = "America/Montevideo";
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit",
+    }).formatToParts(new Date());
+    const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+    const todayDay = parseInt(get("day"), 10);
+    const periodKey = `${get("year")}-${get("month")}`; // ej. "2026-07"
 
-    const membersQuery = db.collectionGroup("members")
-      .where("status", "==", "active")
-      .where("assignedPaymentPlanId", "!=", null);
+    logger.info(
+      `Recordatorios de pago: día ${todayDay}, período ${periodKey}.`);
 
-    const activeMembersSnap = await membersQuery.get();
-    if (activeMembersSnap.empty) {
-      logger.info("No se encontraron miembros con planes asignados.");
-      return;
-    }
+    const schoolsSnap = await db.collection("schools").get();
 
-    const promises: Promise<void>[] = [];
-    activeMembersSnap.docs.forEach((memberDoc) => {
-      const memberData = memberDoc.data();
-      const memberId = memberDoc.id;
-      const schoolId = memberDoc.ref.parent.parent?.id;
-      if (!schoolId) return;
+    const perSchool = schoolsSnap.docs.map(async (schoolDoc) => {
+      const schoolId = schoolDoc.id;
+      const financials =
+        (schoolDoc.data()?.financials ?? {}) as Record<string, unknown>;
+      const dueDay = (financials.paymentDueDay as number | undefined) ?? 5;
+      if (dueDay !== todayDay) return; // hoy no vence en esta escuela
 
-      const planId = memberData.assignedPaymentPlanId;
-      const processingPromise = async () => {
-        const pendingRemindersSnap = await db.collection("schools").doc(schoolId)
+      // Query de un solo campo → auto-indexada, sin índice compuesto.
+      const membersSnap = await schoolDoc.ref.collection("members")
+        .where("status", "==", "active").get();
+
+      const perMember = membersSnap.docs.map(async (memberDoc) => {
+        const memberData = memberDoc.data();
+        const memberId = memberDoc.id;
+        const planId = memberData.assignedPaymentPlanId as string | undefined;
+        if (!planId) return;
+
+        const remindersRef = schoolDoc.ref
           .collection("members").doc(memberId)
-          .collection("paymentReminders")
-          .where("status", "==", "pending")
-          .limit(1).get();
+          .collection("paymentReminders");
 
-        if (pendingRemindersSnap.empty) {
-          const planDoc = await db.collection("schools").doc(schoolId)
-            .collection("paymentPlans").doc(planId).get();
-          const planData = planDoc.data();
-          if (!planDoc.exists || !planData) return;
+        // Idempotencia por período: un recordatorio por mes por alumno.
+        // (Antes se saltaba si había CUALQUIER pendiente, así que un impago
+        //  viejo suprimía todos los meses siguientes.)
+        const existing = await remindersRef
+          .where("periodKey", "==", periodKey).limit(1).get();
+        if (!existing.empty) return;
 
-          const reminderData = {
-            concept: planData.title,
-            amount: planData.amount,
-            currency: planData.currency,
-            status: "pending",
-            planId: planId,
-            studentId: memberId,
-            schoolId: schoolId,
-            createdOn: admin.firestore.FieldValue.serverTimestamp(),
-          };
-          await db.collection("schools").doc(schoolId)
-            .collection("members").doc(memberId)
-            .collection("paymentReminders").add(reminderData);
+        const planDoc = await schoolDoc.ref
+          .collection("paymentPlans").doc(planId).get();
+        const planData = planDoc.data();
+        if (!planDoc.exists || !planData) return;
 
-          const payload = {
-            notification: {
-              title: "Recordatorio de Pago",
-              body: `Tu pago de ${planData.title} está listo.`,
-            },
-          };
-          await sendNotificationsToUser(memberId, payload);
-        }
-      };
-      promises.push(processingPromise());
+        await remindersRef.add({
+          concept: planData.title,
+          amount: planData.amount,
+          currency: planData.currency,
+          status: "pending",
+          planId: planId,
+          studentId: memberId,
+          schoolId: schoolId,
+          periodKey: periodKey,
+          createdOn: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        await sendNotificationsToUser(memberId, {
+          notification: {
+            title: "Recordatorio de Pago",
+            body: `Tu cuota de ${planData.title} vence hoy.`,
+          },
+        });
+      });
+
+      await Promise.all(perMember);
     });
-    await Promise.all(promises);
+
+    await Promise.all(perSchool);
     logger.info("Proceso de recordatorios completado.");
   });
 
@@ -590,6 +608,59 @@ exports.deleteMyAccount = onCall(async (request) => {
 
   logger.info(`Cuenta eliminada: ${uid}`);
   return {success: true};
+});
+
+// ===============================================================================================
+// FUNCIÓN 8: ABANDONAR LA CREACIÓN DE ESCUELA (descartar wizard a medio hacer)
+// ===============================================================================================
+// Borra recursivamente la escuela a medio crear y sus subcolecciones, quita la
+// membresía del usuario y recalcula su `wizardStep` para que no quede atrapado
+// en el wizard (post_auth_navigator fuerza el wizard mientras wizardStep < 99).
+// Devuelve el wizardStep resultante para que el cliente rutee.
+exports.abandonSchoolSetup = onCall(async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) {
+    throw new HttpsError("unauthenticated", "Debés iniciar sesión.");
+  }
+
+  const {schoolId} = request.data ?? {};
+  const userRef = db.collection("users").doc(uid);
+
+  if (schoolId) {
+    const schoolRef = db.collection("schools").doc(schoolId);
+    const schoolSnap = await schoolRef.get();
+    // Sólo el dueño puede descartar su escuela a medio crear.
+    if (schoolSnap.exists && schoolSnap.data()?.ownerId !== uid) {
+      throw new HttpsError(
+        "permission-denied", "Sólo el dueño puede descartar esta escuela.");
+    }
+    if (schoolSnap.exists) {
+      // Borrado recursivo: la escuela + todas sus subcolecciones
+      // (disciplines/levels/techniques, members, paymentPlans, etc.).
+      await db.recursiveDelete(schoolRef);
+    }
+  }
+
+  // Quitar la membresía de esta escuela y recalcular wizardStep.
+  const userSnap = await userRef.get();
+  const memberships =
+    {...((userSnap.data()?.activeMemberships ?? {}) as Record<string, unknown>)};
+  if (schoolId) delete memberships[schoolId];
+
+  // Si quedan otras membresías, el usuario ya está onboardeado (99). Si no,
+  // vuelve al inicio del wizard para re-elegir rol (0).
+  const wizardStep = Object.keys(memberships).length > 0 ? 99 : 0;
+
+  const update: Record<string, unknown> = {wizardStep};
+  if (schoolId) {
+    update[`activeMemberships.${schoolId}`] =
+      admin.firestore.FieldValue.delete();
+  }
+  await userRef.set(update, {merge: true});
+
+  logger.info(`Escuela abandonada por ${uid}: ${schoolId ?? "(sin schoolId)"}` +
+    ` → wizardStep=${wizardStep}`);
+  return {wizardStep};
 });
 
 // ===============================================================================================

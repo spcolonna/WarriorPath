@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:warrior_path/screens/wizard_configure_discipline_screen.dart';
 import 'package:warrior_path/screens/wizard_configure_pricing_screen.dart';
+import 'package:warrior_path/services/school_setup_service.dart';
 
 import '../l10n/app_localizations.dart';
 
@@ -57,6 +58,16 @@ class _WizardDisciplineHubScreenState extends State<WizardDisciplineHubScreen> {
       appBar: AppBar(
         title: Text(l10n.disciplineConfigPanel),
         automaticallyImplyLeading: false, // El usuario no debe volver atrás
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.close),
+            tooltip: l10n.exitAndDiscard,
+            onPressed: () => SchoolSetupService.exitAndDiscard(
+              context,
+              schoolId: widget.schoolId,
+            ),
+          ),
+        ],
       ),
       body: FutureBuilder<List<DocumentSnapshot>>(
         future: _disciplinesFuture,

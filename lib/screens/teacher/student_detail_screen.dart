@@ -1123,7 +1123,8 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
     final allPlans = plansSnapshot.docs
         .map((doc) => PaymentPlanModel.fromFirestore(doc))
         .toList();
-    final assignedPlanId = memberDoc.data()?['paymentPlanId'] as String?;
+    final assignedPlanId =
+        memberDoc.data()?['assignedPaymentPlanId'] as String?;
     final currency =
         (schoolDoc.data()?['financials']
             as Map<String, dynamic>?)?['currency'] ??

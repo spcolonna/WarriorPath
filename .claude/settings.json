@@ -37,7 +37,11 @@
       "Bash(awk '/^  firebase_auth:/{f=1} f&&/version:/{print \"firebase_auth\", $2; f=0}' pubspec.lock)",
       "Bash(awk '/^  sign_in_with_apple:/{f=1} f&&/version:/{print \"sign_in_with_apple\", $2; f=0}' pubspec.lock)",
       "Bash(awk '/^  firebase_core:/{f=1} f&&/version:/{print \"firebase_core\", $2; f=0}' pubspec.lock)",
-      "Bash(grep -v \"Python\\\\|reinstall\\\\|CLOUDSDK\\\\|^$\")"
+      "Bash(grep -v \"Python\\\\|reinstall\\\\|CLOUDSDK\\\\|^$\")",
+      "Bash(grep -vE \"Python|reinstall|CLOUDSDK|^$|WARNING|If you\")",
+      "Bash(gcloud scheduler *)",
+      "Bash(grep -vE \"Python|reinstall|CLOUDSDK|WARNING|If you|^$\")",
+      "Bash(curl -s -o /dev/null -w 'HTTP %{http_code}\\\\n' -X POST https://generatemonthlypaymentreminders-6wf4o6fqsq-uc.a.run.app -H 'Authorization: Bearer __CMDSUB_OUTPUT__' -H 'Content-Type: application/json' -d '{\"data\":{}}')"
     ]
   }
 }
