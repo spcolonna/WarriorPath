@@ -26,6 +26,12 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
 
   late TabController _tabController;
 
+  // Panel de cobros (pestaña Activos): filtro y memo de planes.
+  // 0 = todos · 1 = al día · 2 = vence hoy · 3 = atrasado
+  int _payFilter = 0;
+  Future<Map<String, String>>? _plansFuture;
+  String? _plansForSchool;
+
   @override
   void initState() {
     super.initState();
@@ -64,7 +70,7 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
       body: TabBarView(
         controller: _tabController,
         children: [
-          _buildStudentsList('active', schoolId),
+          _buildActivosCobros(schoolId),
           _buildStudentsList('pending', schoolId),
           _buildStudentsList('inactive', schoolId),
         ],
@@ -83,6 +89,220 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
       ),
     );
   }
+
+  // ── Panel de cobros (pestaña Activos) ──────────────────────────────────────
+  // Convierte la lista de activos en un panel útil: cada alumno con su plan y
+  // estado de pago (al día / vence hoy / atrasado). Resumen + filtros arriba.
+  Widget _buildActivosCobros(String schoolId) {
+    if (_plansForSchool != schoolId) {
+      _plansForSchool = schoolId;
+      _plansFuture = FirebaseFirestore.instance
+          .collection('schools')
+          .doc(schoolId)
+          .collection('paymentPlans')
+          .get()
+          .then((s) => {
+                for (final d in s.docs)
+                  d.id: (d.data()['title'] as String? ?? '')
+              });
+    }
+
+    return FutureBuilder<Map<String, String>>(
+      future: _plansFuture,
+      builder: (context, plansSnap) {
+        final plans = plansSnap.data ?? {};
+        return StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('schools')
+              .doc(schoolId)
+              .collection('members')
+              .where('status', isEqualTo: 'active')
+              .snapshots(),
+          builder: (context, memSnap) {
+            if (memSnap.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            final members = (memSnap.data?.docs ?? [])
+                .where((d) => (d.data() as Map)['role'] != 'maestro')
+                .toList()
+              ..sort((a, b) => ((a.data() as Map)['displayName'] ?? '')
+                  .toString()
+                  .compareTo(((b.data() as Map)['displayName'] ?? '').toString()));
+
+            return StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collectionGroup('paymentReminders')
+                  .where('schoolId', isEqualTo: schoolId)
+                  .where('status', isEqualTo: 'pending')
+                  .snapshots(),
+              builder: (context, remSnap) {
+                // studentId -> fecha de vencimiento del recordatorio pendiente
+                final owing = <String, DateTime?>{};
+                for (final r in remSnap.data?.docs ?? []) {
+                  final d = r.data() as Map<String, dynamic>;
+                  owing[d['studentId'] as String? ?? ''] =
+                      (d['createdOn'] as Timestamp?)?.toDate();
+                }
+
+                int alDia = 0, vence = 0, atrasado = 0;
+                for (final m in members) {
+                  final data = m.data() as Map<String, dynamic>;
+                  if ((data['assignedPaymentPlanId'] as String?) == null) continue;
+                  final k = _payKind(m.id, owing);
+                  if (k == 1) alDia++;
+                  if (k == 2) vence++;
+                  if (k == 3) atrasado++;
+                }
+
+                final filtered = members.where((m) {
+                  if (_payFilter == 0) return true;
+                  return _payKind(m.id, owing) == _payFilter;
+                }).toList();
+
+                return Column(
+                  children: [
+                    _cobrosHeader(members.length, alDia, vence, atrasado),
+                    Expanded(
+                      child: filtered.isEmpty
+                          ? Center(child: Text(l10n.noStudentsWithStatus('active')))
+                          : ListView.builder(
+                              padding: const EdgeInsets.only(bottom: 90),
+                              itemCount: filtered.length,
+                              itemBuilder: (context, i) {
+                                final doc = filtered[i];
+                                final data = doc.data() as Map<String, dynamic>;
+                                return _cobroRow(
+                                    doc.id, data, plans, owing, schoolId);
+                              },
+                            ),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /// 0 = sin plan · 1 = al día · 2 = vence hoy · 3 = atrasado
+  int _payKind(String memberId, Map<String, DateTime?> owing) {
+    if (!owing.containsKey(memberId)) return 1; // sin recordatorio pendiente
+    final due = owing[memberId];
+    if (due == null) return 3;
+    final now = DateTime.now();
+    final isToday =
+        due.year == now.year && due.month == now.month && due.day == now.day;
+    return isToday ? 2 : 3;
+  }
+
+  Widget _cobrosHeader(int total, int alDia, int vence, int atrasado) {
+    Widget chip(int f, String label, int count, Color color) {
+      final selected = _payFilter == f;
+      return GestureDetector(
+        onTap: () => setState(() => _payFilter = f),
+        child: Container(
+          margin: const EdgeInsets.only(right: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          decoration: BoxDecoration(
+            color: selected ? color : color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            '$label · $count',
+            style: TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w700,
+              color: selected ? Colors.white : color,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      child: Row(
+        children: [
+          chip(0, l10n.payFilterAll, total, Colors.blueGrey),
+          chip(1, l10n.payAlDia, alDia, const Color(0xFF2E9E5B)),
+          chip(2, l10n.payVenceHoy, vence, const Color(0xFFE0682B)),
+          chip(3, l10n.payAtrasado, atrasado, const Color(0xFFC0392B)),
+        ],
+      ),
+    );
+  }
+
+  Widget _cobroRow(String memberId, Map<String, dynamic> data,
+      Map<String, String> plans, Map<String, DateTime?> owing, String schoolId) {
+    final name = data['displayName'] as String? ?? l10n.noName;
+    final planId = data['assignedPaymentPlanId'] as String?;
+    final planName = planId != null ? (plans[planId] ?? '') : null;
+    final isOffline = data['isOfflineStudent'] == true;
+    final initials = name
+        .trim()
+        .split(' ')
+        .take(2)
+        .map((w) => w.isNotEmpty ? w[0].toUpperCase() : '')
+        .join();
+
+    // Pill de estado
+    Widget pill;
+    if (planId == null) {
+      pill = _pill(l10n.paySinPlan, Colors.grey);
+    } else {
+      final k = _payKind(memberId, owing);
+      pill = k == 1
+          ? _pill(l10n.payAlDia, const Color(0xFF2E9E5B))
+          : k == 2
+              ? _pill(l10n.payVenceHoy, const Color(0xFFE0682B))
+              : _pill(l10n.payAtrasado, const Color(0xFFC0392B));
+    }
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.12),
+          child: Text(initials,
+              style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: Theme.of(context).primaryColor)),
+        ),
+        title: Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
+        subtitle: Text(
+          [
+            if (planName != null && planName.isNotEmpty) planName,
+            if (isOffline) l10n.offlineStudentBadge,
+          ].join(' · '),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        trailing: pill,
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+                builder: (context) =>
+                    StudentDetailScreen(schoolId: schoolId, studentId: memberId)),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _pill(String label, Color color) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.14),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(label,
+            style: TextStyle(
+                fontSize: 11, fontWeight: FontWeight.w800, color: color)),
+      );
 
   Widget _buildStudentsList(String status, String schoolId) {
     return StreamBuilder<QuerySnapshot>(

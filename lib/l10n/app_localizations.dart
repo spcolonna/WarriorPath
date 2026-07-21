@@ -2830,6 +2830,36 @@ abstract class AppLocalizations {
   /// **'Continue with Apple'**
   String get continueWithApple;
 
+  /// No description provided for @payFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get payFilterAll;
+
+  /// No description provided for @payAlDia.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to date'**
+  String get payAlDia;
+
+  /// No description provided for @payVenceHoy.
+  ///
+  /// In en, this message translates to:
+  /// **'Due today'**
+  String get payVenceHoy;
+
+  /// No description provided for @payAtrasado.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue'**
+  String get payAtrasado;
+
+  /// No description provided for @paySinPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'No plan'**
+  String get paySinPlan;
+
   /// No description provided for @exitAndDiscard.
   ///
   /// In en, this message translates to:

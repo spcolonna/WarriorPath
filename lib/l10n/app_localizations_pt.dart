@@ -1548,6 +1548,21 @@ class AppLocalizationsPt extends AppLocalizations {
   String get continueWithApple => 'Continuar com Apple';
 
   @override
+  String get payFilterAll => 'Todos';
+
+  @override
+  String get payAlDia => 'Em dia';
+
+  @override
+  String get payVenceHoy => 'Vence hoje';
+
+  @override
+  String get payAtrasado => 'Atrasado';
+
+  @override
+  String get paySinPlan => 'Sem plano';
+
+  @override
   String get exitAndDiscard => 'Sair e descartar';
 
   @override

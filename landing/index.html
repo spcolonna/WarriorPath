@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Warrior Path — La app que gestiona tu dojo y motiva a tus alumnos</title>
+<meta name="description" content="Cobrá a tiempo, tomá asistencia y seguí el progreso de tus alumnos. Y con avatares y ranking, tus alumnos no quieren faltar. Probá 30 días gratis.">
+<style>
+  :root{
+    --bg:#0E0B09;
+    --bg-2:#151010;
+    --surface:#1C1512;
+    --surface-2:#241B16;
+    --line:rgba(255,255,255,.08);
+    --ink:#F5EFE8;
+    --muted:#A8968A;
+    --ember:#F26A1B;
+    --ember-lt:#FF8A3D;
+    --gold:#E8B44C;
+    --green:#4FB87A;
+    --blue:#3B82C4;
+    --r:18px;
+    --maxw:1120px;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --round:ui-rounded,"SF Pro Rounded",system-ui,sans-serif;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);color:var(--ink);font-family:var(--sans);
+    line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden;
+  }
+  a{color:inherit;text-decoration:none}
+  img{max-width:100%}
+  ::selection{background:var(--ember);color:#fff}
+
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+  .eyebrow{
+    font-size:12px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--ember-lt);
+  }
+  h1,h2,h3{line-height:1.04;letter-spacing:-.02em;text-wrap:balance;font-weight:900}
+  .lede{color:var(--muted);font-size:clamp(16px,2.2vw,19px);max-width:56ch}
+
+  /* ambient dojo glow */
+  .atmos{position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:
+      radial-gradient(60% 45% at 78% 8%, rgba(242,106,27,.16) 0%, transparent 60%),
+      radial-gradient(55% 40% at 12% 30%, rgba(232,180,76,.07) 0%, transparent 60%),
+      radial-gradient(50% 40% at 50% 100%, rgba(242,106,27,.08) 0%, transparent 70%);
+  }
+  .page{position:relative;z-index:1}
+
+  /* ── NAV ── */
+  nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(12px);
+    background:rgba(14,11,9,.72);border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;align-items:center;justify-content:space-between;height:64px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:-.01em}
+  .brand .mark{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
+    background:linear-gradient(150deg,var(--ember),var(--ember-lt));font-size:16px}
+  .btn{display:inline-flex;align-items:center;gap:8px;font-weight:700;border-radius:12px;
+    padding:11px 18px;font-size:14.5px;cursor:pointer;border:1px solid transparent;transition:.18s}
+  .btn-primary{background:linear-gradient(150deg,var(--ember),var(--ember-lt));color:#1a0d04;
+    box-shadow:0 6px 20px rgba(242,106,27,.3)}
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 10px 28px rgba(242,106,27,.42)}
+  .btn-ghost{border-color:var(--line);color:var(--ink)}
+  .btn-ghost:hover{border-color:var(--ember);color:var(--ember-lt)}
+  .nav-cta{display:none}
+  @media(min-width:720px){.nav-cta{display:inline-flex}}
+
+  /* ── HERO ── */
+  header{padding:clamp(48px,8vw,92px) 0 40px}
+  .hero{display:grid;gap:48px;align-items:center}
+  @media(min-width:960px){.hero{grid-template-columns:1.05fr .95fr;gap:32px}}
+  .hero h1{font-size:clamp(38px,6.4vw,66px)}
+  .hero h1 .accent{background:linear-gradient(120deg,var(--ember-lt),var(--gold));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero .lede{margin-top:20px}
+  .cta-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
+  .stores{display:flex;flex-wrap:wrap;gap:12px;margin-top:18px}
+  .store{display:flex;align-items:center;gap:10px;border:1px solid var(--line);
+    background:var(--surface);border-radius:12px;padding:9px 15px;transition:.18s}
+  .store:hover{border-color:var(--ember);transform:translateY(-1px)}
+  .store svg{width:22px;height:22px;flex:none}
+  .store small{display:block;font-size:10px;color:var(--muted);letter-spacing:.04em}
+  .store b{font-size:14px;font-weight:700}
+  .trust{margin-top:26px;display:flex;gap:26px;flex-wrap:wrap}
+  .trust .t{display:flex;flex-direction:column}
+  .trust .t b{font-size:22px;font-weight:900;color:var(--ink)}
+  .trust .t span{font-size:12.5px;color:var(--muted)}
+  .free-note{margin-top:14px;font-size:13.5px;color:var(--muted)}
+  .free-note b{color:var(--green)}
+
+  /* ── PHONE ── */
+  .phone-stage{display:flex;justify-content:center;position:relative}
+  .phone-stage::before{content:"";position:absolute;width:min(360px,90%);height:min(360px,90%);
+    top:8%;border-radius:50%;background:radial-gradient(circle,rgba(242,106,27,.22),transparent 62%);
+    filter:blur(10px)}
+  .phone{position:relative;width:300px;height:620px;border-radius:44px;
+    background:linear-gradient(160deg,#2a211c,#0f0b09);padding:11px;
+    box-shadow:0 40px 80px -20px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.06),inset 0 0 0 2px rgba(255,255,255,.04)}
+  .screen{position:relative;width:100%;height:100%;border-radius:34px;overflow:hidden;
+    background:#FBF3EE;color:#231a15}
+  .notch{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:96px;height:26px;
+    background:#0f0b09;border-radius:0 0 16px 16px;z-index:9}
+  .caption{position:absolute;left:0;right:0;bottom:-52px;text-align:center;
+    font-family:var(--round);font-weight:700;color:var(--ink);font-size:15px;min-height:24px}
+  .dots{position:absolute;left:0;right:0;bottom:-84px;display:flex;gap:7px;justify-content:center}
+  .dots i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.2);transition:.3s}
+  .dots i.on{background:var(--ember);width:22px;border-radius:5px}
+
+  /* app screens (recreación fiel) */
+  .app{position:absolute;inset:0;opacity:0;transition:opacity .5s ease;
+    display:flex;flex-direction:column;font-size:13px}
+  .app.show{opacity:1}
+  .app-top{background:linear-gradient(135deg,var(--ember),#C64A0E);color:#fff;
+    padding:44px 18px 16px;text-align:center;font-weight:800;font-size:17px;flex:none}
+  .app-body{flex:1;overflow:hidden;padding:16px}
+  .card-hero{border-radius:16px;padding:14px;color:#fff;display:flex;gap:12px;align-items:center;
+    background:linear-gradient(150deg,var(--ember),#8f3208);box-shadow:0 10px 24px rgba(200,74,14,.35)}
+  .tier-name{font-family:var(--round);font-weight:800;font-size:15px;display:flex;align-items:center;gap:6px}
+  .tier-dot{width:9px;height:9px;border-radius:50%}
+  .pl-label{font-size:9px;letter-spacing:.14em;opacity:.75;margin-top:6px}
+  .pl-val{font-family:var(--round);font-weight:900;font-size:26px;line-height:1;display:flex;align-items:center;gap:4px}
+  .pl-bar{height:6px;border-radius:99px;background:rgba(255,255,255,.22);margin-top:9px;overflow:hidden}
+  .pl-bar i{display:block;height:100%;border-radius:99px;background:#fff;transition:width 1s ease}
+  .pl-next{font-size:10.5px;opacity:.85;margin-top:6px}
+
+  .today{margin-top:14px;background:var(--ember);border-radius:14px;padding:14px;color:#fff}
+  .today h4{font-size:13px;margin-bottom:9px}
+  .cls{display:flex;gap:9px;align-items:center;margin-bottom:7px}
+  .cls .t{background:rgba(255,255,255,.2);border-radius:7px;padding:3px 8px;font-weight:700;font-size:11px}
+  .cls span{font-size:12px}
+
+  /* ranking screen */
+  .rk-row{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #eee;
+    border-radius:13px;padding:9px 11px;margin-bottom:8px}
+  .rk-row.me{border-color:var(--ember);background:rgba(242,106,27,.07)}
+  .rk-pos{width:22px;text-align:center;font-weight:800;color:#8a7c72;font-size:13px}
+  .rk-name{flex:1;font-weight:600;font-size:12.5px}
+  .rk-pw{font-weight:800;font-size:12.5px;font-variant-numeric:tabular-nums}
+  .rk-medal{font-size:15px}
+
+  /* cobros screen */
+  .pay-row{display:flex;align-items:center;gap:11px;background:#fff;border:1px solid #eee;
+    border-radius:13px;padding:11px;margin-bottom:9px}
+  .pay-av{width:38px;height:38px;border-radius:50%;background:#f0e6df;display:grid;place-items:center;
+    font-weight:800;color:#a8786a;font-size:13px;flex:none}
+  .pay-name{flex:1}
+  .pay-name b{font-size:12.5px;display:block}
+  .pay-name small{font-size:10.5px;color:#9a8b80}
+  .pill{font-size:10px;font-weight:800;padding:4px 9px;border-radius:20px}
+  .pill.ok{background:rgba(79,184,122,.16);color:#2f8f57}
+  .pill.due{background:rgba(242,106,27,.16);color:#c0490c}
+
+  /* recordatorio screen */
+  .remind{margin:auto;text-align:center;max-width:220px;padding-top:26px}
+  .remind .bell{width:66px;height:66px;border-radius:50%;margin:0 auto 16px;display:grid;place-items:center;
+    background:linear-gradient(150deg,var(--ember),var(--ember-lt));font-size:30px;
+    box-shadow:0 10px 26px rgba(242,106,27,.4)}
+  .remind h4{font-family:var(--round);font-weight:800;font-size:17px;color:#231a15;margin-bottom:8px}
+  .remind p{font-size:12.5px;color:#6d5f56}
+  .remind .amt{margin-top:14px;font-family:var(--round);font-weight:900;font-size:22px;color:var(--ember)}
+
+  /* ── avatar (markup EXACTO de la app, avatar_html_builder.dart) ── */
+  .avf{position:relative;flex:none}
+  .avf .warrior{position:absolute;top:0;left:0;transform-origin:top left}
+  .avf-hero{width:99px;height:112px}   .avf-hero .warrior{transform:scale(.66)}
+  .avf-tier{width:105px;height:119px}  .avf-tier .warrior{transform:scale(.70)}
+  .avf-rk{width:41px;height:46px}      .avf-rk .warrior{transform:scale(.27)}
+  /* en el ranking ocultamos el aura/ring/destellos para que no se desborde */
+  .avf-rk .aura,.avf-rk .ring,.avf-rk .spark{display:none!important}
+
+  .warrior{
+    --t1:#c98a4b;--t2:#9fb7d4;--t3:#f5c451;--epic-a:#b061ff;--epic-b:#ff5db1;
+    --skin:#ffd9b0;--skin-2:#f0b98a;--hair:#3a2c25;--hair-2:#2a1f1a;
+    --gi:#f4f1ea;--gi-2:#d9d3c6;--accent:var(--ember);
+    --belt:#e9e6df;--aura:transparent;--metal:transparent;
+    width:150px;height:170px}
+  .warrior .aura{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);
+    width:150px;height:150px;border-radius:50%;
+    background:radial-gradient(circle,var(--aura) 0%,transparent 62%);opacity:.9;filter:blur(4px)}
+  .warrior .ring{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);
+    width:158px;height:158px;border-radius:50%;border:2px solid var(--metal);opacity:0}
+  .warrior .char{position:absolute;inset:0;z-index:2;animation:bob 4s ease-in-out infinite}
+  .warrior .body{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:118px;height:74px}
+  .warrior .gi{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:112px;height:66px;
+    background:linear-gradient(180deg,var(--gi),var(--gi-2));border-radius:40px 40px 20px 20px;
+    box-shadow:inset 0 -6px 10px rgba(0,0,0,.06)}
+  .warrior .gi::before,.warrior .gi::after{content:"";position:absolute;top:2px;width:0;height:0;border-style:solid}
+  .warrior .gi::before{left:50%;margin-left:-30px;border-width:0 30px 44px 0;
+    border-color:transparent var(--gi-2) transparent transparent;opacity:.55}
+  .warrior .gi::after{right:50%;margin-right:-30px;border-width:44px 30px 0 0;
+    border-color:var(--gi-2) transparent transparent transparent;opacity:.35}
+  .warrior .collar{position:absolute;top:0;left:50%;transform:translateX(-50%);width:44px;height:34px;
+    background:var(--accent);clip-path:polygon(50% 0,68% 0,50% 40%,32% 0);opacity:.92}
+  .warrior .belt{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);width:118px;height:15px;
+    border-radius:6px;background:linear-gradient(180deg,var(--belt),color-mix(in srgb,var(--belt) 70%,#000));
+    box-shadow:0 2px 5px rgba(0,0,0,.25)}
+  .warrior .belt::after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:20px;height:20px;border-radius:5px;
+    background:linear-gradient(180deg,var(--belt),color-mix(in srgb,var(--belt) 60%,#000));
+    box-shadow:0 1px 3px rgba(0,0,0,.3)}
+  .warrior .arm{position:absolute;bottom:14px;width:22px;height:30px;border-radius:12px;
+    background:linear-gradient(180deg,var(--gi),var(--gi-2))}
+  .warrior .arm.l{left:-2px;transform:rotate(8deg)}.warrior .arm.r{right:-2px;transform:rotate(-8deg)}
+  .warrior .fist{position:absolute;bottom:10px;width:17px;height:17px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,var(--skin),var(--skin-2))}
+  .warrior .fist.l{left:-1px}.warrior .fist.r{right:-1px}
+  .warrior .head{position:absolute;left:50%;top:6px;transform:translateX(-50%);width:118px;height:112px;z-index:3}
+  .warrior .ear{position:absolute;top:52px;width:20px;height:24px;border-radius:50%;
+    background:radial-gradient(circle at 40% 35%,var(--skin),var(--skin-2))}
+  .warrior .ear.l{left:-4px}.warrior .ear.r{right:-4px}
+  .warrior .skull{position:absolute;inset:0;
+    background:radial-gradient(120% 120% at 35% 28%,var(--skin) 0%,var(--skin-2) 100%);
+    border-radius:47% 47% 44% 44%/52% 52% 48% 48%;
+    box-shadow:inset -6px -8px 14px rgba(0,0,0,.08),inset 6px 6px 12px rgba(255,255,255,.28)}
+  .warrior .face{position:absolute;inset:0;z-index:4}
+  .warrior .eye{position:absolute;top:58px;width:19px;height:23px;border-radius:50%;background:#2a2230}
+  .warrior .eye.l{left:30px}.warrior .eye.r{right:30px}
+  .warrior .eye .glint{position:absolute;top:4px;left:4px;width:7px;height:7px;border-radius:50%;background:#fff;opacity:.95}
+  .warrior .eye .glint.s{top:12px;left:10px;width:3px;height:3px;opacity:.7}
+  .warrior .brow{position:absolute;top:49px;width:18px;height:5px;border-radius:3px;background:var(--hair-2)}
+  .warrior .brow.l{left:31px;transform:rotate(-6deg)}.warrior .brow.r{right:31px;transform:rotate(6deg)}
+  .warrior .blush{position:absolute;top:74px;width:15px;height:9px;border-radius:50%;background:#ff9a9a;opacity:.55;filter:blur(.5px)}
+  .warrior .blush.l{left:20px}.warrior .blush.r{right:20px}
+  .warrior .mouth{position:absolute;top:82px;left:50%;transform:translateX(-50%);width:22px;height:11px;
+    border-radius:0 0 14px 14px;background:#7a3b3b;box-shadow:inset 0 3px 0 rgba(255,255,255,.15)}
+  .warrior .hair{position:absolute;inset:0;z-index:5;pointer-events:none}
+  .warrior.g-male .hair::before{content:"";position:absolute;top:-4px;left:8px;right:8px;height:52px;
+    background:linear-gradient(180deg,var(--hair),var(--hair-2));border-radius:50% 50% 40% 40%/70% 70% 30% 30%;
+    clip-path:polygon(0 60%,8% 20%,20% 55%,32% 8%,46% 50%,50% 4%,54% 50%,68% 8%,80% 55%,92% 20%,100% 60%,100% 100%,0 100%)}
+  .warrior.g-female .hair::before{content:"";position:absolute;top:-6px;left:2px;right:2px;height:62px;
+    background:linear-gradient(180deg,var(--hair),var(--hair-2));border-radius:50% 50% 46% 46%/60% 60% 40% 40%;
+    clip-path:polygon(0 78%,0 30%,18% 6%,50% 0,82% 6%,100% 30%,100% 78%,86% 52%,72% 74%,60% 50%,50% 72%,40% 50%,28% 74%,14% 52%)}
+  .warrior.g-female .hair::after{content:"";position:absolute;top:-14px;left:50%;transform:translateX(-50%);
+    width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 38% 32%,var(--hair),var(--hair-2))}
+  .warrior.g-neutral .hair::before{content:"";position:absolute;top:-4px;left:6px;right:6px;height:50px;
+    background:linear-gradient(180deg,var(--hair),var(--hair-2));border-radius:52% 52% 42% 42%/66% 66% 34% 34%}
+  .warrior.g-neutral .hair::after{content:"";position:absolute;top:-2px;left:50%;width:10px;height:16px;
+    background:var(--hair);border-radius:6px;transform:translateX(-50%) rotate(6deg)}
+  .warrior .band{position:absolute;top:44px;left:-2px;right:-2px;height:15px;z-index:6}
+  .warrior .band .strip{position:absolute;inset:0;border-radius:8px;
+    background:linear-gradient(180deg,var(--accent),color-mix(in srgb,var(--accent) 65%,#000));
+    box-shadow:0 1px 3px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.25)}
+  .warrior .band .knot{position:absolute;right:-3px;top:-1px;width:14px;height:14px;border-radius:4px;
+    background:linear-gradient(180deg,var(--accent),color-mix(in srgb,var(--accent) 60%,#000));transform:rotate(20deg)}
+  .warrior .band .tail{position:absolute;right:-8px;width:8px;height:26px;border-radius:4px;
+    background:linear-gradient(180deg,var(--accent),color-mix(in srgb,var(--accent) 60%,#000))}
+  .warrior .band .tail.t1{top:6px;transform:rotate(28deg)}
+  .warrior .band .tail.t2{top:8px;right:-2px;transform:rotate(48deg);opacity:.85}
+  .warrior .spark{position:absolute;width:8px;height:8px;border-radius:50%;
+    background:radial-gradient(circle,#fff,transparent 60%);opacity:0}
+  .warrior .s1{top:12px;left:14px}.warrior .s2{top:30px;right:10px}
+  .warrior .s3{top:70px;left:4px}.warrior .s4{top:96px;right:16px;width:6px;height:6px}
+  .warrior[data-tier="1"]{--belt:var(--t1);--aura:color-mix(in srgb,var(--t1) 34%,transparent)}
+  .warrior[data-tier="2"]{--belt:var(--t2);--aura:color-mix(in srgb,var(--t2) 40%,transparent);--metal:var(--t2)}
+  .warrior[data-tier="2"] .ring{opacity:.55}
+  .warrior[data-tier="2"] .spark{opacity:.8;animation:twk 2.6s ease-in-out infinite}
+  .warrior[data-tier="3"]{--belt:var(--t3);--aura:color-mix(in srgb,var(--t3) 46%,transparent);--metal:var(--t3)}
+  .warrior[data-tier="3"] .aura{animation:breathe 3.2s ease-in-out infinite}
+  .warrior[data-tier="3"] .char{animation:bob 3s ease-in-out infinite}
+  .warrior[data-tier="3"] .ring{opacity:.9;border-color:transparent;
+    background:conic-gradient(from 0deg,var(--epic-a),var(--t3),var(--epic-b),var(--epic-a));
+    -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 3px));
+            mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 3px));
+    animation:spin 8s linear infinite}
+  .warrior[data-tier="3"] .spark{opacity:1;animation:twk 2s ease-in-out infinite}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+  @keyframes breathe{0%,100%{opacity:.75;transform:translate(-50%,-50%) scale(1)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}}
+  @keyframes spin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+  @keyframes twk{0%,100%{transform:scale(.6);opacity:.2}50%{transform:scale(1.15);opacity:1}}
+
+  /* ── SECTIONS ── */
+  section{padding:clamp(56px,9vw,104px) 0;position:relative}
+  .sec-head{max-width:640px;margin-bottom:44px}
+  .sec-head h2{font-size:clamp(28px,4.6vw,44px);margin-top:12px}
+  .sec-head p{margin-top:16px}
+
+  .benefits{display:grid;gap:18px;grid-template-columns:1fr}
+  @media(min-width:720px){.benefits{grid-template-columns:repeat(3,1fr)}}
+  .bcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:26px;
+    transition:.2s}
+  .bcard:hover{border-color:rgba(242,106,27,.4);transform:translateY(-3px)}
+  .bcard .ic{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;font-size:22px;
+    background:rgba(242,106,27,.12);margin-bottom:16px}
+  .bcard h3{font-size:19px;margin-bottom:8px}
+  .bcard p{color:var(--muted);font-size:14.5px}
+
+  /* motiva / avatares */
+  .motiva{background:linear-gradient(180deg,transparent,rgba(242,106,27,.04),transparent)}
+  .tiers{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:8px}
+  @media(min-width:720px){.tiers{grid-template-columns:repeat(4,1fr)}}
+  .tier{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+    padding:22px 14px;display:flex;flex-direction:column;align-items:center;gap:8px}
+  .tier .lvl{font-family:var(--round);font-weight:800;font-size:15px}
+  .tier .rng{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+  /* pricing */
+  .price-wrap{display:grid;gap:20px;grid-template-columns:1fr;align-items:center}
+  @media(min-width:840px){.price-wrap{grid-template-columns:1.1fr .9fr}}
+  .price-card{background:linear-gradient(160deg,var(--surface-2),var(--surface));
+    border:1px solid rgba(232,180,76,.28);border-radius:24px;padding:34px;position:relative;overflow:hidden}
+  .price-card::before{content:"";position:absolute;top:-40%;right:-20%;width:60%;height:120%;
+    background:radial-gradient(circle,rgba(232,180,76,.12),transparent 60%)}
+  .price-tag{display:flex;align-items:baseline;gap:8px;margin:6px 0 4px}
+  .price-tag .big{font-size:52px;font-weight:900;letter-spacing:-.03em}
+  .price-tag .per{color:var(--muted);font-size:15px}
+  .price-sub{color:var(--gold);font-weight:600;font-size:14px}
+  .price-list{list-style:none;margin:22px 0;display:flex;flex-direction:column;gap:11px}
+  .price-list li{display:flex;gap:10px;align-items:flex-start;font-size:14.5px}
+  .price-list .ck{color:var(--green);font-weight:900;flex:none}
+  .price-annual{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px 20px}
+  .price-annual b{color:var(--gold)}
+  .save-badge{display:inline-block;background:rgba(79,184,122,.15);color:var(--green);
+    font-size:11px;font-weight:800;padding:4px 10px;border-radius:20px;letter-spacing:.04em;margin-bottom:16px}
+
+  /* final cta */
+  .final{text-align:center}
+  .final h2{font-size:clamp(30px,5vw,50px)}
+  .final .lede{margin:16px auto 0}
+  .final .cta-row{justify-content:center}
+  .wa{display:inline-flex;align-items:center;gap:9px;color:var(--green);font-weight:700;
+    margin-top:22px;font-size:15px}
+  .wa svg{width:20px;height:20px}
+
+  footer{border-top:1px solid var(--line);padding:40px 0;color:var(--muted);font-size:13px}
+  footer .wrap{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;align-items:center}
+  footer a{color:var(--muted)}footer a:hover{color:var(--ink)}
+  .foot-links{display:flex;gap:20px;flex-wrap:wrap}
+
+  .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s,transform .7s}
+  .reveal.in{opacity:1;transform:none}
+  @media(prefers-reduced-motion:reduce){
+    .reveal{opacity:1;transform:none;transition:none}
+    .app{transition:none}.pl-bar i{transition:none}
+  }
+</style>
+</head>
+<body>
+<div class="atmos"></div>
+<div class="page">
+
+<nav>
+  <div class="wrap">
+    <a class="brand" href="#top"><span class="mark">🥋</span> Warrior Path</a>
+    <a class="btn btn-primary nav-cta" href="#precios">Probá 30 días gratis</a>
+  </div>
+</nav>
+
+<header id="top">
+  <div class="wrap hero">
+    <div>
+      <p class="eyebrow">Gestión para escuelas de artes marciales</p>
+      <h1>Gestioná tu dojo. Y hacé que tus alumnos <span class="accent">no quieran faltar.</span></h1>
+      <p class="lede">Cobrá las cuotas a tiempo, tomá asistencia en segundos y seguí el progreso de cada alumno. Con avatares y ranking, entrenar se vuelve un juego que motiva a tu clase.</p>
+
+      <div class="cta-row">
+        <a class="btn btn-primary" href="#precios">Empezar gratis</a>
+        <a class="btn btn-ghost" href="#recorrido">Ver la app</a>
+      </div>
+
+      <div class="stores">
+        <a class="store" href="https://apps.apple.com/app/idTU_APP_ID" aria-label="Descargar en el App Store">
+          <svg viewBox="0 0 24 24" fill="#fff"><path d="M16.4 12.9c0-2.2 1.8-3.3 1.9-3.3-1-1.5-2.6-1.7-3.2-1.7-1.4-.1-2.6.8-3.3.8-.7 0-1.7-.8-2.8-.8-1.4 0-2.8.8-3.5 2.1-1.5 2.6-.4 6.5 1.1 8.6.7 1 1.5 2.2 2.6 2.1 1-.04 1.5-.7 2.7-.7 1.2 0 1.6.7 2.7.6 1.1 0 1.8-1 2.5-2.1.8-1.2 1.1-2.3 1.1-2.4 0 0-2.1-.8-2.1-3.1zM14.3 6.3c.6-.7 1-1.7.9-2.6-.8 0-1.9.6-2.5 1.2-.5.6-1 1.6-.9 2.5.9.1 1.9-.5 2.5-1.1z"/></svg>
+          <span><small>Descargar en el</small><b>App Store</b></span>
+        </a>
+        <a class="store" href="https://play.google.com/store/apps/details?id=com.warriorpath.app" aria-label="Disponible en Google Play">
+          <svg viewBox="0 0 24 24"><path fill="#FF8A3D" d="M3.6 2.4c-.3.2-.5.6-.5 1.1v17c0 .5.2.9.5 1.1l9.2-9.6z"/><path fill="#F26A1B" d="M16.6 8.6l-3.8 3.4-9.2 9.6c.4.2.9.2 1.4-.1l11.6-6.6z"/><path fill="#E8B44C" d="M20.3 10.7l-3.7-2.1-4 3.4 4 3.6 3.7-2.1c.9-.5.9-2 0-2.5z"/><path fill="#C64A0E" d="M3.6 2.4l9.2 9.6 3.8-3.4L5 1.9c-.5-.3-1-.3-1.4.1z"/></svg>
+          <span><small>Disponible en</small><b>Google Play</b></span>
+        </a>
+      </div>
+      <p class="free-note"><b>30 días gratis</b> · Sin tarjeta · Cancelás cuando quieras</p>
+
+      <div class="trust">
+        <div class="t"><b>+14</b><span>artes marciales con plantillas</span></div>
+        <div class="t"><b>0</b><span>planillas de Excel</span></div>
+        <div class="t"><b>ES · PT</b><span>español y portugués</span></div>
+      </div>
+    </div>
+
+    <!-- PHONE -->
+    <div class="phone-stage">
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="screen" id="screen">
+
+          <!-- 1: home alumno + avatar -->
+          <div class="app show" data-cap="Tu avatar sube de nivel al entrenar">
+            <div class="app-top">Mi Escuela</div>
+            <div class="app-body">
+              <div class="card-hero">
+                <div class="avf avf-hero" data-g="male" data-tier="0" id="heroAvatar"></div>
+                <div style="flex:1">
+                  <div class="tier-name"><span class="tier-dot" id="heroDot" style="background:#9fb7d4"></span><span id="heroTier">Novato</span></div>
+                  <div class="pl-label">NIVEL DE PODER</div>
+                  <div class="pl-val">⚡ <span id="heroPw">0</span></div>
+                  <div class="pl-bar"><i id="heroBar" style="width:8%"></i></div>
+                  <div class="pl-next" id="heroNext">100 para el próximo nivel</div>
+                </div>
+              </div>
+              <div class="today">
+                <h4>Clases de Hoy</h4>
+                <div class="cls"><span class="t">18:00</span><span>Clase Iniciantes</span></div>
+                <div class="cls"><span class="t">21:00</span><span>Avanzados</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2: ranking -->
+          <div class="app" data-cap="Ranking de la escuela: sana competencia">
+            <div class="app-top">Ranking de la escuela 🏆</div>
+            <div class="app-body">
+              <div class="rk-row"><span class="rk-medal">🥇</span><div class="avf avf-rk" data-g="male" data-tier="3"></div><span class="rk-name">Martín L.</span><span class="rk-pw">⚡ 330</span></div>
+              <div class="rk-row"><span class="rk-medal">🥈</span><div class="avf avf-rk" data-g="neutral" data-tier="2"></div><span class="rk-name">Nicolás T.</span><span class="rk-pw">⚡ 320</span></div>
+              <div class="rk-row me"><span class="rk-pos">3</span><div class="avf avf-rk" data-g="male" data-tier="1"></div><span class="rk-name">Vos</span><span class="rk-pw">⚡ 200</span></div>
+              <div class="rk-row"><span class="rk-pos">4</span><div class="avf avf-rk" data-g="female" data-tier="1"></div><span class="rk-name">Ana G.</span><span class="rk-pw">⚡ 130</span></div>
+              <div class="rk-row"><span class="rk-pos">5</span><div class="avf avf-rk" data-g="male" data-tier="0"></div><span class="rk-name">Diego F.</span><span class="rk-pw">⚡ 90</span></div>
+            </div>
+          </div>
+
+          <!-- 3: cobros -->
+          <div class="app" data-cap="Sabés al instante quién debe la cuota">
+            <div class="app-top">Alumnos y pagos</div>
+            <div class="app-body">
+              <div class="pay-row"><div class="pay-av">AG</div><div class="pay-name"><b>Ana García</b><small>Plan Avanzado</small></div><span class="pill ok">Al día</span></div>
+              <div class="pay-row"><div class="pay-av">ML</div><div class="pay-name"><b>Martín López</b><small>Plan Intermedio</small></div><span class="pill ok">Al día</span></div>
+              <div class="pay-row"><div class="pay-av">SM</div><div class="pay-name"><b>Sofía Martínez</b><small>Plan Básico</small></div><span class="pill due">Vence hoy</span></div>
+              <div class="pay-row"><div class="pay-av">LG</div><div class="pay-name"><b>Lucas González</b><small>Plan Avanzado</small></div><span class="pill ok">Al día</span></div>
+              <div class="pay-row"><div class="pay-av">CA</div><div class="pay-name"><b>Camila Álvarez</b><small>Plan Intermedio</small></div><span class="pill due">Vence hoy</span></div>
+            </div>
+          </div>
+
+          <!-- 4: recordatorio push -->
+          <div class="app" data-cap="La app le avisa sola cuándo vence">
+            <div class="app-top">Mis Pagos</div>
+            <div class="app-body">
+              <div class="remind">
+                <div class="bell">🔔</div>
+                <h4>Tu cuota vence hoy</h4>
+                <p>Warrior Path le recuerda a cada alumno el día exacto que configuraste. Vos no perseguís a nadie.</p>
+                <div class="amt">$ 2.200</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <div class="caption" id="caption">Tu avatar sube de nivel al entrenar</div>
+      <div class="dots" id="dots"></div>
+    </div>
+  </div>
+</header>
+
+<!-- ancla para "ver la app" -->
+<span id="recorrido"></span>
+
+<!-- BENEFITS -->
+<section>
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <p class="eyebrow">Por qué tu dojo la necesita</p>
+      <h2>Menos papeleo. Más tatami.</h2>
+      <p class="lede">Todo lo que hoy hacés a mano —o que se te escapa— en un solo lugar, desde el teléfono.</p>
+    </div>
+    <div class="benefits">
+      <div class="bcard reveal">
+        <div class="ic">💳</div>
+        <h3>Cobrá a tiempo</h3>
+        <p>Recordatorios automáticos el día de vencimiento, historial de pagos por alumno y quién está al día de un vistazo. Se acabó perseguir la cuota por WhatsApp.</p>
+      </div>
+      <div class="bcard reveal">
+        <div class="ic">✅</div>
+        <h3>Asistencia en segundos</h3>
+        <p>Pasá lista tocando nombres, o dejá que el alumno se registre solo al llegar. Con historial completo para saber quién viene y quién se está perdiendo.</p>
+      </div>
+      <div class="bcard reveal">
+        <div class="ic">🥋</div>
+        <h3>Progreso y cinturones</h3>
+        <p>Cargá tu currícula con plantillas listas (ITF, Shotokan, BJJ y +14 artes), asigná técnicas y promové de cinturón con un toque. Cada alumno ve su camino.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MOTIVA -->
+<section class="motiva">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <p class="eyebrow">El diferencial</p>
+      <h2>Un juego que llena tu clase.</h2>
+      <p class="lede">Cada alumno tiene un avatar que gana <b style="color:var(--ink)">Nivel de Poder</b> al asistir, ir a eventos y subir de cinturón. Sube de tier, gana aura, escala en el ranking. Ir a entrenar deja de ser una obligación.</p>
+    </div>
+    <div class="tiers">
+      <div class="tier reveal"><div class="avf avf-tier" data-g="male" data-tier="0"></div><span class="lvl">Novato</span><span class="rng">0 – 99</span></div>
+      <div class="tier reveal"><div class="avf avf-tier" data-g="female" data-tier="1"></div><span class="lvl">Guerrero</span><span class="rng">100 – 499</span></div>
+      <div class="tier reveal"><div class="avf avf-tier" data-g="male" data-tier="2"></div><span class="lvl">Veterano</span><span class="rng">500 – 999</span></div>
+      <div class="tier reveal"><div class="avf avf-tier" data-g="neutral" data-tier="3"></div><span class="lvl">Maestro</span><span class="rng">1000+</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="precios">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <p class="eyebrow">Precio simple</p>
+      <h2>Menos que la cuota de un alumno.</h2>
+      <p class="lede">Una sola tarifa por escuela, alumnos ilimitados. Sin costos por alumno, sin sorpresas.</p>
+    </div>
+    <div class="price-wrap">
+      <div class="price-card reveal">
+        <span class="save-badge">30 DÍAS GRATIS PARA EMPEZAR</span>
+        <div class="price-tag"><span class="big">$490</span><span class="per">/ mes · UYU</span></div>
+        <div class="price-sub">o el equivalente en tu país (AR$ / CLP / USD)</div>
+        <ul class="price-list">
+          <li><span class="ck">✓</span> Alumnos ilimitados</li>
+          <li><span class="ck">✓</span> Cobros, asistencia y progreso</li>
+          <li><span class="ck">✓</span> Avatares, Nivel de Poder y ranking</li>
+          <li><span class="ck">✓</span> Recordatorios de pago automáticos</li>
+          <li><span class="ck">✓</span> Plantillas de +14 artes marciales</li>
+          <li><span class="ck">✓</span> App del alumno gratis, siempre</li>
+        </ul>
+        <a class="btn btn-primary" href="https://apps.apple.com/app/idTU_APP_ID" style="width:100%;justify-content:center">Probá 30 días gratis</a>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="price-annual reveal">
+          <p style="font-weight:800;margin-bottom:4px">Plan anual</p>
+          <p style="color:var(--muted);font-size:14px">Pagás <b>10 meses</b> y usás 12. <span style="color:var(--green);font-weight:700">2 meses gratis</span> — y menos cobros que gestionar.</p>
+        </div>
+        <div class="price-annual reveal">
+          <p style="font-weight:800;margin-bottom:4px">Escuelas fundadoras</p>
+          <p style="color:var(--muted);font-size:14px">¿Sos de las primeras? Escribinos: <b>12 meses gratis</b> a cambio de tu feedback.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final">
+  <div class="wrap">
+    <div class="reveal">
+      <p class="eyebrow">Empezá hoy</p>
+      <h2>Tu dojo, ordenado. Tus alumnos, motivados.</h2>
+      <p class="lede">Descargá Warrior Path y probala 30 días gratis. Cargar tu escuela lleva menos de 10 minutos.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://apps.apple.com/app/idTU_APP_ID">App Store</a>
+        <a class="btn btn-ghost" href="https://play.google.com/store/apps/details?id=com.warriorpath.app">Google Play</a>
+      </div>
+      <div><a class="wa" href="https://wa.me/598TU_NUMERO" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.7 15l-1.3 4.7 4.8-1.3A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-2.8.8.7-2.8-.2-.3A8 8 0 1112 20zm4.4-6c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.6.1-.2.2-.6.8-.8 1-.1.1-.3.2-.5.1a6.5 6.5 0 01-3.2-2.8c-.2-.4.2-.4.6-1.2.1-.2 0-.3 0-.5s-.6-1.4-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.7.7-.9 1.7-.6 2.9.4 1.5 1.4 2.9 1.6 3.1.2.2 2.7 4.1 6.5 5.4 2.5.9 2.9.7 3.4.6.7-.1 1.4-.6 1.6-1.1.2-.6.2-1 .1-1.1-.1-.1-.3-.2-.5-.3z"/></svg>
+        Hablanos por WhatsApp
+      </a></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="brand"><span class="mark">🥋</span> Warrior Path</div>
+    <div class="foot-links">
+      <a href="privacy.html">Privacidad</a>
+      <a href="support.html">Soporte</a>
+      <a href="https://wa.me/598TU_NUMERO">WhatsApp</a>
+    </div>
+    <div>© 2026 Warrior Path</div>
+  </div>
+</footer>
+
+</div>
+
+<script>
+  // Avatar: markup EXACTO de la app, inyectado en cada .avf
+  function warriorHTML(g,t){
+    return `<div class="warrior g-${g}" data-tier="${t}">
+      <div class="aura"></div><div class="ring"></div>
+      <div class="spark s1"></div><div class="spark s2"></div><div class="spark s3"></div><div class="spark s4"></div>
+      <div class="char">
+        <div class="body">
+          <div class="arm l"></div><div class="fist l"></div>
+          <div class="arm r"></div><div class="fist r"></div>
+          <div class="gi"></div><div class="collar"></div><div class="belt"></div>
+        </div>
+        <div class="head">
+          <div class="ear l"></div><div class="ear r"></div>
+          <div class="skull"></div><div class="hair"></div>
+          <div class="face">
+            <div class="brow l"></div><div class="brow r"></div>
+            <div class="eye l"><span class="glint"></span><span class="glint s"></span></div>
+            <div class="eye r"><span class="glint"></span><span class="glint s"></span></div>
+            <div class="blush l"></div><div class="blush r"></div><div class="mouth"></div>
+          </div>
+          <div class="band"><span class="strip"></span><span class="knot"></span><span class="tail t1"></span><span class="tail t2"></span></div>
+        </div>
+      </div>
+    </div>`;
+  }
+  document.querySelectorAll('.avf').forEach(el=>{
+    el.innerHTML = warriorHTML(el.dataset.g||'male', el.dataset.tier||'0');
+  });
+
+  // Recorrido: rota las pantallas del teléfono
+  const apps = [...document.querySelectorAll('#screen .app')];
+  const caption = document.getElementById('caption');
+  const dotsBox = document.getElementById('dots');
+  apps.forEach((_,i)=>{const d=document.createElement('i');if(!i)d.className='on';dotsBox.appendChild(d);});
+  const dots = [...dotsBox.children];
+  let idx = 0;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Animación del avatar del hero subiendo de nivel (solo en pantalla 1)
+  const tiers = [
+    {t:0,name:'Novato',dot:'#9fb7d4',pw:40,bar:40,next:'60 para el próximo nivel'},
+    {t:1,name:'Guerrero',dot:'#c98a4b',pw:320,bar:55,next:'180 para el próximo nivel'},
+    {t:2,name:'Veterano',dot:'#9fb7d4',pw:760,bar:52,next:'240 para el próximo nivel'},
+    {t:3,name:'Maestro',dot:'#f5c451',pw:1480,bar:100,next:'¡Nivel máximo!'},
+  ];
+  const heroW=document.querySelector('#heroAvatar .warrior');
+  let ti=0;
+  function stepAvatar(){
+    if(idx!==0) return;
+    const s=tiers[ti];
+    heroW.dataset.tier=s.t;
+    document.getElementById('heroTier').textContent=s.name;
+    document.getElementById('heroDot').style.background=s.dot;
+    document.getElementById('heroPw').textContent=s.pw.toLocaleString('es');
+    document.getElementById('heroBar').style.width=s.bar+'%';
+    document.getElementById('heroNext').textContent=s.next;
+    ti=(ti+1)%tiers.length;
+  }
+  let avTimer=null;
+
+  function show(n){
+    apps[idx].classList.remove('show');
+    dots[idx].classList.remove('on');
+    idx=n;
+    apps[idx].classList.add('show');
+    dots[idx].classList.add('on');
+    caption.textContent=apps[idx].dataset.cap;
+    clearInterval(avTimer);
+    if(idx===0 && !reduce){ ti=0; stepAvatar(); avTimer=setInterval(stepAvatar,1400); }
+  }
+  if(!reduce){
+    stepAvatar(); avTimer=setInterval(stepAvatar,1400);
+    setInterval(()=>show((idx+1)%apps.length), 4200);
+  }
+
+  // Reveal on scroll
+  const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}})},{threshold:.15});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>

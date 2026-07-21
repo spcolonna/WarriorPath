@@ -41,7 +41,10 @@
       "Bash(grep -vE \"Python|reinstall|CLOUDSDK|^$|WARNING|If you\")",
       "Bash(gcloud scheduler *)",
       "Bash(grep -vE \"Python|reinstall|CLOUDSDK|WARNING|If you|^$\")",
-      "Bash(curl -s -o /dev/null -w 'HTTP %{http_code}\\\\n' -X POST https://generatemonthlypaymentreminders-6wf4o6fqsq-uc.a.run.app -H 'Authorization: Bearer __CMDSUB_OUTPUT__' -H 'Content-Type: application/json' -d '{\"data\":{}}')"
+      "Bash(curl -s -o /dev/null -w 'HTTP %{http_code}\\\\n' -X POST https://generatemonthlypaymentreminders-6wf4o6fqsq-uc.a.run.app -H 'Authorization: Bearer __CMDSUB_OUTPUT__' -H 'Content-Type: application/json' -d '{\"data\":{}}')",
+      "Bash(xcrun simctl *)",
+      "Read(//tmp/**)",
+      "Read(//private/tmp/**)"
     ]
   }
 }

@@ -1546,6 +1546,21 @@ class AppLocalizationsEs extends AppLocalizations {
   String get continueWithApple => 'Continuar con Apple';
 
   @override
+  String get payFilterAll => 'Todos';
+
+  @override
+  String get payAlDia => 'Al día';
+
+  @override
+  String get payVenceHoy => 'Vence hoy';
+
+  @override
+  String get payAtrasado => 'Atrasado';
+
+  @override
+  String get paySinPlan => 'Sin plan';
+
+  @override
   String get exitAndDiscard => 'Salir y descartar';
 
   @override

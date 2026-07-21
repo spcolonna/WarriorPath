@@ -1541,6 +1541,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get continueWithApple => 'Continue with Apple';
 
   @override
+  String get payFilterAll => 'All';
+
+  @override
+  String get payAlDia => 'Up to date';
+
+  @override
+  String get payVenceHoy => 'Due today';
+
+  @override
+  String get payAtrasado => 'Overdue';
+
+  @override
+  String get paySinPlan => 'No plan';
+
+  @override
   String get exitAndDiscard => 'Exit and discard';
 
   @override
