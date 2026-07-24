@@ -75,9 +75,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final remoteConfigService = RemoteConfigService.instance;
-    final bool showBannerAd = remoteConfigService.getBool('show_banner_ad');
-    final bool showLanding = remoteConfigService.getBool('show_landing_screen');
+    // Accessor SEGURO: nunca lanza aunque Remote Config no se haya inicializado
+    // (evita el crash de arranque en release). Cae a los defaults (false).
+    final bool showBannerAd = RemoteConfigService.boolOf('show_banner_ad');
+    final bool showLanding = RemoteConfigService.boolOf('show_landing_screen');
 
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {

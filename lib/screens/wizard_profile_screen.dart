@@ -1,13 +1,13 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:warrior_path/screens/parent/add_child_screen.dart';
 import 'package:warrior_path/screens/student/school_search_screen.dart';
 import 'package:warrior_path/screens/wizard_create_school_screen.dart';
+import 'package:warrior_path/services/StorageService.dart';
 import 'package:warrior_path/l10n/app_localizations.dart';
 import '../enums/user_role.dart';
 
@@ -134,12 +134,8 @@ class _WizardProfileScreenState extends State<WizardProfileScreen> {
 
       String? photoUrl;
       if (_imageFile != null) {
-        final ref = FirebaseStorage.instance
-            .ref()
-            .child('profile_pics')
-            .child('$_uid.jpg');
-        await ref.putFile(_imageFile!);
-        photoUrl = await ref.getDownloadURL();
+        photoUrl = await StorageService()
+            .uploadImage(_imageFile!, 'profile_pics/$_uid');
       }
 
       final dataToUpdate = <String, dynamic>{

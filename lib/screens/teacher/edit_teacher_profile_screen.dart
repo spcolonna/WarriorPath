@@ -1,10 +1,10 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import '../../services/StorageService.dart';
 
 import '../../l10n/app_localizations.dart';
 
@@ -99,9 +99,8 @@ class _EditTeacherProfileScreenState extends State<EditTeacherProfileScreen> {
       String? newPhotoUrl;
 
       if (_newImageFile != null) {
-        final ref = FirebaseStorage.instance.ref().child('profile_pics').child('${user.uid}.jpg');
-        await ref.putFile(_newImageFile!);
-        newPhotoUrl = await ref.getDownloadURL();
+        newPhotoUrl = await StorageService()
+            .uploadImage(_newImageFile!, 'profile_pics/${user.uid}');
       }
 
       final dataToUpdate = {

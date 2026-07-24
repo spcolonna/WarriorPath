@@ -1,5 +1,13 @@
 {
   "projects": {
     "default": "warriorpath-89a85"
+  },
+  "targets": {
+    "warriorpath-89a85": {
+      "hosting": {
+        "app": ["warriorpath-89a85"],
+        "landing": ["warriorpath-web"]
+      }
+    }
   }
 }

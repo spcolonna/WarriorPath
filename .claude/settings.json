@@ -44,7 +44,19 @@
       "Bash(curl -s -o /dev/null -w 'HTTP %{http_code}\\\\n' -X POST https://generatemonthlypaymentreminders-6wf4o6fqsq-uc.a.run.app -H 'Authorization: Bearer __CMDSUB_OUTPUT__' -H 'Content-Type: application/json' -d '{\"data\":{}}')",
       "Bash(xcrun simctl *)",
       "Read(//tmp/**)",
-      "Read(//private/tmp/**)"
+      "Read(//private/tmp/**)",
+      "Bash(curl -s \"https://itunes.apple.com/lookup?bundleId=com.warriorpath.app&country=uy\")",
+      "Bash(curl -s \"https://itunes.apple.com/lookup?bundleId=com.warriorpath.app\")",
+      "Bash(firebase hosting:sites:list --project warriorpath-89a85)",
+      "Bash(firebase hosting:sites:create warriorpath-web --project warriorpath-89a85)",
+      "Bash(grep -vE \"Python|reinstall|CLOUDSDK|^$|WARNING|If you|CLOUDSDK_PYTHON\")",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" https://warriorpath-web.web.app)",
+      "Bash(curl -s https://warriorpath-web.web.app)",
+      "Bash(awk '{print \"captura:\", $5, \"bytes\"}')",
+      "Bash(curl -sI \"https://warriorpath-web.web.app\")",
+      "Bash(curl -sI \"https://warriorpath-web.web.app/?nocache=$\\(date +%s\\)\")",
+      "Bash(curl -sI \"https://warriorpath-web.web.app/index.html?nocache=$\\(date +%s\\)\")",
+      "Bash(curl -sI \"https://warriorpath-web.web.app/?nc=$\\(date +%s\\)\")"
     ]
   }
 }

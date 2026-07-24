@@ -3,10 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="only dark">
+<meta name="theme-color" content="#0E0B09">
 <title>Warrior Path — La app que gestiona tu dojo y motiva a tus alumnos</title>
 <meta name="description" content="Cobrá a tiempo, tomá asistencia y seguí el progreso de tus alumnos. Y con avatares y ranking, tus alumnos no quieren faltar. Probá 30 días gratis.">
 <style>
   :root{
+    color-scheme: only dark;
     --bg:#0E0B09;
     --bg-2:#151010;
     --surface:#1C1512;
@@ -73,8 +76,12 @@
   .hero{display:grid;gap:48px;align-items:center}
   @media(min-width:960px){.hero{grid-template-columns:1.05fr .95fr;gap:32px}}
   .hero h1{font-size:clamp(38px,6.4vw,66px)}
-  .hero h1 .accent{background:linear-gradient(120deg,var(--ember-lt),var(--gold));
-    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero h1 .accent{color:var(--gold)} /* fallback: si el navegador no soporta el recorte, se ve texto sólido dorado */
+  @supports ((-webkit-background-clip:text) or (background-clip:text)){
+    .hero h1 .accent{background:linear-gradient(120deg,var(--ember-lt),var(--gold));
+      -webkit-background-clip:text;background-clip:text;
+      -webkit-text-fill-color:transparent;color:transparent}
+  }
   .hero .lede{margin-top:20px}
   .cta-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
   .stores{display:flex;flex-wrap:wrap;gap:12px;margin-top:18px}
@@ -195,10 +202,11 @@
   .warrior .collar{position:absolute;top:0;left:50%;transform:translateX(-50%);width:44px;height:34px;
     background:var(--accent);clip-path:polygon(50% 0,68% 0,50% 40%,32% 0);opacity:.92}
   .warrior .belt{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);width:118px;height:15px;
-    border-radius:6px;background:linear-gradient(180deg,var(--belt),color-mix(in srgb,var(--belt) 70%,#000));
+    border-radius:6px;background:var(--belt);
+    background:linear-gradient(180deg,var(--belt),color-mix(in srgb,var(--belt) 70%,#000));
     box-shadow:0 2px 5px rgba(0,0,0,.25)}
   .warrior .belt::after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-    width:20px;height:20px;border-radius:5px;
+    width:20px;height:20px;border-radius:5px;background:var(--belt);
     background:linear-gradient(180deg,var(--belt),color-mix(in srgb,var(--belt) 60%,#000));
     box-shadow:0 1px 3px rgba(0,0,0,.3)}
   .warrior .arm{position:absolute;bottom:14px;width:22px;height:30px;border-radius:12px;
@@ -240,12 +248,13 @@
   .warrior.g-neutral .hair::after{content:"";position:absolute;top:-2px;left:50%;width:10px;height:16px;
     background:var(--hair);border-radius:6px;transform:translateX(-50%) rotate(6deg)}
   .warrior .band{position:absolute;top:44px;left:-2px;right:-2px;height:15px;z-index:6}
-  .warrior .band .strip{position:absolute;inset:0;border-radius:8px;
+  .warrior .band .strip{position:absolute;inset:0;border-radius:8px;background:var(--accent);
     background:linear-gradient(180deg,var(--accent),color-mix(in srgb,var(--accent) 65%,#000));
     box-shadow:0 1px 3px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.25)}
   .warrior .band .knot{position:absolute;right:-3px;top:-1px;width:14px;height:14px;border-radius:4px;
+    background:var(--accent);
     background:linear-gradient(180deg,var(--accent),color-mix(in srgb,var(--accent) 60%,#000));transform:rotate(20deg)}
-  .warrior .band .tail{position:absolute;right:-8px;width:8px;height:26px;border-radius:4px;
+  .warrior .band .tail{position:absolute;right:-8px;width:8px;height:26px;border-radius:4px;background:var(--accent);
     background:linear-gradient(180deg,var(--accent),color-mix(in srgb,var(--accent) 60%,#000))}
   .warrior .band .tail.t1{top:6px;transform:rotate(28deg)}
   .warrior .band .tail.t2{top:8px;right:-2px;transform:rotate(48deg);opacity:.85}
@@ -286,6 +295,19 @@
     background:rgba(242,106,27,.12);margin-bottom:16px}
   .bcard h3{font-size:19px;margin-bottom:8px}
   .bcard p{color:var(--muted);font-size:14.5px}
+
+  /* pains */
+  .pains-sec{padding-top:clamp(48px,7vw,80px);padding-bottom:0}
+  .pains{display:grid;gap:12px;grid-template-columns:1fr;margin-top:8px}
+  @media(min-width:720px){.pains{grid-template-columns:repeat(2,1fr)}}
+  .pain{display:flex;gap:13px;align-items:flex-start;background:var(--surface-2);
+    border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+  .pain .x{width:26px;height:26px;border-radius:8px;flex:none;display:grid;place-items:center;
+    background:rgba(192,57,43,.16);color:#e07a6d;font-weight:900;font-size:15px}
+  .pain p{font-size:14.5px;color:var(--ink)}
+  .pains-turn{margin-top:26px;font-size:clamp(18px,2.6vw,23px);font-weight:800;
+    color:var(--ink);text-wrap:balance}
+  .pains-turn b{color:var(--ember-lt)}
 
   /* motiva / avatares */
   .motiva{background:linear-gradient(180deg,transparent,rgba(242,106,27,.04),transparent)}
@@ -351,9 +373,9 @@
 <header id="top">
   <div class="wrap hero">
     <div>
-      <p class="eyebrow">Gestión para escuelas de artes marciales</p>
-      <h1>Gestioná tu dojo. Y hacé que tus alumnos <span class="accent">no quieran faltar.</span></h1>
-      <p class="lede">Cobrá las cuotas a tiempo, tomá asistencia en segundos y seguí el progreso de cada alumno. Con avatares y ranking, entrenar se vuelve un juego que motiva a tu clase.</p>
+      <p class="eyebrow">Hecha por y para maestros de artes marciales</p>
+      <h1>Dejá de administrar tu dojo. <span class="accent">Volvé a enseñar.</span></h1>
+      <p class="lede">Warrior Path se ocupa de las cuotas, la asistencia y el progreso de cada alumno — para que vos estés en el tatami, no en la planilla. Y con avatares y ranking, tus alumnos vienen más seguido.</p>
 
       <div class="cta-row">
         <a class="btn btn-primary" href="#precios">Empezar gratis</a>
@@ -361,20 +383,20 @@
       </div>
 
       <div class="stores">
-        <a class="store" href="https://apps.apple.com/app/idTU_APP_ID" aria-label="Descargar en el App Store">
+        <a class="store" href="https://apps.apple.com/uy/app/warrior-path/id6752713613" aria-label="Descargar en el App Store">
           <svg viewBox="0 0 24 24" fill="#fff"><path d="M16.4 12.9c0-2.2 1.8-3.3 1.9-3.3-1-1.5-2.6-1.7-3.2-1.7-1.4-.1-2.6.8-3.3.8-.7 0-1.7-.8-2.8-.8-1.4 0-2.8.8-3.5 2.1-1.5 2.6-.4 6.5 1.1 8.6.7 1 1.5 2.2 2.6 2.1 1-.04 1.5-.7 2.7-.7 1.2 0 1.6.7 2.7.6 1.1 0 1.8-1 2.5-2.1.8-1.2 1.1-2.3 1.1-2.4 0 0-2.1-.8-2.1-3.1zM14.3 6.3c.6-.7 1-1.7.9-2.6-.8 0-1.9.6-2.5 1.2-.5.6-1 1.6-.9 2.5.9.1 1.9-.5 2.5-1.1z"/></svg>
           <span><small>Descargar en el</small><b>App Store</b></span>
         </a>
-        <a class="store" href="https://play.google.com/store/apps/details?id=com.warriorpath.app" aria-label="Disponible en Google Play">
+        <a class="store" href="https://wa.me/59899660730?text=Hola!%20Quiero%20anotarme%20a%20la%20beta%20de%20Android%20de%20Warrior%20Path" target="_blank" rel="noopener" aria-label="Android próximamente, anotate a la beta por WhatsApp">
           <svg viewBox="0 0 24 24"><path fill="#FF8A3D" d="M3.6 2.4c-.3.2-.5.6-.5 1.1v17c0 .5.2.9.5 1.1l9.2-9.6z"/><path fill="#F26A1B" d="M16.6 8.6l-3.8 3.4-9.2 9.6c.4.2.9.2 1.4-.1l11.6-6.6z"/><path fill="#E8B44C" d="M20.3 10.7l-3.7-2.1-4 3.4 4 3.6 3.7-2.1c.9-.5.9-2 0-2.5z"/><path fill="#C64A0E" d="M3.6 2.4l9.2 9.6 3.8-3.4L5 1.9c-.5-.3-1-.3-1.4.1z"/></svg>
-          <span><small>Disponible en</small><b>Google Play</b></span>
+          <span><small>Android · Próximamente</small><b>Anotate a la beta</b></span>
         </a>
       </div>
       <p class="free-note"><b>30 días gratis</b> · Sin tarjeta · Cancelás cuando quieras</p>
 
       <div class="trust">
         <div class="t"><b>+14</b><span>artes marciales con plantillas</span></div>
-        <div class="t"><b>0</b><span>planillas de Excel</span></div>
+        <div class="t"><b>0</b><span>Excel que vas a necesitar</span></div>
         <div class="t"><b>ES · PT</b><span>español y portugués</span></div>
       </div>
     </div>
@@ -455,11 +477,28 @@
 <!-- ancla para "ver la app" -->
 <span id="recorrido"></span>
 
+<!-- PAINS -->
+<section class="pains-sec">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <p class="eyebrow">Si tenés un dojo, esto te suena</p>
+      <h2>Amás enseñar. Odiás el resto.</h2>
+    </div>
+    <div class="pains">
+      <div class="pain reveal"><span class="x">✕</span><p>Perseguís las cuotas por WhatsApp y a fin de mes no sabés bien quién te pagó.</p></div>
+      <div class="pain reveal"><span class="x">✕</span><p>La asistencia vive en un cuaderno (o en tu cabeza) y no te enterás cuando un alumno se empieza a borrar.</p></div>
+      <div class="pain reveal"><span class="x">✕</span><p>El progreso de cada uno, las técnicas y los cinturones los llevás de memoria o en un Excel que nadie más entiende.</p></div>
+      <div class="pain reveal"><span class="x">✕</span><p>Perdés horas de tu semana en administrar, cuando lo que querés es dar clase.</p></div>
+    </div>
+    <p class="pains-turn reveal">Warrior Path se ocupa de todo eso. <b>Vos volvés al tatami.</b></p>
+  </div>
+</section>
+
 <!-- BENEFITS -->
 <section>
   <div class="wrap">
     <div class="sec-head reveal">
-      <p class="eyebrow">Por qué tu dojo la necesita</p>
+      <p class="eyebrow">Lo que cambia para vos</p>
       <h2>Menos papeleo. Más tatami.</h2>
       <p class="lede">Todo lo que hoy hacés a mano —o que se te escapa— en un solo lugar, desde el teléfono.</p>
     </div>
@@ -487,9 +526,9 @@
 <section class="motiva">
   <div class="wrap">
     <div class="sec-head reveal">
-      <p class="eyebrow">El diferencial</p>
-      <h2>Un juego que llena tu clase.</h2>
-      <p class="lede">Cada alumno tiene un avatar que gana <b style="color:var(--ink)">Nivel de Poder</b> al asistir, ir a eventos y subir de cinturón. Sube de tier, gana aura, escala en el ranking. Ir a entrenar deja de ser una obligación.</p>
+      <p class="eyebrow">El diferencial que ninguna otra tiene</p>
+      <h2>Alumnos que no se borran.</h2>
+      <p class="lede">Cada alumno tiene un avatar que gana <b style="color:var(--ink)">Nivel de Poder</b> al asistir, ir a eventos y subir de cinturón: sube de tier, gana aura, escala en el ranking de la escuela. Ir a entrenar se vuelve un juego. Y un alumno que no falta es un alumno que no abandona — <b style="color:var(--ink)">y que sigue pagando su cuota</b>.</p>
     </div>
     <div class="tiers">
       <div class="tier reveal"><div class="avf avf-tier" data-g="male" data-tier="0"></div><span class="lvl">Novato</span><span class="rng">0 – 99</span></div>
@@ -521,7 +560,7 @@
           <li><span class="ck">✓</span> Plantillas de +14 artes marciales</li>
           <li><span class="ck">✓</span> App del alumno gratis, siempre</li>
         </ul>
-        <a class="btn btn-primary" href="https://apps.apple.com/app/idTU_APP_ID" style="width:100%;justify-content:center">Probá 30 días gratis</a>
+        <a class="btn btn-primary" href="https://apps.apple.com/uy/app/warrior-path/id6752713613" style="width:100%;justify-content:center">Probá 30 días gratis</a>
       </div>
       <div style="display:flex;flex-direction:column;gap:16px">
         <div class="price-annual reveal">
@@ -530,7 +569,7 @@
         </div>
         <div class="price-annual reveal">
           <p style="font-weight:800;margin-bottom:4px">Escuelas fundadoras</p>
-          <p style="color:var(--muted);font-size:14px">¿Sos de las primeras? Escribinos: <b>12 meses gratis</b> a cambio de tu feedback.</p>
+          <p style="color:var(--muted);font-size:14px">¿Sos de las primeras? <a href="https://wa.me/59899660730?text=Hola!%20Quiero%20sumar%20mi%20escuela%20como%20fundadora%20de%20Warrior%20Path%20%F0%9F%A5%8B" target="_blank" rel="noopener" style="color:var(--gold);font-weight:700;text-decoration:underline">Escribinos por WhatsApp</a>: <b>12 meses gratis</b> a cambio de tu feedback.</p>
         </div>
       </div>
     </div>
@@ -543,15 +582,11 @@
     <div class="reveal">
       <p class="eyebrow">Empezá hoy</p>
       <h2>Tu dojo, ordenado. Tus alumnos, motivados.</h2>
-      <p class="lede">Descargá Warrior Path y probala 30 días gratis. Cargar tu escuela lleva menos de 10 minutos.</p>
+      <p class="lede">Descargá Warrior Path y probala 30 días gratis, sin tarjeta. Cargar tu escuela lleva menos de 10 minutos.</p>
       <div class="cta-row">
-        <a class="btn btn-primary" href="https://apps.apple.com/app/idTU_APP_ID">App Store</a>
-        <a class="btn btn-ghost" href="https://play.google.com/store/apps/details?id=com.warriorpath.app">Google Play</a>
+        <a class="btn btn-primary" href="https://apps.apple.com/uy/app/warrior-path/id6752713613">App Store</a>
+        <a class="btn btn-ghost" href="https://wa.me/59899660730?text=Hola!%20Quiero%20anotarme%20a%20la%20beta%20de%20Android%20de%20Warrior%20Path" target="_blank" rel="noopener">Android: anotate a la beta</a>
       </div>
-      <div><a class="wa" href="https://wa.me/598TU_NUMERO" target="_blank" rel="noopener">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.7 15l-1.3 4.7 4.8-1.3A10 10 0 1012 2zm0 18a8 8 0 01-4.1-1.1l-.3-.2-2.8.8.7-2.8-.2-.3A8 8 0 1112 20zm4.4-6c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.6.1-.2.2-.6.8-.8 1-.1.1-.3.2-.5.1a6.5 6.5 0 01-3.2-2.8c-.2-.4.2-.4.6-1.2.1-.2 0-.3 0-.5s-.6-1.4-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.7.7-.9 1.7-.6 2.9.4 1.5 1.4 2.9 1.6 3.1.2.2 2.7 4.1 6.5 5.4 2.5.9 2.9.7 3.4.6.7-.1 1.4-.6 1.6-1.1.2-.6.2-1 .1-1.1-.1-.1-.3-.2-.5-.3z"/></svg>
-        Hablanos por WhatsApp
-      </a></div>
     </div>
   </div>
 </section>
@@ -562,7 +597,6 @@
     <div class="foot-links">
       <a href="privacy.html">Privacidad</a>
       <a href="support.html">Soporte</a>
-      <a href="https://wa.me/598TU_NUMERO">WhatsApp</a>
     </div>
     <div>© 2026 Warrior Path</div>
   </div>
@@ -641,10 +675,12 @@
     clearInterval(avTimer);
     if(idx===0 && !reduce){ ti=0; stepAvatar(); avTimer=setInterval(stepAvatar,1400); }
   }
-  if(!reduce){
-    stepAvatar(); avTimer=setInterval(stepAvatar,1400);
-    setInterval(()=>show((idx+1)%apps.length), 4200);
-  }
+  // El carrusel sigue rotando aunque el usuario tenga "Reducir movimiento":
+  // la media query de arriba ya saca la transición (opacity/transform), así
+  // que el cambio de pantalla es instantáneo en vez de animado — pero NUNCA
+  // queda congelado en la primera pantalla.
+  stepAvatar(); avTimer=setInterval(stepAvatar,1400);
+  setInterval(()=>show((idx+1)%apps.length), 4200);
 
   // Reveal on scroll
   const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}})},{threshold:.15});

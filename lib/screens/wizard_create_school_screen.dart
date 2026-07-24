@@ -1,13 +1,13 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:warrior_path/models/school_model.dart';
 import 'package:warrior_path/screens/wizard_discipline_hub_screen.dart';
 import 'package:warrior_path/services/school_setup_service.dart';
+import 'package:warrior_path/services/StorageService.dart';
 import 'package:warrior_path/theme/martial_art_themes.dart';
 import 'package:warrior_path/widgets/location_picker_map.dart';
 import '../l10n/app_localizations.dart';
@@ -102,12 +102,8 @@ class _WizardCreateSchoolScreenState extends State<WizardCreateSchoolScreen> {
 
       String? logoUrl;
       if (_logoImageFile != null) {
-        final ref = FirebaseStorage.instance
-            .ref()
-            .child('school_logos')
-            .child('${user.uid}_${DateTime.now().toIso8601String()}.jpg');
-        await ref.putFile(_logoImageFile!);
-        logoUrl = await ref.getDownloadURL();
+        logoUrl = await StorageService().uploadImage(_logoImageFile!,
+            'school_logos/${user.uid}_${DateTime.now().toIso8601String()}');
       }
 
       final schoolName = _schoolNameController.text.trim();

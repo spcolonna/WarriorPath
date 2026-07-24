@@ -2,11 +2,11 @@ import 'dart:io';
 
 import '../../../l10n/app_localizations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:warrior_path/models/discipline_model.dart';
+import 'package:warrior_path/services/StorageService.dart';
 import 'package:warrior_path/theme/martial_art_themes.dart';
 import 'package:warrior_path/widgets/location_picker_map.dart';
 
@@ -160,9 +160,8 @@ class _EditSchoolDataScreenState extends State<EditSchoolDataScreen> {
     try {
       String? newLogoUrl;
       if (_newLogoImageFile != null) {
-        final ref = FirebaseStorage.instance.ref().child('school_logos').child('${widget.schoolId}_${DateTime.now().toIso8601String()}.jpg');
-        await ref.putFile(_newLogoImageFile!);
-        newLogoUrl = await ref.getDownloadURL();
+        newLogoUrl = await StorageService().uploadImage(_newLogoImageFile!,
+            'school_logos/${widget.schoolId}_${DateTime.now().toIso8601String()}');
       }
 
       final schoolName = _nameController.text.trim();
