@@ -56,7 +56,15 @@
       "Bash(curl -sI \"https://warriorpath-web.web.app\")",
       "Bash(curl -sI \"https://warriorpath-web.web.app/?nocache=$\\(date +%s\\)\")",
       "Bash(curl -sI \"https://warriorpath-web.web.app/index.html?nocache=$\\(date +%s\\)\")",
-      "Bash(curl -sI \"https://warriorpath-web.web.app/?nc=$\\(date +%s\\)\")"
+      "Bash(curl -sI \"https://warriorpath-web.web.app/?nc=$\\(date +%s\\)\")",
+      "Bash(gcloud config *)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(curl -s https://identitytoolkit.googleapis.com/admin/v2/projects/warriorpath-89a85/config -H 'Authorization: Bearer __CMDSUB_OUTPUT__')",
+      "Bash(python3 -m json.tool)",
+      "Bash(rm -f /tmp/smtp_payload.json /tmp/idtk_disc.json /tmp/gcloud_err.txt 2>/dev/null; echo ok)"
+    ],
+    "additionalDirectories": [
+      "/tmp"
     ]
   }
 }
