@@ -88,6 +88,71 @@
     "instructor": "instructor",
     "save": "Guardar",
     "updateRolSuccess": "Rol actualizado con éxito.",
+    "promoteToTeacherTitle": "¿Promover a Maestro?",
+    "promoteToTeacherBody": "{name} va a poder gestionar la escuela como vos: alumnos, asistencia, cobros, progreso y eventos. No va a poder borrar la escuela ni cambiar roles de otros maestros.",
+    "@promoteToTeacherBody": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "promote": "Promover",
+    "deactivateStudent": "Inactivar alumno",
+    "reactivateStudent": "Reactivar alumno",
+    "removeStudent": "Eliminar de la escuela",
+    "deactivateStudentTitle": "¿Inactivar a {name}?",
+    "@deactivateStudentTitle": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "deactivateStudentBody": "Va a dejar de aparecer en las listas, el ranking y la asistencia, y no va a poder entrar a la escuela. Se conserva todo su historial: si lo reactivás, recupera su progreso y cinturón intactos.",
+    "deactivate": "Inactivar",
+    "reactivate": "Reactivar",
+    "studentDeactivated": "Alumno inactivado.",
+    "studentReactivated": "Alumno reactivado.",
+    "removeStudentTitle": "¿Eliminar a {name} definitivamente?",
+    "@removeStudentTitle": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "removeStudentBody": "Se borra su historial de asistencias, pagos y progreso en esta escuela. Esta acción no se puede deshacer. Si quiere volver, tendrá que postularse de nuevo como alumno nuevo.",
+    "delete": "Eliminar",
+    "studentRemoved": "Alumno eliminado de la escuela.",
+    "actionError": "No se pudo completar la acción: {e}",
+    "@actionError": {
+        "placeholders": {
+            "e": {
+                "type": "String"
+            }
+        }
+    },
+    "inactivatedTitle": "Fuiste dado de baja",
+    "inactivatedBody": "{school} te dio de baja como alumno. Comunicate con tu maestro para que te reactive.",
+    "@inactivatedBody": {
+        "placeholders": {
+            "school": {
+                "type": "String"
+            }
+        }
+    },
+    "inactivatedHint": "Mientras tanto, podés buscar otra escuela o crear la tuya.",
+    "searchAnotherSchool": "Buscar otra escuela",
+    "createMySchool": "Crear mi escuela",
+    "inactiveInThisSchool": "Te dieron de baja en esta escuela",
+    "orWithEmail": "o con tu correo",
+    "notificationsActive": "Notificaciones activas",
+    "notificationsActiveSubtitle": "Vas a recibir avisos en este dispositivo.",
+    "notificationsOff": "No vas a recibir notificaciones",
+    "notificationsOffPermission": "Activá las notificaciones para Warrior Path en los ajustes de tu teléfono.",
+    "notificationsOffDevice": "Este dispositivo no quedó registrado. Tocá reintentar.",
+    "retry": "Reintentar",
     "updateRolError": "Error al cambiar el rol: {e}",
     "successPayment": "Pago registrado con éxito.",
     "paymentError": "Error al registrar el pago: {e}",

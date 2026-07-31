@@ -194,14 +194,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       ),
                     ),
                     const SizedBox(height: 32.0),
-                    CustomInputField(
-                      controller: _emailController,
-                      labelText: l10n.emailLabel,
-                      icon: Icons.email_outlined,
-                    ),
-                    const SizedBox(height: 16.0),
-                    CustomPasswordField(controller: _passwordController),
-                    const SizedBox(height: 32.0),
                     if (_isLoading)
                       const CircularProgressIndicator(
                         valueColor: AlwaysStoppedAnimation<Color>(
@@ -212,6 +204,53 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
+                          // Google y Apple van PRIMERO: es la forma más rápida
+                          // de entrar y, abajo del todo, los usuarios nuevos ni
+                          // se enteraban de que existía.
+                          _SocialButton(
+                            label: l10n.continueWithGoogle,
+                            icon: Icons.g_mobiledata,
+                            iconColor: const Color(0xFF4285F4),
+                            onPressed: () =>
+                                _handleSocialLogin(_authService.signInWithGoogle),
+                          ),
+                          if (Platform.isIOS) ...[
+                            const SizedBox(height: 12.0),
+                            _SocialButton(
+                              label: l10n.continueWithApple,
+                              icon: Icons.apple,
+                              dark: true,
+                              onPressed: () =>
+                                  _handleSocialLogin(_authService.signInWithApple),
+                            ),
+                          ],
+                          const SizedBox(height: 24.0),
+                          Row(
+                            children: [
+                              const Expanded(child: Divider()),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
+                                child: Text(
+                                  l10n.orWithEmail,
+                                  style: TextStyle(color: Colors.grey.shade500),
+                                ),
+                              ),
+                              const Expanded(child: Divider()),
+                            ],
+                          ),
+                          const SizedBox(height: 24.0),
+                          CustomInputField(
+                            controller: _emailController,
+                            labelText: l10n.emailLabel,
+                            icon: Icons.email_outlined,
+                          ),
+                          const SizedBox(height: 16.0),
+                          CustomPasswordField(
+                            controller: _passwordController,
+                          ),
+                          const SizedBox(height: 24.0),
                           SecondaryButton(
                             text: l10n.loginButton,
                             onPressed: _performLogin,
@@ -236,40 +275,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                             },
                             child: Text(l10n.forgotPasswordLink),
                           ),
-                          const SizedBox(height: 8.0),
-                          Row(
-                            children: [
-                              const Expanded(child: Divider()),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                ),
-                                child: Text(
-                                  'o',
-                                  style: TextStyle(color: Colors.grey.shade500),
-                                ),
-                              ),
-                              const Expanded(child: Divider()),
-                            ],
-                          ),
-                          const SizedBox(height: 16.0),
-                          _SocialButton(
-                            label: l10n.continueWithGoogle,
-                            icon: Icons.g_mobiledata,
-                            iconColor: const Color(0xFF4285F4),
-                            onPressed: () =>
-                                _handleSocialLogin(_authService.signInWithGoogle),
-                          ),
-                          if (Platform.isIOS) ...[
-                            const SizedBox(height: 12.0),
-                            _SocialButton(
-                              label: l10n.continueWithApple,
-                              icon: Icons.apple,
-                              dark: true,
-                              onPressed: () =>
-                                  _handleSocialLogin(_authService.signInWithApple),
-                            ),
-                          ],
                         ],
                       ),
                   ],

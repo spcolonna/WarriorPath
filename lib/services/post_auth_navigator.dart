@@ -6,6 +6,7 @@ import 'package:warrior_path/providers/session_provider.dart';
 import 'package:warrior_path/screens/parent/add_child_screen.dart';
 import 'package:warrior_path/screens/parent/guardian_dashboard_screen.dart';
 import 'package:warrior_path/screens/role_selector_screen.dart';
+import 'package:warrior_path/screens/student/inactivated_screen.dart';
 import 'package:warrior_path/screens/student/pending_progress_screen.dart';
 import 'package:warrior_path/screens/student/school_search_screen.dart';
 import 'package:warrior_path/screens/student/student_dashboard_screen.dart';
@@ -175,10 +176,32 @@ Future<void> navigateAfterAuth(BuildContext context, User user) async {
           ),
         );
       } else {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (context) => const SchoolSearchScreen()),
+        // Sin membresías activas y sin postulaciones: puede ser un alumno al
+        // que dieron de baja (al inactivarlo se le limpia `activeMemberships`).
+        // Hay que decírselo, no mandarlo mudo a buscar escuela.
+        final inactiveSchoolName = _findInactiveSchoolName(userData);
+
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => inactiveSchoolName != null
+                ? InactivatedScreen(schoolName: inactiveSchoolName)
+                : const SchoolSearchScreen(),
+          ),
         );
       }
     }
   }
+}
+
+/// Nombre de la escuela que dio de baja al usuario, o null si no hay ninguna.
+///
+/// Al inactivar se escribe `users/{uid}.inactiveMemberships[schoolId] = nombre`
+/// además de limpiar `activeMemberships`. Se guarda el nombre desnormalizado a
+/// propósito: un `collectionGroup` sobre `members` no serviría, porque filtrar
+/// por ID de documento en ese tipo de consulta exige el path completo.
+String? _findInactiveSchoolName(Map<String, dynamic> userData) {
+  final inactive = userData['inactiveMemberships'] as Map<String, dynamic>?;
+  if (inactive == null || inactive.isEmpty) return null;
+  final name = inactive.values.first;
+  return name is String && name.isNotEmpty ? name : null;
 }

@@ -297,6 +297,112 @@ class AppLocalizationsEs extends AppLocalizations {
   String get updateRolSuccess => 'Rol actualizado con éxito.';
 
   @override
+  String get promoteToTeacherTitle => '¿Promover a Maestro?';
+
+  @override
+  String promoteToTeacherBody(String name) {
+    return '$name va a poder gestionar la escuela como vos: alumnos, asistencia, cobros, progreso y eventos. No va a poder borrar la escuela ni cambiar roles de otros maestros.';
+  }
+
+  @override
+  String get promote => 'Promover';
+
+  @override
+  String get deactivateStudent => 'Inactivar alumno';
+
+  @override
+  String get reactivateStudent => 'Reactivar alumno';
+
+  @override
+  String get removeStudent => 'Eliminar de la escuela';
+
+  @override
+  String deactivateStudentTitle(String name) {
+    return '¿Inactivar a $name?';
+  }
+
+  @override
+  String get deactivateStudentBody =>
+      'Va a dejar de aparecer en las listas, el ranking y la asistencia, y no va a poder entrar a la escuela. Se conserva todo su historial: si lo reactivás, recupera su progreso y cinturón intactos.';
+
+  @override
+  String get deactivate => 'Inactivar';
+
+  @override
+  String get reactivate => 'Reactivar';
+
+  @override
+  String get studentDeactivated => 'Alumno inactivado.';
+
+  @override
+  String get studentReactivated => 'Alumno reactivado.';
+
+  @override
+  String removeStudentTitle(String name) {
+    return '¿Eliminar a $name definitivamente?';
+  }
+
+  @override
+  String get removeStudentBody =>
+      'Se borra su historial de asistencias, pagos y progreso en esta escuela. Esta acción no se puede deshacer. Si quiere volver, tendrá que postularse de nuevo como alumno nuevo.';
+
+  @override
+  String get delete => 'Eliminar';
+
+  @override
+  String get studentRemoved => 'Alumno eliminado de la escuela.';
+
+  @override
+  String actionError(String e) {
+    return 'No se pudo completar la acción: $e';
+  }
+
+  @override
+  String get inactivatedTitle => 'Fuiste dado de baja';
+
+  @override
+  String inactivatedBody(String school) {
+    return '$school te dio de baja como alumno. Comunicate con tu maestro para que te reactive.';
+  }
+
+  @override
+  String get inactivatedHint =>
+      'Mientras tanto, podés buscar otra escuela o crear la tuya.';
+
+  @override
+  String get searchAnotherSchool => 'Buscar otra escuela';
+
+  @override
+  String get createMySchool => 'Crear mi escuela';
+
+  @override
+  String get inactiveInThisSchool => 'Te dieron de baja en esta escuela';
+
+  @override
+  String get orWithEmail => 'o con tu correo';
+
+  @override
+  String get notificationsActive => 'Notificaciones activas';
+
+  @override
+  String get notificationsActiveSubtitle =>
+      'Vas a recibir avisos en este dispositivo.';
+
+  @override
+  String get notificationsOff => 'No vas a recibir notificaciones';
+
+  @override
+  String get notificationsOffPermission =>
+      'Activá las notificaciones para Warrior Path en los ajustes de tu teléfono.';
+
+  @override
+  String get notificationsOffDevice =>
+      'Este dispositivo no quedó registrado. Tocá reintentar.';
+
+  @override
+  String get retry => 'Reintentar';
+
+  @override
   String updateRolError(String e) {
     return 'Error al cambiar el rol: $e';
   }

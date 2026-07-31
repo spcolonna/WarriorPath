@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
+import '../constants/school_roles.dart';
 import '../l10n/app_localizations.dart';
 
 /// Lógica compartida para aceptar/rechazar solicitudes de ingreso de alumnos.
@@ -128,20 +129,22 @@ class StudentApplicationService {
       final userRef = firestore.collection('users').doc(userId);
 
       batch.update(memberRef, {
-        'status': 'active',
+        'status': MemberStatus.active,
         'powerLevel': FieldValue.increment(0), // materializa el campo p/ranking
         'progress.$disciplineId': {
           'currentLevelId': initialLevelId,
           'enrollmentDate': FieldValue.serverTimestamp(),
           'assignedTechniqueIds': [],
-          'role': 'alumno'
         },
         'joinDate': FieldValue.serverTimestamp(),
-        'role': FieldValue.delete(), // Eliminamos el campo de rol antiguo
+        // El rol vive en la RAÍZ del member (es de la escuela, no de una
+        // disciplina). Antes se borraba acá, con lo que las listas que filtran
+        // por `role` quedaban mirando un campo inexistente.
+        'role': SchoolRoles.alumno,
       });
 
       batch.set(userRef, {
-        'activeMemberships': {schoolId: 'alumno'},
+        'activeMemberships': {schoolId: SchoolRoles.alumno},
         'pendingApplications': FieldValue.delete(),
       }, SetOptions(merge: true));
 

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:warrior_path/constants/school_roles.dart';
 import 'package:warrior_path/providers/session_provider.dart';
 import 'package:warrior_path/screens/teacher/add_offline_student_screen.dart';
 import 'package:warrior_path/screens/teacher/student_detail_screen.dart';
@@ -62,7 +63,28 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
           indicatorWeight: 3,
           tabs: [
             Tab(text: l10n.actives),
-            Tab(text: l10n.pending),
+            Tab(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('schools')
+                    .doc(schoolId)
+                    .collection('members')
+                    .where('status', isEqualTo: MemberStatus.pending)
+                    .snapshots(),
+                builder: (context, snap) {
+                  final count = snap.data?.docs.length ?? 0;
+                  if (count == 0) return Text(l10n.pending);
+                  return Badge(
+                    label: Text('$count'),
+                    backgroundColor: Colors.red,
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: Text(l10n.pending),
+                    ),
+                  );
+                },
+              ),
+            ),
             Tab(text: l10n.inactives),
           ],
         ),
@@ -71,8 +93,8 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
         controller: _tabController,
         children: [
           _buildActivosCobros(schoolId),
-          _buildStudentsList('pending', schoolId),
-          _buildStudentsList('inactive', schoolId),
+          _buildStudentsList(MemberStatus.pending, schoolId),
+          _buildStudentsList(MemberStatus.inactive, schoolId),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -116,14 +138,14 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
               .collection('schools')
               .doc(schoolId)
               .collection('members')
-              .where('status', isEqualTo: 'active')
+              .where('status', isEqualTo: MemberStatus.active)
               .snapshots(),
           builder: (context, memSnap) {
             if (memSnap.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
             final members = (memSnap.data?.docs ?? [])
-                .where((d) => (d.data() as Map)['role'] != 'maestro')
+                .where((d) => (d.data() as Map)['role'] != SchoolRoles.maestro)
                 .toList()
               ..sort((a, b) => ((a.data() as Map)['displayName'] ?? '')
                   .toString()

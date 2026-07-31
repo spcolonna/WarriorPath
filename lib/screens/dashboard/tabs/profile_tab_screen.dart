@@ -6,6 +6,7 @@ import 'package:warrior_path/providers/locale_provider.dart';
 import 'package:warrior_path/providers/session_provider.dart';
 import 'package:warrior_path/screens/WelcomeScreen.dart';
 import 'package:warrior_path/widgets/delete_account_flow.dart';
+import 'package:warrior_path/widgets/notification_status_tile.dart';
 import 'package:warrior_path/screens/role_selector_screen.dart';
 import 'package:warrior_path/screens/student/school_search_screen.dart';
 import 'package:warrior_path/screens/wizard_create_school_screen.dart';
@@ -50,6 +51,7 @@ class ProfileTabScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
+          const NotificationStatusTile(),
           ListTile(
             leading: const Icon(Icons.edit),
             title: Text(l10n.editMyProfile),

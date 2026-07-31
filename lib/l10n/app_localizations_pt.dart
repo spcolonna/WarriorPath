@@ -299,6 +299,112 @@ class AppLocalizationsPt extends AppLocalizations {
   String get updateRolSuccess => 'Papel atualizado com sucesso.';
 
   @override
+  String get promoteToTeacherTitle => 'Promover a Mestre?';
+
+  @override
+  String promoteToTeacherBody(String name) {
+    return '$name poderá gerenciar a escola como você: alunos, presença, cobranças, progresso e eventos. Não poderá excluir a escola nem mudar papéis de outros mestres.';
+  }
+
+  @override
+  String get promote => 'Promover';
+
+  @override
+  String get deactivateStudent => 'Inativar aluno';
+
+  @override
+  String get reactivateStudent => 'Reativar aluno';
+
+  @override
+  String get removeStudent => 'Remover da escola';
+
+  @override
+  String deactivateStudentTitle(String name) {
+    return 'Inativar $name?';
+  }
+
+  @override
+  String get deactivateStudentBody =>
+      'Deixará de aparecer nas listas, no ranking e na presença, e não poderá entrar na escola. Todo o histórico é preservado: se você reativá-lo, recupera o progresso e a faixa intactos.';
+
+  @override
+  String get deactivate => 'Inativar';
+
+  @override
+  String get reactivate => 'Reativar';
+
+  @override
+  String get studentDeactivated => 'Aluno inativado.';
+
+  @override
+  String get studentReactivated => 'Aluno reativado.';
+
+  @override
+  String removeStudentTitle(String name) {
+    return 'Remover $name definitivamente?';
+  }
+
+  @override
+  String get removeStudentBody =>
+      'O histórico de presenças, pagamentos e progresso nesta escola será apagado. Esta ação não pode ser desfeita. Se quiser voltar, terá que se candidatar de novo como aluno novo.';
+
+  @override
+  String get delete => 'Remover';
+
+  @override
+  String get studentRemoved => 'Aluno removido da escola.';
+
+  @override
+  String actionError(String e) {
+    return 'Não foi possível concluir a ação: $e';
+  }
+
+  @override
+  String get inactivatedTitle => 'Você foi desligado';
+
+  @override
+  String inactivatedBody(String school) {
+    return '$school desligou você como aluno. Fale com seu mestre para que ele reative seu acesso.';
+  }
+
+  @override
+  String get inactivatedHint =>
+      'Enquanto isso, você pode procurar outra escola ou criar a sua.';
+
+  @override
+  String get searchAnotherSchool => 'Procurar outra escola';
+
+  @override
+  String get createMySchool => 'Criar minha escola';
+
+  @override
+  String get inactiveInThisSchool => 'Você foi desligado desta escola';
+
+  @override
+  String get orWithEmail => 'ou com seu e-mail';
+
+  @override
+  String get notificationsActive => 'Notificações ativas';
+
+  @override
+  String get notificationsActiveSubtitle =>
+      'Você vai receber avisos neste dispositivo.';
+
+  @override
+  String get notificationsOff => 'Você não vai receber notificações';
+
+  @override
+  String get notificationsOffPermission =>
+      'Ative as notificações para o Warrior Path nas configurações do seu telefone.';
+
+  @override
+  String get notificationsOffDevice =>
+      'Este dispositivo não foi registrado. Toque em tentar novamente.';
+
+  @override
+  String get retry => 'Tentar novamente';
+
+  @override
   String updateRolError(String e) {
     return 'Erro ao mudar o papel: $e';
   }

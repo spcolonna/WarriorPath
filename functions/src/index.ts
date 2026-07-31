@@ -56,15 +56,25 @@ exports.generateMonthlyPaymentReminders = onSchedule(
     // Día del mes y período (YYYY-MM) en Montevideo — dentro de la función
     // `new Date()` es UTC, así que lo derivamos con Intl en la zona correcta.
     const tz = "America/Montevideo";
-    const parts = new Intl.DateTimeFormat("en-CA", {
-      timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit",
-    }).formatToParts(new Date());
-    const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
-    const todayDay = parseInt(get("day"), 10);
-    const periodKey = `${get("year")}-${get("month")}`; // ej. "2026-07"
+    const dateParts = (d: Date) => {
+      const parts = new Intl.DateTimeFormat("en-CA", {
+        timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit",
+      }).formatToParts(d);
+      const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+      return {
+        day: parseInt(get("day"), 10),
+        periodKey: `${get("year")}-${get("month")}`, // ej. "2026-07"
+      };
+    };
 
-    logger.info(
-      `Recordatorios de pago: día ${todayDay}, período ${periodKey}.`);
+    const now = new Date();
+    const today = dateParts(now);
+    // Mañana calculado como fecha real: así el aviso de víspera funciona
+    // también cuando el vencimiento es el día 1 y hoy es fin de mes.
+    const tomorrow = dateParts(new Date(now.getTime() + 24 * 60 * 60 * 1000));
+
+    logger.info(`Recordatorios de pago: hoy día ${today.day} ` +
+      `(${today.periodKey}), mañana día ${tomorrow.day} (${tomorrow.periodKey}).`);
 
     const schoolsSnap = await db.collection("schools").get();
 
@@ -73,7 +83,14 @@ exports.generateMonthlyPaymentReminders = onSchedule(
       const financials =
         (schoolDoc.data()?.financials ?? {}) as Record<string, unknown>;
       const dueDay = (financials.paymentDueDay as number | undefined) ?? 5;
-      if (dueDay !== todayDay) return; // hoy no vence en esta escuela
+
+      // Dos momentos: la víspera y el día del vencimiento. El período siempre
+      // es el del vencimiento (si mañana es 1°, el período es el mes que viene).
+      const isEve = tomorrow.day === dueDay;
+      const isDueDay = today.day === dueDay;
+      if (!isEve && !isDueDay) return;
+
+      const periodKey = isEve ? tomorrow.periodKey : today.periodKey;
 
       // Query de un solo campo → auto-indexada, sin índice compuesto.
       const membersSnap = await schoolDoc.ref.collection("members")
@@ -94,30 +111,49 @@ exports.generateMonthlyPaymentReminders = onSchedule(
         //  viejo suprimía todos los meses siguientes.)
         const existing = await remindersRef
           .where("periodKey", "==", periodKey).limit(1).get();
-        if (!existing.empty) return;
+        const reminderDoc = existing.docs[0];
+
+        // El día del vencimiento sólo se insiste si sigue impago.
+        if (reminderDoc && reminderDoc.data().status !== "pending") return;
+
+        // Un aviso por momento: la víspera no se repite, y el del día tampoco.
+        const alreadyNotified = reminderDoc?.data()[
+          isEve ? "notifiedEve" : "notifiedDueDay"] === true;
+        if (alreadyNotified) return;
 
         const planDoc = await schoolDoc.ref
           .collection("paymentPlans").doc(planId).get();
         const planData = planDoc.data();
         if (!planDoc.exists || !planData) return;
 
-        await remindersRef.add({
-          concept: planData.title,
-          amount: planData.amount,
-          currency: planData.currency,
-          status: "pending",
-          planId: planId,
-          studentId: memberId,
-          schoolId: schoolId,
-          periodKey: periodKey,
-          createdOn: admin.firestore.FieldValue.serverTimestamp(),
-        });
+        if (reminderDoc) {
+          await reminderDoc.ref.update({
+            [isEve ? "notifiedEve" : "notifiedDueDay"]: true,
+          });
+        } else {
+          await remindersRef.add({
+            concept: planData.title,
+            amount: planData.amount,
+            currency: planData.currency,
+            status: "pending",
+            planId: planId,
+            studentId: memberId,
+            schoolId: schoolId,
+            periodKey: periodKey,
+            notifiedEve: isEve,
+            notifiedDueDay: isDueDay && !isEve,
+            createdOn: admin.firestore.FieldValue.serverTimestamp(),
+          });
+        }
 
         await sendNotificationsToUser(memberId, {
           notification: {
             title: "Recordatorio de Pago",
-            body: `Tu cuota de ${planData.title} vence hoy.`,
+            body: isEve ?
+              `Tu cuota de ${planData.title} vence mañana.` :
+              `Tu cuota de ${planData.title} vence hoy.`,
           },
+          data: {type: "payment_due", schoolId, memberId},
         });
       });
 
@@ -140,23 +176,50 @@ exports.onMemberStatusChange = onDocumentWritten(
     const beforeData = event.data.before.data();
     const afterData = event.data.after.data();
 
+    // Borrado: si se rechaza una postulación pendiente, avisarle al alumno.
+    // Antes se le borraba el documento y se quedaba esperando sin enterarse.
+    if (event.data.before.exists && !event.data.after.exists && beforeData) {
+      if (beforeData.status === "pending") {
+        try {
+          const schoolDoc = await db.collection("schools").doc(schoolId).get();
+          const schoolName = schoolDoc.data()?.name ?? "la escuela";
+          await sendNotificationsToUser(memberId, {
+            notification: {
+              title: "Solicitud no aprobada",
+              body: `Tu solicitud para unirte a ${schoolName} no fue aprobada.` +
+                " Podés buscar otra escuela en la app.",
+            },
+            data: {type: "application_rejected", schoolId},
+          });
+        } catch (error) {
+          logger.error("Error al notificar rechazo de solicitud:", error);
+        }
+      }
+      return;
+    }
+
     // Creación (Postulación)
     if (!event.data.before.exists && event.data.after.exists && afterData) {
       if (afterData.status === "pending") {
         try {
-          const schoolDoc = await db.collection("schools").doc(schoolId).get();
-          const ownerId = schoolDoc.data()?.ownerId;
-          if (ownerId) {
-            const payload = {
-              notification: {
-                title: "Nueva Solicitud de Ingreso",
-                body: `${afterData.displayName} quiere unirse a tu escuela.`,
-              },
-            };
-            await sendNotificationsToUser(ownerId, payload);
-          }
+          // A todos los maestros, no sólo al dueño: si la escuela tiene
+          // co-maestros, cualquiera de ellos puede aprobar la solicitud.
+          const recipients = await getSchoolManagerIds(schoolId);
+          const payload = {
+            notification: {
+              title: "Nueva Solicitud de Ingreso",
+              body: `${afterData.displayName} quiere unirse a tu escuela.`,
+            },
+            data: {
+              type: "join_request",
+              schoolId,
+              memberId,
+            },
+          };
+          await Promise.all(
+            recipients.map((uid) => sendNotificationsToUser(uid, payload)));
         } catch (error) {
-          logger.error("Error al notificar al dueño:", error);
+          logger.error("Error al notificar a los maestros:", error);
         }
       }
     }
@@ -174,6 +237,7 @@ exports.onMemberStatusChange = onDocumentWritten(
               body: `Felicitaciones, tu solicitud para unirte a ${schoolName}` +
                                 " ha sido aprobada.",
             },
+            data: {type: "application_accepted", schoolId, memberId},
           };
           await sendNotificationsToUser(memberId, payload);
         } catch (error) {
@@ -181,13 +245,20 @@ exports.onMemberStatusChange = onDocumentWritten(
         }
       }
       // Promoción
-      if (beforeData.hasUnseenPromotion === false && afterData.hasUnseenPromotion === true) {
+      // El flag arranca ausente (el member se crea sin él), así que comparar
+      // con `=== false` hacía que la PRIMERA promoción nunca notificara.
+      if (!beforeData.hasUnseenPromotion && afterData.hasUnseenPromotion === true) {
         try {
-          const newLevelId = afterData.currentLevelId;
+          // El nivel vive dentro de progress.{disciplineId}; leerlo de la raíz
+          // hacía que el nombre siempre cayera al genérico "un nuevo nivel".
+          const {levelId, disciplineId} =
+            findPromotedLevel(beforeData.progress, afterData.progress);
+
           let newLevelName = "un nuevo nivel";
-          if (newLevelId) {
+          if (levelId && disciplineId) {
             const levelDoc = await db.collection("schools").doc(schoolId)
-              .collection("levels").doc(newLevelId).get();
+              .collection("disciplines").doc(disciplineId)
+              .collection("levels").doc(levelId).get();
             newLevelName = levelDoc.data()?.name ?? newLevelName;
           }
           const payload = {
@@ -195,6 +266,7 @@ exports.onMemberStatusChange = onDocumentWritten(
               title: "¡Felicitaciones, has sido promovido!",
               body: `Has alcanzado el nivel de ${newLevelName}. ¡Sigue así!`,
             },
+            data: {type: "promotion", schoolId, memberId},
           };
           await sendNotificationsToUser(memberId, payload);
         } catch (error) {
@@ -202,17 +274,19 @@ exports.onMemberStatusChange = onDocumentWritten(
         }
       }
       // Técnicas
-      const beforeTechs = new Set(beforeData.assignedTechniqueIds ?? []);
-      const afterTechs = afterData.assignedTechniqueIds ?? [];
-      const newTechIds = afterTechs.filter((id: string) => !beforeTechs.has(id));
-      if (newTechIds.length > 0) {
+      // Las técnicas se asignan por disciplina (progress.{id}.assignedTechniqueIds).
+      // Antes se leía el campo en la raíz, que no existe: nunca disparaba.
+      const newTechCount =
+        countNewTechniques(beforeData.progress, afterData.progress);
+      if (newTechCount > 0) {
         try {
           const payload = {
             notification: {
               title: "Nuevas Técnicas Asignadas",
-              body: `Tu maestro te ha asignado ${newTechIds.length} nueva(s)` +
+              body: `Tu maestro te ha asignado ${newTechCount} nueva(s)` +
                                 " técnica(s). ¡Revísalas en tu progreso!",
             },
+            data: {type: "techniques", schoolId, memberId},
           };
           await sendNotificationsToUser(memberId, payload);
         } catch (error) {
@@ -240,6 +314,11 @@ exports.onPaymentCreated = onDocumentWritten(
         title: "Nuevo Pago Registrado",
         body: `Tu maestro ha registrado un pago de ${amount} ${currency}` +
                     ` por concepto de "${concept}".`,
+      },
+      data: {
+        type: "payment_registered",
+        schoolId: event.params.schoolId,
+        memberId: studentId,
       },
     };
     try {
@@ -307,6 +386,7 @@ exports.onAttendanceUpdated = onDocumentWritten(
         body: "¡Presente! Se ha registrado tu asistencia para la clase de" +
                     ` "${scheduleTitle}".`,
       },
+      data: {type: "attendance", schoolId},
     };
     const notificationPromises = newStudentIds
       .map((studentId) => sendNotificationsToUser(studentId, payload));
@@ -397,6 +477,11 @@ exports.onEventAssigned = onDocumentWritten(
         body: `Has sido invitado al evento: "${eventName}".` +
                     " ¡Revisa la app para más detalles!",
       },
+      data: {
+        type: "event_invite",
+        schoolId: event.params.schoolId,
+        eventId: event.params.eventId,
+      },
     };
     const notificationPromises = newStudentIds
       .map((studentId) => sendNotificationsToUser(studentId, payload));
@@ -435,10 +520,10 @@ exports.linkOfflineStudent = onCall(async (request) => {
   if (!schoolSnap.exists) {
     throw new HttpsError("not-found", "La escuela no existe.");
   }
-  // Solo el dueño de la escuela puede vincular cuentas.
-  if (schoolSnap.data()?.ownerId !== callerUid) {
+  // Gestión del día a día: la pueden hacer el dueño y los maestros.
+  if (!await canManageSchool(schoolId, callerUid)) {
     throw new HttpsError(
-      "permission-denied", "Solo el dueño de la escuela puede vincular cuentas.");
+      "permission-denied", "Solo un maestro de la escuela puede vincular cuentas.");
   }
 
   const offlineMemberRef = schoolRef.collection("members").doc(offlineMemberId);
@@ -664,6 +749,166 @@ exports.abandonSchoolSetup = onCall(async (request) => {
 });
 
 // ===============================================================================================
+// ELIMINAR UN MIEMBRO DE LA ESCUELA
+// ===============================================================================================
+// Borra el miembro y todo su historial en esta escuela (asistencias, pagos,
+// progreso). Se hace en backend porque el cliente no puede borrar
+// subcolecciones de forma recursiva.
+//
+// Sólo se permite sobre miembros ya inactivos: es una acción irreversible, así
+// que el maestro primero tiene que darlo de baja y recién después eliminarlo.
+exports.removeMember = onCall(async (request) => {
+  const callerUid = request.auth?.uid;
+  if (!callerUid) {
+    throw new HttpsError("unauthenticated", "Debés iniciar sesión.");
+  }
+
+  const {schoolId, memberId} = request.data ?? {};
+  if (!schoolId || !memberId) {
+    throw new HttpsError("invalid-argument", "Faltan schoolId o memberId.");
+  }
+
+  if (!await canManageSchool(schoolId, callerUid)) {
+    throw new HttpsError(
+      "permission-denied", "Solo un maestro de la escuela puede eliminar alumnos.");
+  }
+
+  const schoolRef = db.collection("schools").doc(schoolId);
+
+  // No se puede eliminar al dueño de la escuela.
+  const schoolSnap = await schoolRef.get();
+  if (schoolSnap.data()?.ownerId === memberId) {
+    throw new HttpsError(
+      "failed-precondition", "No se puede eliminar al dueño de la escuela.");
+  }
+
+  const memberRef = schoolRef.collection("members").doc(memberId);
+  const memberSnap = await memberRef.get();
+  if (!memberSnap.exists) {
+    throw new HttpsError("not-found", "El miembro no existe en esta escuela.");
+  }
+  if (memberSnap.data()?.status !== "inactive") {
+    throw new HttpsError(
+      "failed-precondition",
+      "Primero hay que inactivar al alumno antes de eliminarlo.");
+  }
+
+  // Borrado recursivo: el member + sus subcolecciones (payments,
+  // paymentReminders, attendance, etc.).
+  await db.recursiveDelete(memberRef);
+
+  // Limpieza del perfil del alumno para que no le quede rastro de la escuela.
+  // Va con update() y no con set({merge}) porque las rutas con punto sólo se
+  // interpretan como campos anidados en update(); en set() serían literales.
+  try {
+    await db.collection("users").doc(memberId).update({
+      [`activeMemberships.${schoolId}`]: admin.firestore.FieldValue.delete(),
+      [`inactiveMemberships.${schoolId}`]: admin.firestore.FieldValue.delete(),
+      [`pendingApplications.${schoolId}`]: admin.firestore.FieldValue.delete(),
+    });
+  } catch (error) {
+    // El alumno puede no tener perfil (alumno offline creado por el maestro).
+    logger.warn(`No se pudo limpiar el perfil de ${memberId}:`, error);
+  }
+
+  logger.info(`Miembro ${memberId} eliminado de ${schoolId} por ${callerUid}`);
+  return {success: true};
+});
+
+// ===============================================================================================
+// AUXILIARES: LECTURA DE `progress` POR DISCIPLINA
+// ===============================================================================================
+// El progreso del alumno se guarda anidado por disciplina:
+//   progress: { <disciplineId>: { currentLevelId, assignedTechniqueIds, ... } }
+// Estos helpers comparan el antes/después para detectar qué cambió.
+
+type ProgressMap = Record<string, Record<string, unknown>> | undefined;
+
+/**
+ * Encuentra la disciplina en la que cambió el nivel del alumno.
+ * @param {ProgressMap} before Progreso previo.
+ * @param {ProgressMap} after Progreso nuevo.
+ * @return {object} levelId y disciplineId, o nulls si no cambió nada.
+ */
+function findPromotedLevel(before: ProgressMap, after: ProgressMap): {
+  levelId: string | null, disciplineId: string | null,
+} {
+  const afterProgress = after ?? {};
+  const beforeProgress = before ?? {};
+
+  for (const disciplineId of Object.keys(afterProgress)) {
+    const newLevelId = afterProgress[disciplineId]?.currentLevelId;
+    const oldLevelId = beforeProgress[disciplineId]?.currentLevelId;
+    if (typeof newLevelId === "string" && newLevelId !== oldLevelId) {
+      return {levelId: newLevelId, disciplineId};
+    }
+  }
+  return {levelId: null, disciplineId: null};
+}
+
+/**
+ * Cuenta las técnicas nuevas asignadas sumando todas las disciplinas.
+ * @param {ProgressMap} before Progreso previo.
+ * @param {ProgressMap} after Progreso nuevo.
+ * @return {number} Cantidad de técnicas nuevas.
+ */
+function countNewTechniques(before: ProgressMap, after: ProgressMap): number {
+  const afterProgress = after ?? {};
+  const beforeProgress = before ?? {};
+  let count = 0;
+
+  for (const disciplineId of Object.keys(afterProgress)) {
+    const afterTechs =
+      (afterProgress[disciplineId]?.assignedTechniqueIds ?? []) as string[];
+    const beforeTechs = new Set(
+      (beforeProgress[disciplineId]?.assignedTechniqueIds ?? []) as string[]);
+    count += afterTechs.filter((id) => !beforeTechs.has(id)).length;
+  }
+  return count;
+}
+
+// ===============================================================================================
+// AUXILIARES: PERMISOS DE ESCUELA
+// ===============================================================================================
+/**
+ * IDs de todos los que pueden gestionar la escuela: el dueño y los maestros.
+ * @param {string} schoolId La escuela.
+ * @return {Promise<string[]>} Lista de uids sin duplicados.
+ */
+async function getSchoolManagerIds(schoolId: string): Promise<string[]> {
+  const ids = new Set<string>();
+
+  const schoolDoc = await db.collection("schools").doc(schoolId).get();
+  const ownerId = schoolDoc.data()?.ownerId;
+  if (ownerId) ids.add(ownerId);
+
+  const teachers = await db.collection("schools").doc(schoolId)
+    .collection("members").where("role", "==", "maestro").get();
+  teachers.forEach((doc) => ids.add(doc.id));
+
+  return Array.from(ids);
+}
+
+/**
+ * ¿Puede este usuario gestionar la escuela? Dueño o maestro.
+ *
+ * Se usa para autorizar operaciones de gestión en las callables. Las acciones
+ * destructivas (borrar la escuela) siguen chequeando `ownerId` directamente.
+ * @param {string} schoolId La escuela.
+ * @param {string} uid El usuario que hace la llamada.
+ * @return {Promise<boolean>} true si puede gestionar.
+ */
+async function canManageSchool(
+  schoolId: string, uid: string): Promise<boolean> {
+  const schoolDoc = await db.collection("schools").doc(schoolId).get();
+  if (schoolDoc.data()?.ownerId === uid) return true;
+
+  const memberDoc = await db.collection("schools").doc(schoolId)
+    .collection("members").doc(uid).get();
+  return memberDoc.data()?.role === "maestro";
+}
+
+// ===============================================================================================
 // FUNCIÓN AUXILIAR: ENVIAR NOTIFICACIONES A UN USUARIO
 // ===============================================================================================
 /**
@@ -673,7 +918,10 @@ exports.abandonSchoolSetup = onCall(async (request) => {
  */
 async function sendNotificationsToUser(
   userId: string,
-  payload: {notification: {title: string, body: string}}
+  payload: {
+    notification: {title: string, body: string},
+    data?: Record<string, string>,
+  }
 ) {
   try {
     const userDoc = await db.collection("users").doc(userId).get();
@@ -682,30 +930,51 @@ async function sendNotificationsToUser(
       return;
     }
     const tokens = userDoc.data()?.fcmTokens as string[] | undefined;
-    if (tokens && tokens.length > 0) {
-      const message = {
-        tokens: tokens,
-        ...payload,
-      };
-      const response = await admin.messaging().sendEachForMulticast(message);
-      const tokensToRemove: Promise<FirebaseFirestore.WriteResult>[] = [];
-      response.responses.forEach(
-        (result: admin.messaging.SendResponse, index: number) => {
-          if (!result.success) {
-            const error = result.error;
-            if (error) {
-              const errorCode = error.code;
-              if (errorCode === "messaging/invalid-registration-token" ||
-                                errorCode === "messaging/registration-token-not-registered") {
-                tokensToRemove.push(db.collection("users").doc(userId).update({
-                  fcmTokens: admin.firestore.FieldValue.arrayRemove(tokens[index]),
-                }));
-              }
+
+    // Sin tokens no hay push posible. Antes esto se salteaba en silencio: la
+    // función terminaba "bien" y no había forma de saber por qué no llegaba
+    // nada. Ahora queda registrado para poder diagnosticarlo desde los logs.
+    if (!tokens || tokens.length === 0) {
+      logger.warn(
+        `SIN TOKENS: ${userId} no tiene dispositivos registrados. ` +
+        `No se envió "${payload.notification.title}". ` +
+        "El usuario debe abrir la app y aceptar las notificaciones.");
+      return;
+    }
+
+    const message = {
+      tokens: tokens,
+      ...payload,
+    };
+    const response = await admin.messaging().sendEachForMulticast(message);
+    const tokensToRemove: Promise<FirebaseFirestore.WriteResult>[] = [];
+    response.responses.forEach(
+      (result: admin.messaging.SendResponse, index: number) => {
+        if (!result.success) {
+          const error = result.error;
+          if (error) {
+            const errorCode = error.code;
+            if (errorCode === "messaging/invalid-registration-token" ||
+                              errorCode === "messaging/registration-token-not-registered") {
+              logger.info(
+                `Token vencido de ${userId}, se elimina: ${errorCode}`);
+              tokensToRemove.push(db.collection("users").doc(userId).update({
+                fcmTokens: admin.firestore.FieldValue.arrayRemove(tokens[index]),
+              }));
+            } else {
+              // Estos errores antes se descartaban del todo.
+              logger.error(
+                `Fallo enviando a ${userId} (token ${index}): ` +
+                `${errorCode} - ${error.message}`);
             }
           }
-        });
-      await Promise.all(tokensToRemove);
-    }
+        }
+      });
+    await Promise.all(tokensToRemove);
+
+    logger.info(
+      `Push "${payload.notification.title}" → ${userId}: ` +
+      `${response.successCount}/${tokens.length} entregados.`);
   } catch (error) {
     logger.error(`Error enviando notificaciones a ${userId}:`, error);
   }

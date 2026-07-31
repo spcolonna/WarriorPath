@@ -298,6 +298,112 @@ class AppLocalizationsEn extends AppLocalizations {
   String get updateRolSuccess => 'Role updated successfully.';
 
   @override
+  String get promoteToTeacherTitle => 'Promote to Teacher?';
+
+  @override
+  String promoteToTeacherBody(String name) {
+    return '$name will be able to manage the school just like you: students, attendance, payments, progress and events. They won\'t be able to delete the school or change other teachers\' roles.';
+  }
+
+  @override
+  String get promote => 'Promote';
+
+  @override
+  String get deactivateStudent => 'Deactivate student';
+
+  @override
+  String get reactivateStudent => 'Reactivate student';
+
+  @override
+  String get removeStudent => 'Remove from school';
+
+  @override
+  String deactivateStudentTitle(String name) {
+    return 'Deactivate $name?';
+  }
+
+  @override
+  String get deactivateStudentBody =>
+      'They will no longer appear in lists, the ranking or attendance, and won\'t be able to access the school. All their history is kept: if you reactivate them, they get their progress and belt back intact.';
+
+  @override
+  String get deactivate => 'Deactivate';
+
+  @override
+  String get reactivate => 'Reactivate';
+
+  @override
+  String get studentDeactivated => 'Student deactivated.';
+
+  @override
+  String get studentReactivated => 'Student reactivated.';
+
+  @override
+  String removeStudentTitle(String name) {
+    return 'Permanently remove $name?';
+  }
+
+  @override
+  String get removeStudentBody =>
+      'Their attendance, payment and progress history in this school will be deleted. This cannot be undone. If they want to come back, they\'ll have to apply again as a new student.';
+
+  @override
+  String get delete => 'Remove';
+
+  @override
+  String get studentRemoved => 'Student removed from the school.';
+
+  @override
+  String actionError(String e) {
+    return 'Could not complete the action: $e';
+  }
+
+  @override
+  String get inactivatedTitle => 'You were deactivated';
+
+  @override
+  String inactivatedBody(String school) {
+    return '$school deactivated you as a student. Get in touch with your teacher to be reactivated.';
+  }
+
+  @override
+  String get inactivatedHint =>
+      'In the meantime, you can look for another school or create your own.';
+
+  @override
+  String get searchAnotherSchool => 'Find another school';
+
+  @override
+  String get createMySchool => 'Create my school';
+
+  @override
+  String get inactiveInThisSchool => 'You were deactivated from this school';
+
+  @override
+  String get orWithEmail => 'or with your email';
+
+  @override
+  String get notificationsActive => 'Notifications on';
+
+  @override
+  String get notificationsActiveSubtitle =>
+      'You\'ll get alerts on this device.';
+
+  @override
+  String get notificationsOff => 'You won\'t get notifications';
+
+  @override
+  String get notificationsOffPermission =>
+      'Turn on notifications for Warrior Path in your phone\'s settings.';
+
+  @override
+  String get notificationsOffDevice =>
+      'This device isn\'t registered. Tap retry.';
+
+  @override
+  String get retry => 'Retry';
+
+  @override
   String updateRolError(String e) {
     return 'Error changing role: $e';
   }

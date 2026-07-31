@@ -61,7 +61,20 @@
       "Bash(echo \"EXIT:$?\")",
       "Bash(curl -s https://identitytoolkit.googleapis.com/admin/v2/projects/warriorpath-89a85/config -H 'Authorization: Bearer __CMDSUB_OUTPUT__')",
       "Bash(python3 -m json.tool)",
-      "Bash(rm -f /tmp/smtp_payload.json /tmp/idtk_disc.json /tmp/gcloud_err.txt 2>/dev/null; echo ok)"
+      "Bash(rm -f /tmp/smtp_payload.json /tmp/idtk_disc.json /tmp/gcloud_err.txt 2>/dev/null; echo ok)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\({k:v for k,v in d.items\\(\\) if k in \\('displayName','projectId','name'\\)},indent=2\\)\\)\")",
+      "Bash(rm -f /tmp/s.json)",
+      "Bash(curl -s https://iap.googleapis.com/v1/projects/warriorpath-89a85/brands -H 'Authorization: Bearer __CMDSUB_OUTPUT__' -H 'x-goog-user-project: warriorpath-89a85')",
+      "Bash(firebase functions:log --only onMemberStatusChange -n 40)",
+      "Bash(firebase functions:artifacts:setpolicy --location southamerica-east1 --days 3 --force)",
+      "Bash(firebase functions:artifacts:setpolicy --location us-central1 --days 3 --force)",
+      "Bash(firebase functions:list)",
+      "Bash(firebase functions:log --only onMemberStatusChange -n 30)",
+      "Bash(gcloud services *)",
+      "Bash(flutter devices *)",
+      "Bash(awk '{print \"captura:\",$5,\"bytes\"}')",
+      "Bash(cd /Users/sebastianperez/Documents/Personal/WarriorPath *)",
+      "Bash(pkill -f \"flutter run\")"
     ],
     "additionalDirectories": [
       "/tmp"

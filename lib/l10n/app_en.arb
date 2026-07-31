@@ -158,6 +158,71 @@
     "instructor": "instructor",
     "save": "Save",
     "updateRolSuccess": "Role updated successfully.",
+    "promoteToTeacherTitle": "Promote to Teacher?",
+    "promoteToTeacherBody": "{name} will be able to manage the school just like you: students, attendance, payments, progress and events. They won't be able to delete the school or change other teachers' roles.",
+    "@promoteToTeacherBody": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "promote": "Promote",
+    "deactivateStudent": "Deactivate student",
+    "reactivateStudent": "Reactivate student",
+    "removeStudent": "Remove from school",
+    "deactivateStudentTitle": "Deactivate {name}?",
+    "@deactivateStudentTitle": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "deactivateStudentBody": "They will no longer appear in lists, the ranking or attendance, and won't be able to access the school. All their history is kept: if you reactivate them, they get their progress and belt back intact.",
+    "deactivate": "Deactivate",
+    "reactivate": "Reactivate",
+    "studentDeactivated": "Student deactivated.",
+    "studentReactivated": "Student reactivated.",
+    "removeStudentTitle": "Permanently remove {name}?",
+    "@removeStudentTitle": {
+        "placeholders": {
+            "name": {
+                "type": "String"
+            }
+        }
+    },
+    "removeStudentBody": "Their attendance, payment and progress history in this school will be deleted. This cannot be undone. If they want to come back, they'll have to apply again as a new student.",
+    "delete": "Remove",
+    "studentRemoved": "Student removed from the school.",
+    "actionError": "Could not complete the action: {e}",
+    "@actionError": {
+        "placeholders": {
+            "e": {
+                "type": "String"
+            }
+        }
+    },
+    "inactivatedTitle": "You were deactivated",
+    "inactivatedBody": "{school} deactivated you as a student. Get in touch with your teacher to be reactivated.",
+    "@inactivatedBody": {
+        "placeholders": {
+            "school": {
+                "type": "String"
+            }
+        }
+    },
+    "inactivatedHint": "In the meantime, you can look for another school or create your own.",
+    "searchAnotherSchool": "Find another school",
+    "createMySchool": "Create my school",
+    "inactiveInThisSchool": "You were deactivated from this school",
+    "orWithEmail": "or with your email",
+    "notificationsActive": "Notifications on",
+    "notificationsActiveSubtitle": "You'll get alerts on this device.",
+    "notificationsOff": "You won't get notifications",
+    "notificationsOffPermission": "Turn on notifications for Warrior Path in your phone's settings.",
+    "notificationsOffDevice": "This device isn't registered. Tap retry.",
+    "retry": "Retry",
     "updateRolError": "Error changing role: {e}",
     "@updateRolError": {
         "placeholders": {

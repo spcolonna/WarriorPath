@@ -16,7 +16,11 @@ import 'package:warrior_path/widgets/achievement_unlock_overlay.dart';
 import '../../l10n/app_localizations.dart';
 
 class StudentDashboardScreen extends StatefulWidget {
-  const StudentDashboardScreen({super.key});
+  /// Pestaña en la que abrir: la usan los deep links de notificaciones para
+  /// llevar al alumno directo a lo que le avisaron (p. ej. Pagos).
+  final int initialTabIndex;
+
+  const StudentDashboardScreen({super.key, this.initialTabIndex = 0});
 
   @override
   State<StudentDashboardScreen> createState() => _StudentDashboardScreenState();
@@ -37,6 +41,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
   @override
   void initState() {
     super.initState();
+    _selectedIndex = widget.initialTabIndex;
     _confettiController = ConfettiController(duration: const Duration(seconds: 4));
 
     WidgetsBinding.instance.addPostFrameCallback((_) {

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:warrior_path/constants/school_roles.dart';
 import 'package:warrior_path/providers/session_provider.dart';
 import 'package:warrior_path/providers/theme_provider.dart';
 import 'package:warrior_path/screens/school_pending_validation_screen.dart';
@@ -12,7 +13,11 @@ import 'dashboard/tabs/profile_tab_screen.dart';
 import 'dashboard/tabs/students_tab_screen.dart';
 
 class TeacherDashboardScreen extends StatefulWidget {
-  const TeacherDashboardScreen({super.key});
+  /// Pestaña en la que abrir: la usan los deep links de notificaciones para
+  /// llevar al maestro directo a donde pasó algo (p. ej. Alumnos).
+  final int initialTabIndex;
+
+  const TeacherDashboardScreen({super.key, this.initialTabIndex = 0});
 
   @override
   State<TeacherDashboardScreen> createState() => _TeacherDashboardScreenState();
@@ -47,6 +52,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   @override
   void initState() {
     super.initState();
+    _selectedIndex = widget.initialTabIndex;
     final session = Provider.of<SessionProvider>(context, listen: false);
     if (session.activeSchoolId != null) {
       Provider.of<ThemeProvider>(
@@ -124,7 +130,10 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
         items: <BottomNavigationBarItem>[
           BottomNavigationBarItem(icon: Icon(Icons.home), label: l10n.home),
           BottomNavigationBarItem(
-            icon: Icon(Icons.groups),
+            icon: _PendingBadge(
+              schoolId: session.activeSchoolId!,
+              child: const Icon(Icons.groups),
+            ),
             label: l10n.students,
           ),
           BottomNavigationBarItem(
@@ -142,6 +151,39 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
       ),
+    );
+  }
+}
+
+/// Punto rojo sobre el ícono de Alumnos cuando hay solicitudes sin responder.
+///
+/// Es la señal pasiva que respalda al push: si la notificación no llegó (o el
+/// maestro la descartó), la solicitud igual se ve al abrir la app.
+class _PendingBadge extends StatelessWidget {
+  final String schoolId;
+  final Widget child;
+
+  const _PendingBadge({required this.schoolId, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('schools')
+          .doc(schoolId)
+          .collection('members')
+          .where('status', isEqualTo: MemberStatus.pending)
+          .snapshots(),
+      builder: (context, snapshot) {
+        final count = snapshot.data?.docs.length ?? 0;
+        if (count == 0) return child;
+
+        return Badge(
+          label: Text('$count'),
+          backgroundColor: Colors.red,
+          child: child,
+        );
+      },
     );
   }
 }

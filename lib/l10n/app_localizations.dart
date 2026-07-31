@@ -628,6 +628,186 @@ abstract class AppLocalizations {
   /// **'Role updated successfully.'**
   String get updateRolSuccess;
 
+  /// No description provided for @promoteToTeacherTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Promote to Teacher?'**
+  String get promoteToTeacherTitle;
+
+  /// No description provided for @promoteToTeacherBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} will be able to manage the school just like you: students, attendance, payments, progress and events. They won\'t be able to delete the school or change other teachers\' roles.'**
+  String promoteToTeacherBody(String name);
+
+  /// No description provided for @promote.
+  ///
+  /// In en, this message translates to:
+  /// **'Promote'**
+  String get promote;
+
+  /// No description provided for @deactivateStudent.
+  ///
+  /// In en, this message translates to:
+  /// **'Deactivate student'**
+  String get deactivateStudent;
+
+  /// No description provided for @reactivateStudent.
+  ///
+  /// In en, this message translates to:
+  /// **'Reactivate student'**
+  String get reactivateStudent;
+
+  /// No description provided for @removeStudent.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from school'**
+  String get removeStudent;
+
+  /// No description provided for @deactivateStudentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Deactivate {name}?'**
+  String deactivateStudentTitle(String name);
+
+  /// No description provided for @deactivateStudentBody.
+  ///
+  /// In en, this message translates to:
+  /// **'They will no longer appear in lists, the ranking or attendance, and won\'t be able to access the school. All their history is kept: if you reactivate them, they get their progress and belt back intact.'**
+  String get deactivateStudentBody;
+
+  /// No description provided for @deactivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Deactivate'**
+  String get deactivate;
+
+  /// No description provided for @reactivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Reactivate'**
+  String get reactivate;
+
+  /// No description provided for @studentDeactivated.
+  ///
+  /// In en, this message translates to:
+  /// **'Student deactivated.'**
+  String get studentDeactivated;
+
+  /// No description provided for @studentReactivated.
+  ///
+  /// In en, this message translates to:
+  /// **'Student reactivated.'**
+  String get studentReactivated;
+
+  /// No description provided for @removeStudentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanently remove {name}?'**
+  String removeStudentTitle(String name);
+
+  /// No description provided for @removeStudentBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Their attendance, payment and progress history in this school will be deleted. This cannot be undone. If they want to come back, they\'ll have to apply again as a new student.'**
+  String get removeStudentBody;
+
+  /// No description provided for @delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get delete;
+
+  /// No description provided for @studentRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Student removed from the school.'**
+  String get studentRemoved;
+
+  /// No description provided for @actionError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not complete the action: {e}'**
+  String actionError(String e);
+
+  /// No description provided for @inactivatedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You were deactivated'**
+  String get inactivatedTitle;
+
+  /// No description provided for @inactivatedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{school} deactivated you as a student. Get in touch with your teacher to be reactivated.'**
+  String inactivatedBody(String school);
+
+  /// No description provided for @inactivatedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'In the meantime, you can look for another school or create your own.'**
+  String get inactivatedHint;
+
+  /// No description provided for @searchAnotherSchool.
+  ///
+  /// In en, this message translates to:
+  /// **'Find another school'**
+  String get searchAnotherSchool;
+
+  /// No description provided for @createMySchool.
+  ///
+  /// In en, this message translates to:
+  /// **'Create my school'**
+  String get createMySchool;
+
+  /// No description provided for @inactiveInThisSchool.
+  ///
+  /// In en, this message translates to:
+  /// **'You were deactivated from this school'**
+  String get inactiveInThisSchool;
+
+  /// No description provided for @orWithEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'or with your email'**
+  String get orWithEmail;
+
+  /// No description provided for @notificationsActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications on'**
+  String get notificationsActive;
+
+  /// No description provided for @notificationsActiveSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ll get alerts on this device.'**
+  String get notificationsActiveSubtitle;
+
+  /// No description provided for @notificationsOff.
+  ///
+  /// In en, this message translates to:
+  /// **'You won\'t get notifications'**
+  String get notificationsOff;
+
+  /// No description provided for @notificationsOffPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on notifications for Warrior Path in your phone\'s settings.'**
+  String get notificationsOffPermission;
+
+  /// No description provided for @notificationsOffDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'This device isn\'t registered. Tap retry.'**
+  String get notificationsOffDevice;
+
+  /// No description provided for @retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
+
   /// No description provided for @updateRolError.
   ///
   /// In en, this message translates to:

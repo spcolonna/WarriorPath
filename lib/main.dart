@@ -86,6 +86,9 @@ class MyApp extends StatelessWidget {
           builder: (context, localeProvider, child) {
             return MaterialApp(
               title: 'Warrior Path',
+              // Permite navegar al tocar una notificación, desde fuera del
+              // árbol de widgets.
+              navigatorKey: appNavigatorKey,
               theme: ThemeData(
                 colorScheme: ColorScheme.fromSeed(
                   seedColor: themeProvider.theme.primaryColor,

@@ -2,13 +2,16 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:collection/collection.dart';
 import 'package:confetti/confetti.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:warrior_path/models/discipline_model.dart';
 import 'package:warrior_path/screens/teacher/progress_discipline_tab.dart';
+import '../../constants/school_roles.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/payment_plan_model.dart';
+import '../../services/school_permissions.dart';
 import '../../widgets/register_payment_dialog.dart';
 
 class StudentDetailScreen extends StatefulWidget {
@@ -59,7 +62,17 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
   final int _staticTabsCount = 3;
 
   String? _assignedPaymentPlanId;
+
+  /// El que mira es el dueño de la escuela. Sólo habilita lo destructivo /
+  /// el traspaso de poder (promover o degradar maestros).
   bool _isOwnerViewing = false;
+
+  /// El que mira puede gestionar la escuela: dueño **o** maestro.
+  /// Gatea asistencia, pagos, progreso, técnicas y datos de contacto.
+  bool _canManage = false;
+
+  /// Estado de la membresía que se está viendo ('active' / 'inactive' / ...).
+  String _memberStatus = MemberStatus.active;
 
   @override
   void initState() {
@@ -80,10 +93,32 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
         .doc(widget.schoolId)
         .get();
     if (schoolDoc.exists) {
-      final schoolOwnerId = schoolDoc.data()?['ownerId'];
+      final schoolOwnerId = schoolDoc.data()?['ownerId'] as String?;
+
+      // El rol del que MIRA (no el del alumno que se está viendo): un maestro
+      // promovido debe poder gestionar igual que el dueño.
+      String? viewerRole;
+      if (currentUser != null) {
+        final viewerMember = await firestore
+            .collection('schools')
+            .doc(widget.schoolId)
+            .collection('members')
+            .doc(currentUser.uid)
+            .get();
+        viewerRole = viewerMember.data()?['role'] as String?;
+      }
+
       if (mounted) {
         setState(() {
-          _isOwnerViewing = (currentUser?.uid == schoolOwnerId);
+          _isOwnerViewing = SchoolPermissions.isOwner(
+            uid: currentUser?.uid,
+            ownerId: schoolOwnerId,
+          );
+          _canManage = SchoolPermissions.canManageSchool(
+            uid: currentUser?.uid,
+            ownerId: schoolOwnerId,
+            memberRole: viewerRole,
+          );
         });
       }
     }
@@ -114,7 +149,8 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
           }
 
           final memberData = memberSnapshot.data()!;
-          _currentRole = memberData['role'] ?? 'alumno';
+          _currentRole = memberData['role'] ?? SchoolRoles.alumno;
+          _memberStatus = memberData['status'] as String? ?? MemberStatus.active;
           _memberProgress =
               memberData['progress'] as Map<String, dynamic>? ?? {};
           _assignedPaymentPlanId =
@@ -182,15 +218,15 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
 
     final List<Tab> tabs = [
       Tab(text: l10n.general),
-      if (_isOwnerViewing) Tab(text: l10n.assistance),
-      if (_isOwnerViewing) Tab(text: l10n.payments),
+      if (_canManage) Tab(text: l10n.assistance),
+      if (_canManage) Tab(text: l10n.payments),
       ..._enrolledDisciplines.map((d) => Tab(text: l10n.progressFor(d.name))),
     ];
 
     final List<Widget> tabViews = [
       _buildGeneralInfoTab(),
-      if (_isOwnerViewing) _buildAttendanceHistoryTab(),
-      if (_isOwnerViewing) _buildPaymentsHistoryTab(),
+      if (_canManage) _buildAttendanceHistoryTab(),
+      if (_canManage) _buildPaymentsHistoryTab(),
       ..._enrolledDisciplines.map(
         (d) => ProgressDisciplineTab(
           schoolId: widget.schoolId,
@@ -198,7 +234,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
           discipline: d,
           studentProgress: _memberProgress[d.id] as Map<String, dynamic>? ?? {},
           confettiController: _confettiController,
-          isOwnerViewing: _isOwnerViewing,
+          isOwnerViewing: _canManage,
         ),
       ),
     ];
@@ -225,19 +261,51 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
           appBar: AppBar(
             title: Text(_studentName),
             actions: [
-              if (_isOwnerViewing)
+              if (_canManage)
                 PopupMenuButton<String>(
                   onSelected: (value) {
-                    if (value == 'change_role') {
-                      _showChangeRoleDialog();
+                    switch (value) {
+                      case 'change_role':
+                        _showChangeRoleDialog();
+                        break;
+                      case 'deactivate':
+                        _confirmDeactivate();
+                        break;
+                      case 'reactivate':
+                        _reactivateMember();
+                        break;
+                      case 'remove':
+                        _confirmRemove();
+                        break;
                     }
                   },
                   itemBuilder: (BuildContext context) =>
                       <PopupMenuEntry<String>>[
-                        PopupMenuItem<String>(
-                          value: 'change_role',
-                          child: Text(l10n.changeRol),
-                        ),
+                        // Sólo el dueño reparte poder: un maestro no puede
+                        // promover ni degradar a otro maestro.
+                        if (_isOwnerViewing)
+                          PopupMenuItem<String>(
+                            value: 'change_role',
+                            child: Text(l10n.changeRol),
+                          ),
+                        if (_memberStatus == MemberStatus.active)
+                          PopupMenuItem<String>(
+                            value: 'deactivate',
+                            child: Text(l10n.deactivateStudent),
+                          ),
+                        if (_memberStatus == MemberStatus.inactive) ...[
+                          PopupMenuItem<String>(
+                            value: 'reactivate',
+                            child: Text(l10n.reactivateStudent),
+                          ),
+                          PopupMenuItem<String>(
+                            value: 'remove',
+                            child: Text(
+                              l10n.removeStudent,
+                              style: const TextStyle(color: Colors.red),
+                            ),
+                          ),
+                        ],
                       ],
                 ),
             ],
@@ -330,37 +398,15 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
     );
   }
 
+  /// El rol es de la ESCUELA, no de una disciplina: ser maestro es un cargo
+  /// administrativo, no algo que se tenga "en karate pero no en BJJ".
+  ///
+  /// Antes esto guardaba en `progress.{disciplineId}.role`, un campo que nadie
+  /// leía nunca, así que promover a maestro no tenía ningún efecto real.
   Future<void> _showChangeRoleDialog() async {
-    final DisciplineModel? selectedDiscipline =
-        await showDialog<DisciplineModel>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: Text(l10n.selectDiscipline),
-            content: SizedBox(
-              width: double.maxFinite,
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: _enrolledDisciplines.length,
-                itemBuilder: (context, index) {
-                  final discipline = _enrolledDisciplines[index];
-                  return ListTile(
-                    title: Text(discipline.name),
-                    onTap: () => Navigator.of(ctx).pop(discipline),
-                  );
-                },
-              ),
-            ),
-          ),
-        );
+    String? newRole = _currentRole;
 
-    if (selectedDiscipline == null || !mounted) return;
-
-    final currentProgress =
-        _memberProgress[selectedDiscipline.id] as Map<String, dynamic>? ?? {};
-    final currentRole = currentProgress['role'] as String? ?? 'alumno';
-    String? newRole = currentRole;
-
-    await showDialog(
+    final confirmedRole = await showDialog<String>(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) {
@@ -368,22 +414,17 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
             title: Text(l10n.changeRolMember),
             content: Column(
               mainAxisSize: MainAxisSize.min,
-              children:
-                  [
-                    l10n.student.toLowerCase(),
-                    l10n.instructor,
-                    l10n.teacher.toLowerCase(),
-                  ].map((roleKey) {
-                    return RadioListTile<String>(
-                      title: Text(
-                        roleKey[0].toUpperCase() + roleKey.substring(1),
-                      ),
-                      value: roleKey,
-                      groupValue: newRole,
-                      onChanged: (value) =>
-                          setDialogState(() => newRole = value),
-                    );
-                  }).toList(),
+              children: [
+                // Los VALORES son constantes fijas; l10n sólo para mostrar.
+                // Antes se guardaba el texto traducido, así que un teléfono en
+                // inglés escribía 'teacher' y no matcheaba con el resto de la app.
+                _roleOption(SchoolRoles.alumno, l10n.student, newRole,
+                    (v) => setDialogState(() => newRole = v)),
+                _roleOption(SchoolRoles.instructor, l10n.instructor, newRole,
+                    (v) => setDialogState(() => newRole = v)),
+                _roleOption(SchoolRoles.maestro, l10n.teacher, newRole,
+                    (v) => setDialogState(() => newRole = v)),
+              ],
             ),
             actions: [
               TextButton(
@@ -391,12 +432,9 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
                 child: Text(l10n.cancel),
               ),
               ElevatedButton(
-                onPressed: newRole == null || newRole == currentRole
+                onPressed: newRole == null || newRole == _currentRole
                     ? null
-                    : () {
-                        _changeStudentRole(selectedDiscipline.id!, newRole!);
-                        Navigator.of(context).pop();
-                      },
+                    : () => Navigator.of(context).pop(newRole),
                 child: Text(l10n.save),
               ),
             ],
@@ -404,18 +442,73 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
         },
       ),
     );
+
+    if (confirmedRole == null || !mounted) return;
+
+    // Promover a maestro le da acceso de gestión completo: pedir confirmación
+    // explícita para que no pase por accidente.
+    if (confirmedRole == SchoolRoles.maestro) {
+      final sure = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(l10n.promoteToTeacherTitle),
+          content: Text(l10n.promoteToTeacherBody(_studentName)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(l10n.cancel),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(l10n.promote),
+            ),
+          ],
+        ),
+      );
+      if (sure != true || !mounted) return;
+    }
+
+    await _changeStudentRole(confirmedRole);
   }
 
-  Future<void> _changeStudentRole(String disciplineId, String newRole) async {
+  Widget _roleOption(String value, String label, String? group,
+      ValueChanged<String?> onChanged) {
+    final display = label.isEmpty
+        ? label
+        : label[0].toUpperCase() + label.substring(1).toLowerCase();
+    return RadioListTile<String>(
+      title: Text(display),
+      value: value,
+      groupValue: group,
+      onChanged: onChanged,
+    );
+  }
+
+  Future<void> _changeStudentRole(String newRole) async {
     try {
       final firestore = FirebaseFirestore.instance;
+      final batch = firestore.batch();
+
       final memberRef = firestore
           .collection('schools')
           .doc(widget.schoolId)
           .collection('members')
           .doc(widget.studentId);
+      final userRef =
+          firestore.collection('users').doc(widget.studentId);
 
-      await memberRef.update({'progress.$disciplineId.role': newRole});
+      // Los dos lugares que el sistema realmente lee: `members.role` para las
+      // listas y permisos, y `activeMemberships` para el ruteo post-login.
+      batch.update(memberRef, {'role': newRole});
+      batch.set(
+        userRef,
+        {
+          'activeMemberships': {widget.schoolId: newRole},
+        },
+        SetOptions(merge: true),
+      );
+
+      await batch.commit();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -429,6 +522,173 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l10n.updateRolError(e.toString()))),
+        );
+      }
+    }
+  }
+
+  // ── Estados de la membresía ──────────────────────────────────────────────
+
+  Future<void> _confirmDeactivate() async {
+    final sure = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.deactivateStudentTitle(_studentName)),
+        content: Text(l10n.deactivateStudentBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(l10n.deactivate),
+          ),
+        ],
+      ),
+    );
+    if (sure != true) return;
+    await _setMemberActive(false);
+  }
+
+  Future<void> _reactivateMember() => _setMemberActive(true);
+
+  /// Inactivar/reactivar. Se conserva TODO el historial (asistencias, pagos,
+  /// progreso): reactivar devuelve al alumno su cinturón y progreso intactos.
+  ///
+  /// Clave: al inactivar hay que limpiar `users/{uid}.activeMemberships`, si no
+  /// el alumno sigue entrando a la escuela como si nada (el ruteo post-login
+  /// se basa en ese mapa, no en el status del member).
+  Future<void> _setMemberActive(bool active) async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    try {
+      final firestore = FirebaseFirestore.instance;
+
+      // Nombre de la escuela para poder decirle al alumno quién lo dio de baja
+      // cuando abra la app (su perfil ya no va a tener la escuela asociada).
+      String schoolName = '';
+      if (!active) {
+        final schoolDoc = await firestore
+            .collection('schools')
+            .doc(widget.schoolId)
+            .get();
+        schoolName = schoolDoc.data()?['name'] as String? ?? '';
+      }
+
+      final batch = firestore.batch();
+
+      final memberRef = firestore
+          .collection('schools')
+          .doc(widget.schoolId)
+          .collection('members')
+          .doc(widget.studentId);
+      final userRef =
+          firestore.collection('users').doc(widget.studentId);
+
+      if (active) {
+        batch.update(memberRef, {
+          'status': MemberStatus.active,
+          'inactivatedAt': FieldValue.delete(),
+          'inactivatedBy': FieldValue.delete(),
+        });
+        batch.set(
+          userRef,
+          {
+            'activeMemberships': {
+              widget.schoolId: _currentRole.isEmpty
+                  ? SchoolRoles.alumno
+                  : _currentRole,
+            },
+          },
+          SetOptions(merge: true),
+        );
+        batch.update(userRef, {
+          'inactiveMemberships.${widget.schoolId}': FieldValue.delete(),
+        });
+      } else {
+        batch.update(memberRef, {
+          'status': MemberStatus.inactive,
+          'inactivatedAt': FieldValue.serverTimestamp(),
+          'inactivatedBy': currentUser?.uid,
+        });
+        batch.set(
+          userRef,
+          {
+            'inactiveMemberships': {widget.schoolId: schoolName},
+          },
+          SetOptions(merge: true),
+        );
+        batch.update(userRef, {
+          'activeMemberships.${widget.schoolId}': FieldValue.delete(),
+        });
+      }
+
+      await batch.commit();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(active
+                ? l10n.studentReactivated
+                : l10n.studentDeactivated),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.actionError(e.toString()))),
+        );
+      }
+    }
+  }
+
+  Future<void> _confirmRemove() async {
+    final sure = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.removeStudentTitle(_studentName)),
+        content: Text(l10n.removeStudentBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(l10n.delete),
+          ),
+        ],
+      ),
+    );
+    if (sure != true || !mounted) return;
+
+    try {
+      // Se hace en backend: hay que borrar subcolecciones (asistencias, pagos,
+      // progreso), y el cliente no puede hacer un borrado recursivo.
+      await FirebaseFunctions.instanceFor(region: 'us-central1')
+          .httpsCallable('removeMember')
+          .call({
+        'schoolId': widget.schoolId,
+        'memberId': widget.studentId,
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.studentRemoved),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.actionError(e.toString()))),
         );
       }
     }

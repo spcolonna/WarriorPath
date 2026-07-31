@@ -7,9 +7,11 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:warrior_path/providers/locale_provider.dart';
 import 'package:warrior_path/providers/session_provider.dart';
 import 'package:warrior_path/screens/WelcomeScreen.dart';
+import 'package:warrior_path/screens/role_selector_screen.dart';
 import 'package:warrior_path/screens/student/edit_profile_screen.dart';
 import 'package:warrior_path/screens/student/school_search_screen.dart';
 import 'package:warrior_path/screens/wizard_create_school_screen.dart';
+import 'package:warrior_path/widgets/notification_status_tile.dart';
 import 'package:warrior_path/widgets/delete_account_flow.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../parent/add_child_screen.dart';
@@ -279,6 +281,8 @@ class _ProfileBody extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                const NotificationStatusTile(),
+
                 // ── Personal data ──────────────────────────────────────
                 _SectionCard(
                   icon: Icons.person_outline,
@@ -331,6 +335,17 @@ class _ProfileBody extends StatelessWidget {
                       label: l10n.editProfile,
                       color: Theme.of(context).primaryColor,
                       onTap: onEditTap,
+                    ),
+                    // Cambiar de escuela/rol: el maestro ya lo tenía, pero el
+                    // alumno con más de una membresía quedaba encerrado en una
+                    // sola sin forma de saltar a las otras.
+                    _ActionTile(
+                      icon: Icons.swap_horiz,
+                      label: l10n.switchProfileSchool,
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (_) => const RoleSelectorScreen()),
+                      ),
                     ),
                     _ActionTile(
                       icon: Icons.language,

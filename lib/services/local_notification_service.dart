@@ -20,6 +20,38 @@ class LocalNotificationService {
     _initialized = true;
   }
 
+  /// Muestra una notificación recibida con la app en primer plano.
+  ///
+  /// Android no despliega nada por sí solo cuando la app está abierta, así que
+  /// sin esto los push que llegan mientras el usuario usa la app pasan
+  /// desapercibidos.
+  static Future<void> showForegroundMessage({
+    required String title,
+    required String body,
+    String? payload,
+  }) async {
+    if (!_initialized) return;
+    const androidDetails = AndroidNotificationDetails(
+      'general_channel',
+      'General',
+      channelDescription: 'Avisos de tu escuela: pagos, clases y progreso',
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+    await _plugin.show(
+      DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      title,
+      body,
+      const NotificationDetails(android: androidDetails, iOS: iosDetails),
+      payload: payload,
+    );
+  }
+
   static Future<void> showAchievementUnlocked(
       AchievementStatus status) async {
     if (!_initialized) return;
