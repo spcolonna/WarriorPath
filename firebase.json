@@ -46,7 +46,11 @@
     {
       "target": "app",
       "public": "build/web",
-      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
       "rewrites": [
         {
           "source": "**",
@@ -57,12 +61,21 @@
     {
       "target": "landing",
       "public": "landing",
-      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**",
+        "**/_raw/**",
+        "**/_build.py"
+      ],
       "headers": [
         {
           "source": "**",
           "headers": [
-            { "key": "Cache-Control", "value": "no-cache, max-age=0, must-revalidate" }
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, max-age=0, must-revalidate"
+            }
           ]
         }
       ]

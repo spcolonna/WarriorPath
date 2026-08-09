@@ -766,6 +766,24 @@ abstract class AppLocalizations {
   /// **'You were deactivated from this school'**
   String get inactiveInThisSchool;
 
+  /// No description provided for @editStudentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit student'**
+  String get editStudentTitle;
+
+  /// No description provided for @editStudent.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit student details'**
+  String get editStudent;
+
+  /// No description provided for @updateProfileSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Details updated successfully.'**
+  String get updateProfileSuccess;
+
   /// No description provided for @orWithEmail.
   ///
   /// In en, this message translates to:
@@ -3123,6 +3141,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You'**
   String get rankingYou;
+
+  /// No description provided for @declareMyLevelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Is this your level?'**
+  String get declareMyLevelTitle;
+
+  /// No description provided for @declareMyLevelBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ll be recorded as {level}. Your teacher will see it and can correct it if it doesn\'t match.'**
+  String declareMyLevelBody(String level);
+
+  /// No description provided for @levelDeclaredSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Done, we updated your level.'**
+  String get levelDeclaredSuccess;
+
+  /// No description provided for @myTechniquesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Techniques I know'**
+  String get myTechniquesTitle;
+
+  /// No description provided for @myTechniquesHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the techniques you already know. Your teacher will see them as self-reported and can confirm them.'**
+  String get myTechniquesHelp;
+
+  /// No description provided for @techniquesReportedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'We saved the techniques you checked.'**
+  String get techniquesReportedSuccess;
+
+  /// No description provided for @confirmedByTeacher.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmed by your teacher'**
+  String get confirmedByTeacher;
+
+  /// No description provided for @noTechniquesDefined.
+  ///
+  /// In en, this message translates to:
+  /// **'Your school hasn\'t added techniques for this discipline yet.'**
+  String get noTechniquesDefined;
+
+  /// No description provided for @declaredByStudent.
+  ///
+  /// In en, this message translates to:
+  /// **'Self-reported by the student'**
+  String get declaredByStudent;
+
+  /// No description provided for @confirmTechnique.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get confirmTechnique;
+
+  /// No description provided for @techniqueConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Technique confirmed.'**
+  String get techniqueConfirmed;
+
+  /// No description provided for @iKnowTheseTechniques.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the ones I know'**
+  String get iKnowTheseTechniques;
+
+  /// No description provided for @pendingTeacherReview.
+  ///
+  /// In en, this message translates to:
+  /// **'pending confirmation'**
+  String get pendingTeacherReview;
 }
 
 class _AppLocalizationsDelegate

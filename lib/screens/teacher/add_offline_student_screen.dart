@@ -9,9 +9,23 @@ import '../../l10n/app_localizations.dart';
 /// usado para hijos en add_child_screen.dart. Como toda la app indexa al alumno
 /// por el id del documento en members/{id}, este perfil funciona en asistencia,
 /// pagos y progreso sin cambios adicionales.
+///
+/// Con [studentId] la misma pantalla funciona en modo EDICIÓN: el alumno offline
+/// no tiene cuenta propia, así que si el maestro se equivoca al cargarlo (o le
+/// cambia el teléfono) nadie más que él puede corregirlo.
 class AddOfflineStudentScreen extends StatefulWidget {
   final String schoolId;
-  const AddOfflineStudentScreen({super.key, required this.schoolId});
+
+  /// Si viene, se edita ese alumno en vez de crear uno nuevo.
+  final String? studentId;
+
+  const AddOfflineStudentScreen({
+    super.key,
+    required this.schoolId,
+    this.studentId,
+  });
+
+  bool get isEditing => studentId != null;
 
   @override
   State<AddOfflineStudentScreen> createState() =>
@@ -28,12 +42,55 @@ class _AddOfflineStudentScreenState extends State<AddOfflineStudentScreen> {
 
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
+  bool _isLoadingData = false;
 
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _dobController = TextEditingController();
   String? _selectedSex;
   DateTime? _selectedDateOfBirth;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.isEditing) _loadStudent();
+  }
+
+  Future<void> _loadStudent() async {
+    setState(() => _isLoadingData = true);
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.studentId)
+          .get();
+      final data = doc.data();
+      if (data != null && mounted) {
+        _nameController.text = data['displayName'] as String? ?? '';
+        _phoneController.text = data['phoneNumber'] as String? ?? '';
+        _selectedSex = data['gender'] as String?;
+
+        final dob = data['dateOfBirth'];
+        if (dob is Timestamp) {
+          _selectedDateOfBirth = dob.toDate();
+        } else if (dob is DateTime) {
+          _selectedDateOfBirth = dob;
+        }
+        if (_selectedDateOfBirth != null) {
+          _dobController.text =
+              DateFormat('dd/MM/yyyy').format(_selectedDateOfBirth!);
+        }
+        setState(() {});
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.genericErrorContent(e.toString()))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoadingData = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -64,6 +121,11 @@ class _AddOfflineStudentScreenState extends State<AddOfflineStudentScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
+
+    if (widget.isEditing) {
+      await _updateOfflineStudent();
+      return;
+    }
 
     try {
       final firestore = FirebaseFirestore.instance;
@@ -129,10 +191,70 @@ class _AddOfflineStudentScreenState extends State<AddOfflineStudentScreen> {
     }
   }
 
+  /// El nombre y el género están duplicados en `users` y en `members` (se
+  /// desnormalizan para las listas), así que hay que actualizar los dos o el
+  /// alumno queda con el nombre viejo en la lista de la escuela.
+  Future<void> _updateOfflineStudent() async {
+    try {
+      final firestore = FirebaseFirestore.instance;
+      final displayName = _nameController.text.trim();
+      final batch = firestore.batch();
+
+      batch.update(firestore.collection('users').doc(widget.studentId), {
+        'displayName': displayName,
+        'phoneNumber': _phoneController.text.trim(),
+        'gender': _selectedSex,
+        'dateOfBirth': _selectedDateOfBirth,
+      });
+
+      batch.update(
+        firestore
+            .collection('schools')
+            .doc(widget.schoolId)
+            .collection('members')
+            .doc(widget.studentId),
+        {
+          'displayName': displayName,
+          'gender': _selectedSex,
+        },
+      );
+
+      await batch.commit();
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.updateProfileSuccess),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.of(context).pop(true);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.genericErrorContent(e.toString()))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_isLoadingData) {
+      return Scaffold(
+        appBar: AppBar(title: Text(l10n.editStudentTitle)),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.addOfflineStudentTitle)),
+      appBar: AppBar(
+        title: Text(widget.isEditing
+            ? l10n.editStudentTitle
+            : l10n.addOfflineStudentTitle),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Form(

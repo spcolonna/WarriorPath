@@ -19,7 +19,7 @@ val flutterVersionName: String = localProperties.getProperty("flutter.versionNam
 
 android {
     namespace = "com.warriorpath.app"
-    compileSdk = 35
+    compileSdk = 36
     ndkVersion = "27.0.12077973"
 
     // --- 1. AÑADIMOS ESTE BLOQUE PARA CARGAR LAS CLAVES ---

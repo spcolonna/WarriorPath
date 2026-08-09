@@ -41,6 +41,12 @@ class _AddEditEventScreenState extends State<AddEditEventScreen> {
   List<DisciplineModel> _allDisciplines = [];
   Set<String> _selectedDisciplineIds = {};
 
+  /// Se distingue "todavía cargando" de "no hay ninguna": antes se mostraba el
+  /// spinner cuando la lista estaba vacía, así que un resultado vacío quedaba
+  /// girando para siempre y parecía que la app se había colgado.
+  bool _loadingDisciplines = true;
+  String? _disciplinesError;
+
   @override
   void initState() {
     super.initState();
@@ -60,14 +66,34 @@ class _AddEditEventScreenState extends State<AddEditEventScreen> {
   }
 
   Future<void> _fetchDisciplines() async {
-    final disciplinesSnapshot = await FirebaseFirestore.instance
-        .collection('schools').doc(widget.schoolId)
-        .collection('disciplines').where('isActive', isEqualTo: true).get();
+    try {
+      // Se traen TODAS y se filtra en Dart a propósito. Las disciplinas creadas
+      // por el wizard no tienen el campo `isActive`, y Firestore no matchea
+      // documentos donde el campo no existe: filtrar en la query devolvía cero
+      // resultados en cualquier escuela creada por el wizard. `DisciplineModel`
+      // ya interpreta el campo ausente como activo.
+      final disciplinesSnapshot = await FirebaseFirestore.instance
+          .collection('schools').doc(widget.schoolId)
+          .collection('disciplines').get();
 
-    if (mounted) {
-      setState(() {
-        _allDisciplines = disciplinesSnapshot.docs.map((doc) => DisciplineModel.fromFirestore(doc)).toList();
-      });
+      final disciplines = disciplinesSnapshot.docs
+          .map((doc) => DisciplineModel.fromFirestore(doc))
+          .where((d) => d.isActive)
+          .toList();
+
+      if (mounted) {
+        setState(() {
+          _allDisciplines = disciplines;
+          _loadingDisciplines = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _loadingDisciplines = false;
+          _disciplinesError = e.toString();
+        });
+      }
     }
   }
 
@@ -166,8 +192,24 @@ class _AddEditEventScreenState extends State<AddEditEventScreen> {
                 // --- CAMBIO: Nueva sección para seleccionar disciplinas ---
                 Text(l10n.involvedDisciplines, style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 8),
-                if (_allDisciplines.isEmpty)
+                if (_loadingDisciplines)
                   const Center(child: CircularProgressIndicator())
+                else if (_disciplinesError != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Text(
+                      l10n.genericErrorContent(_disciplinesError!),
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  )
+                else if (_allDisciplines.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Text(
+                      l10n.noDisciplinesAvailable,
+                      style: TextStyle(color: Colors.grey.shade700),
+                    ),
+                  )
                 else
                   Wrap(
                     spacing: 8.0,

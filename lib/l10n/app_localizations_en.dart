@@ -380,6 +380,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inactiveInThisSchool => 'You were deactivated from this school';
 
   @override
+  String get editStudentTitle => 'Edit student';
+
+  @override
+  String get editStudent => 'Edit student details';
+
+  @override
+  String get updateProfileSuccess => 'Details updated successfully.';
+
+  @override
   String get orWithEmail => 'or with your email';
 
   @override
@@ -1705,4 +1714,48 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rankingYou => 'You';
+
+  @override
+  String get declareMyLevelTitle => 'Is this your level?';
+
+  @override
+  String declareMyLevelBody(String level) {
+    return 'You\'ll be recorded as $level. Your teacher will see it and can correct it if it doesn\'t match.';
+  }
+
+  @override
+  String get levelDeclaredSuccess => 'Done, we updated your level.';
+
+  @override
+  String get myTechniquesTitle => 'Techniques I know';
+
+  @override
+  String get myTechniquesHelp =>
+      'Check the techniques you already know. Your teacher will see them as self-reported and can confirm them.';
+
+  @override
+  String get techniquesReportedSuccess =>
+      'We saved the techniques you checked.';
+
+  @override
+  String get confirmedByTeacher => 'Confirmed by your teacher';
+
+  @override
+  String get noTechniquesDefined =>
+      'Your school hasn\'t added techniques for this discipline yet.';
+
+  @override
+  String get declaredByStudent => 'Self-reported by the student';
+
+  @override
+  String get confirmTechnique => 'Confirm';
+
+  @override
+  String get techniqueConfirmed => 'Technique confirmed.';
+
+  @override
+  String get iKnowTheseTechniques => 'Check the ones I know';
+
+  @override
+  String get pendingTeacherReview => 'pending confirmation';
 }

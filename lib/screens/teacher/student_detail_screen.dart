@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:warrior_path/models/discipline_model.dart';
+import 'package:warrior_path/screens/teacher/add_offline_student_screen.dart';
 import 'package:warrior_path/screens/teacher/progress_discipline_tab.dart';
 import '../../constants/school_roles.dart';
 import '../../l10n/app_localizations.dart';
@@ -265,6 +266,9 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
                 PopupMenuButton<String>(
                   onSelected: (value) {
                     switch (value) {
+                      case 'edit_student':
+                        _editOfflineStudent();
+                        break;
                       case 'change_role':
                         _showChangeRoleDialog();
                         break;
@@ -281,6 +285,13 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
                   },
                   itemBuilder: (BuildContext context) =>
                       <PopupMenuEntry<String>>[
+                        // Los alumnos con cuenta editan sus propios datos; los
+                        // offline no tienen cómo, así que lo hace el maestro.
+                        if (_isOfflineStudent)
+                          PopupMenuItem<String>(
+                            value: 'edit_student',
+                            child: Text(l10n.editStudent),
+                          ),
                         // Sólo el dueño reparte poder: un maestro no puede
                         // promover ni degradar a otro maestro.
                         if (_isOwnerViewing)
@@ -524,6 +535,22 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
           SnackBar(content: Text(l10n.updateRolError(e.toString()))),
         );
       }
+    }
+  }
+
+  /// Edita los datos de un alumno sin app. Al volver se recargan los datos
+  /// para que el nombre y la foto de la cabecera queden actualizados.
+  Future<void> _editOfflineStudent() async {
+    final updated = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => AddOfflineStudentScreen(
+          schoolId: widget.schoolId,
+          studentId: widget.studentId,
+        ),
+      ),
+    );
+    if (updated == true && mounted) {
+      await _loadAllData();
     }
   }
 

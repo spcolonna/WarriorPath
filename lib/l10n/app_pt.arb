@@ -146,6 +146,9 @@
     "searchAnotherSchool": "Procurar outra escola",
     "createMySchool": "Criar minha escola",
     "inactiveInThisSchool": "Você foi desligado desta escola",
+    "editStudentTitle": "Editar aluno",
+    "editStudent": "Editar dados do aluno",
+    "updateProfileSuccess": "Dados atualizados com sucesso.",
     "orWithEmail": "ou com seu e-mail",
     "notificationsActive": "Notificações ativas",
     "notificationsActiveSubtitle": "Você vai receber avisos neste dispositivo.",
@@ -269,7 +272,9 @@
     "nextPaymentDue": "Próximo vencimento: {date}",
     "@nextPaymentDue": {
         "placeholders": {
-            "date": { "type": "String" }
+            "date": {
+                "type": "String"
+            }
         }
     },
     "pendingPaymentContactTeacher": "Fale com seu professor para regularizar este pagamento.",
@@ -279,15 +284,23 @@
     "paidOn": "Pago em {date}",
     "@paidOn": {
         "placeholders": {
-            "date": { "type": "String" }
+            "date": {
+                "type": "String"
+            }
         }
     },
     "templateLoadedBanner": "Carregamos o modelo de {art} ({levels} níveis · {techniques} técnicas). Edite ou remova o que quiser.",
     "@templateLoadedBanner": {
         "placeholders": {
-            "art": { "type": "String" },
-            "levels": { "type": "int" },
-            "techniques": { "type": "int" }
+            "art": {
+                "type": "String"
+            },
+            "levels": {
+                "type": "int"
+            },
+            "techniques": {
+                "type": "int"
+            }
         }
     },
     "startFromBlank": "Começar do zero",
@@ -295,13 +308,17 @@
     "applyTemplateTitle": "Aplicar modelo de {art}",
     "@applyTemplateTitle": {
         "placeholders": {
-            "art": { "type": "String" }
+            "art": {
+                "type": "String"
+            }
         }
     },
     "applyTemplateBody": "Serão adicionados os níveis, categorias e técnicas do modelo de {art} que você ainda não tem. Nada do que você já adicionou é removido ou reordenado, então os alunos com nível atribuído não são afetados. Revise as mudanças e toque em \"Salvar todas as alterações\" para mantê-las.",
     "@applyTemplateBody": {
         "placeholders": {
-            "art": { "type": "String" }
+            "art": {
+                "type": "String"
+            }
         }
     },
     "templateApplied": "Modelo adicionado. Revise e salve suas alterações.",
@@ -363,13 +380,17 @@
     "confirmResendMessage": "Deseja reenviar sua solicitação para \"{schoolName}\"?",
     "@confirmResendMessage": {
         "placeholders": {
-            "schoolName": { "type": "String" }
+            "schoolName": {
+                "type": "String"
+            }
         }
     },
     "applicationResentSuccess": "Solicitação para \"{schoolName}\" reenviada!",
     "@applicationResentSuccess": {
         "placeholders": {
-            "schoolName": { "type": "String" }
+            "schoolName": {
+                "type": "String"
+            }
         }
     },
     "manageProfiles": "Gerenciar Perfis",
@@ -514,17 +535,32 @@
     "achievementExpiresToday": "Expira hoje — complete novamente!",
     "achievementExpiresInDays": "Expira em {days} dia{plural}",
     "@achievementExpiresInDays": {
-        "placeholders": { "days": {"type": "int"}, "plural": {"type": "String"} }
+        "placeholders": {
+            "days": {
+                "type": "int"
+            },
+            "plural": {
+                "type": "String"
+            }
+        }
     },
     "achievementExpired": "Expirou — cumpra a condição para recuperar",
     "achievementNotObtained": "Ainda não obtido",
     "achievementRenews": "Esta conquista se renova a cada {days} dias se você cumprir a condição.",
     "@achievementRenews": {
-        "placeholders": { "days": {"type": "int"} }
+        "placeholders": {
+            "days": {
+                "type": "int"
+            }
+        }
     },
     "achievementObtainedOn": "Obtido em: {date}",
     "@achievementObtainedOn": {
-        "placeholders": { "date": {"type": "String"} }
+        "placeholders": {
+            "date": {
+                "type": "String"
+            }
+        }
     },
     "achievementExpiredBadge": "Expirou!",
     "changeLanguage": "Idioma do aplicativo",
@@ -551,25 +587,44 @@
     "linkConfirmTitle": "Confirmar vinculação",
     "linkConfirmMessage": "Toda a info de \"{manual}\" será transferida para \"{real}\". O aluno sem app ficará desativado. Esta ação não pode ser desfeita.",
     "@linkConfirmMessage": {
-        "placeholders": { "manual": {"type": "String"}, "real": {"type": "String"} }
+        "placeholders": {
+            "manual": {
+                "type": "String"
+            },
+            "real": {
+                "type": "String"
+            }
+        }
     },
     "linkButton": "Vincular",
     "linkInProgress": "Vinculando contas...",
     "linkSuccess": "Conta vinculada com sucesso.",
     "linkErrorMsg": "Não foi possível vincular: {error}",
     "@linkErrorMsg": {
-        "placeholders": { "error": {"type": "String"} }
+        "placeholders": {
+            "error": {
+                "type": "String"
+            }
+        }
     },
     "verifyEmailTitle": "Verifique seu e-mail",
     "verifyEmailMessage": "Enviamos um e-mail de verificação para {email}. Abra-o e toque no link para ativar sua conta. Depois volte aqui e toque em \"Já confirmei\".",
     "@verifyEmailMessage": {
-        "placeholders": { "email": {"type": "String"} }
+        "placeholders": {
+            "email": {
+                "type": "String"
+            }
+        }
     },
     "verifyEmailConfirmedButton": "Já confirmei",
     "verifyEmailResendButton": "Reenviar e-mail",
     "verifyEmailResendIn": "Reenviar em {seconds}s",
     "@verifyEmailResendIn": {
-        "placeholders": { "seconds": {"type": "int"} }
+        "placeholders": {
+            "seconds": {
+                "type": "int"
+            }
+        }
     },
     "verifyEmailResent": "E-mail de verificação reenviado.",
     "verifyEmailNotYet": "Ainda não detectamos a verificação. Verifique seu e-mail.",
@@ -592,12 +647,34 @@
     "pointsToNextTier": "{points} para o próximo nível",
     "@pointsToNextTier": {
         "placeholders": {
-            "points": { "type": "int" }
+            "points": {
+                "type": "int"
+            }
         }
     },
     "maxTierReached": "Nível máximo alcançado",
     "schoolRanking": "Ranking da escola",
     "viewFullRanking": "Ver ranking completo",
     "rankingEmpty": "Ainda não há guerreiros no ranking",
-    "rankingYou": "Você"
+    "rankingYou": "Você",
+    "declareMyLevelTitle": "Este é o seu nível?",
+    "declareMyLevelBody": "Você ficará registrado como {level}. Seu mestre vai ver e pode corrigir se não coincidir.",
+    "@declareMyLevelBody": {
+        "placeholders": {
+            "level": {
+                "type": "String"
+            }
+        }
+    },
+    "levelDeclaredSuccess": "Pronto, atualizamos seu nível.",
+    "myTechniquesTitle": "As técnicas que sei",
+    "myTechniquesHelp": "Marque as técnicas que você já sabe. Seu mestre vai vê-las como declaradas por você e poderá confirmá-las.",
+    "techniquesReportedSuccess": "Salvamos as técnicas que você marcou.",
+    "confirmedByTeacher": "Confirmada pelo seu mestre",
+    "noTechniquesDefined": "Sua escola ainda não cadastrou técnicas para esta disciplina.",
+    "declaredByStudent": "Declarada pelo aluno",
+    "confirmTechnique": "Confirmar",
+    "techniqueConfirmed": "Técnica confirmada.",
+    "iKnowTheseTechniques": "Marcar as que já sei",
+    "pendingTeacherReview": "pendente de confirmação"
 }

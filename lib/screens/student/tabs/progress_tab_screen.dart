@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -5,7 +7,9 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:warrior_path/models/discipline_model.dart';
 import 'package:warrior_path/models/level_model.dart';
 import 'package:warrior_path/models/technique_model.dart';
+import 'package:warrior_path/screens/student/self_report_techniques_screen.dart';
 import 'package:warrior_path/services/achievement_engine.dart';
+import 'package:warrior_path/services/student_progress_service.dart';
 import 'package:warrior_path/widgets/achievements_section.dart';
 import 'package:warrior_path/widgets/school_ranking_preview.dart';
 import 'package:collection/collection.dart';
@@ -42,33 +46,79 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
   DisciplineModel? _selectedDiscipline;
   Map<String, dynamic> _memberProgress = {};
 
+  /// El progreso se escucha en vivo: ahora el propio alumno puede editarlo
+  /// (declarar su nivel, marcar técnicas) y el maestro puede confirmárselas,
+  /// así que una lectura única dejaría la pantalla mostrando datos viejos.
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _memberSub;
+
   @override
   void initState() {
     super.initState();
-    _loadInitialData();
+    _listenToMember();
   }
 
-  Future<void> _loadInitialData() async {
-    try {
-      final memberDoc = await FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('members').doc(widget.memberId).get();
+  @override
+  void dispose() {
+    _memberSub?.cancel();
+    super.dispose();
+  }
+
+  void _listenToMember() {
+    _memberSub = FirebaseFirestore.instance
+        .collection('schools')
+        .doc(widget.schoolId)
+        .collection('members')
+        .doc(widget.memberId)
+        .snapshots()
+        .listen((memberDoc) async {
       if (!memberDoc.exists || !mounted) {
-        setState(() => _isLoading = false);
+        if (mounted) setState(() => _isLoading = false);
         return;
       }
-      _memberProgress = memberDoc.data()?['progress'] as Map<String, dynamic>? ?? {};
-      final enrolledDisciplineIds = _memberProgress.keys.toList();
-      if (enrolledDisciplineIds.isNotEmpty) {
-        final disciplinesSnapshot = await FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('disciplines').where(FieldPath.documentId, whereIn: enrolledDisciplineIds).get();
-        _enrolledDisciplines = disciplinesSnapshot.docs.map((doc) => DisciplineModel.fromFirestore(doc)).toList();
-        if (_enrolledDisciplines.isNotEmpty) {
-          _selectedDiscipline = _enrolledDisciplines.first;
+
+      final progress =
+          memberDoc.data()?['progress'] as Map<String, dynamic>? ?? {};
+      final enrolledIds = progress.keys.toList();
+
+      // Las disciplinas sólo se recargan si cambió en cuáles está inscripto;
+      // marcar una técnica no debería disparar una query extra cada vez.
+      final currentIds = _enrolledDisciplines.map((d) => d.id).toSet();
+      final needsReload = enrolledIds.isNotEmpty &&
+          !const SetEquality<String?>().equals(currentIds, enrolledIds.toSet());
+
+      if (needsReload) {
+        try {
+          final snap = await FirebaseFirestore.instance
+              .collection('schools')
+              .doc(widget.schoolId)
+              .collection('disciplines')
+              .where(FieldPath.documentId, whereIn: enrolledIds)
+              .get();
+          _enrolledDisciplines =
+              snap.docs.map((d) => DisciplineModel.fromFirestore(d)).toList();
+        } catch (e) {
+          debugPrint('Error al cargar disciplinas del alumno: $e');
         }
       }
-    } catch (e) {
-      print('Error al cargar progreso del alumno: $e');
-    } finally {
-      if(mounted) setState(() => _isLoading = false);
-    }
+
+      if (!mounted) return;
+      setState(() {
+        _memberProgress = progress;
+        if (_enrolledDisciplines.isNotEmpty) {
+          // Se conserva la disciplina elegida si sigue existiendo.
+          _selectedDiscipline = _enrolledDisciplines.firstWhereOrNull(
+                (d) => d.id == _selectedDiscipline?.id,
+              ) ??
+              _enrolledDisciplines.first;
+        } else {
+          _selectedDiscipline = null;
+        }
+        _isLoading = false;
+      });
+    }, onError: (e) {
+      debugPrint('Error escuchando el progreso: $e');
+      if (mounted) setState(() => _isLoading = false);
+    });
   }
 
   @override
@@ -102,7 +152,19 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
             const Divider(height: 32, indent: 16, endIndent: 16),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Text(l10n.assignedTechniques, style: Theme.of(context).textTheme.headlineSmall),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(l10n.assignedTechniques,
+                        style: Theme.of(context).textTheme.headlineSmall),
+                  ),
+                  TextButton.icon(
+                    icon: const Icon(Icons.playlist_add_check, size: 18),
+                    label: Text(l10n.iKnowTheseTechniques),
+                    onPressed: _openSelfReportTechniques,
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 8),
             _buildAssignedTechniques(),
@@ -270,11 +332,93 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
             return ListTile(
               leading: Icon(isCompleted ? Icons.check_circle : (isCurrent ? Icons.star : Icons.radio_button_unchecked), color: isCurrent ? primaryColor : (isCompleted ? Colors.green : Colors.grey)),
               title: Text(level.name),
-              tileColor: isCurrent ? primaryColor.withOpacity(0.1) : null,
+              tileColor: isCurrent ? primaryColor.withValues(alpha: 0.1) : null,
+              // El alumno puede declarar el cinturón con el que llegó, para no
+              // depender de que el maestro se lo cargue a mano.
+              trailing: isCurrent
+                  ? null
+                  : const Icon(Icons.edit_outlined, size: 18, color: Colors.grey),
+              onTap: isCurrent
+                  ? null
+                  : () => _confirmSelfDeclareLevel(level, currentLevelId),
             );
           },
         );
       },
+    );
+  }
+
+  /// Declarar el cinturón actual. Se pide confirmación porque queda visible
+  /// para el maestro y para el resto de la escuela en el ranking.
+  Future<void> _confirmSelfDeclareLevel(
+    LevelModel level,
+    String? currentLevelId,
+  ) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.declareMyLevelTitle),
+        content: Text(l10n.declareMyLevelBody(level.name)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(l10n.confirm),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+
+    try {
+      await StudentProgressService.selfDeclareLevel(
+        schoolId: widget.schoolId,
+        studentId: widget.memberId,
+        disciplineId: _selectedDiscipline!.id!,
+        disciplineName: _selectedDiscipline!.name,
+        previousLevelId: currentLevelId,
+        newLevelId: level.id!,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.levelDeclaredSuccess),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.saveError(e.toString()))),
+        );
+      }
+    }
+  }
+
+  /// Marcar qué técnicas ya sabe. Van a una lista aparte de las que asigna el
+  /// maestro, así él puede revisarlas y confirmarlas.
+  Future<void> _openSelfReportTechniques() async {
+    final disciplineId = _selectedDiscipline!.id!;
+    final progress =
+        _memberProgress[disciplineId] as Map<String, dynamic>? ?? {};
+    final assigned = List<String>.from(progress['assignedTechniqueIds'] ?? []);
+    final selfReported =
+        List<String>.from(progress['selfReportedTechniqueIds'] ?? []);
+
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => SelfReportTechniquesScreen(
+          schoolId: widget.schoolId,
+          studentId: widget.memberId,
+          disciplineId: disciplineId,
+          assignedByTeacher: assigned,
+          initiallySelfReported: selfReported,
+        ),
+      ),
     );
   }
 
@@ -320,14 +464,19 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
   Widget _buildAssignedTechniques() {
     final progressInDiscipline = _memberProgress[_selectedDiscipline!.id] as Map<String, dynamic>? ?? {};
     final assignedTechniqueIds = List<String>.from(progressInDiscipline['assignedTechniqueIds'] ?? []);
+    final selfReportedIds = List<String>.from(progressInDiscipline['selfReportedTechniqueIds'] ?? []);
 
-    if (assignedTechniqueIds.isEmpty) {
+    // Se muestran juntas las confirmadas por el maestro y las que declaró el
+    // alumno, distinguidas: si no, el alumno marca algo y parece que no pasó nada.
+    final allIds = {...assignedTechniqueIds, ...selfReportedIds}.toList();
+
+    if (allIds.isEmpty) {
       return Center(child: Padding(padding: const EdgeInsets.all(16), child: Text(l10n.teacherHasNotAssignedTechniques)));
     }
 
     return StreamBuilder<QuerySnapshot>(
       // --- CORRECCIÓN: Reconstruimos la referencia a la colección ---
-      stream: FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('disciplines').doc(_selectedDiscipline!.id).collection('techniques').where(FieldPath.documentId, whereIn: assignedTechniqueIds).snapshots(),
+      stream: FirebaseFirestore.instance.collection('schools').doc(widget.schoolId).collection('disciplines').doc(_selectedDiscipline!.id).collection('techniques').where(FieldPath.documentId, whereIn: allIds).snapshots(),
       builder: (context, techSnapshot) {
         if (!techSnapshot.hasData) return const Center(child: CircularProgressIndicator());
         return ListView.builder(
@@ -336,10 +485,22 @@ class _ProgressTabScreenState extends State<ProgressTabScreen> {
           itemCount: techSnapshot.data!.docs.length,
           itemBuilder: (context, index) {
             final tech = TechniqueModel.fromFirestore(techSnapshot.data!.docs[index]);
+            final isSelfReported = selfReportedIds.contains(tech.id) &&
+                !assignedTechniqueIds.contains(tech.id);
             return ListTile(
-              leading: const Icon(Icons.menu_book),
+              leading: Icon(
+                isSelfReported ? Icons.hourglass_empty : Icons.menu_book,
+                color: isSelfReported ? Colors.orange.shade700 : null,
+              ),
               title: Text(tech.name),
-              subtitle: Text(tech.category),
+              subtitle: Text(
+                isSelfReported
+                    ? '${tech.category} · ${l10n.pendingTeacherReview}'
+                    : tech.category,
+                style: isSelfReported
+                    ? TextStyle(color: Colors.orange.shade800, fontSize: 12.5)
+                    : null,
+              ),
               onTap: () => _showTechniqueDetailsDialog(tech),
             );
           },

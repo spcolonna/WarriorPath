@@ -2,43 +2,163 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // ── Helpers ────────────────────────────────────────────────────────────
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function memberDoc(schoolId) {
+      return get(/databases/$(database)/documents/schools/$(schoolId)/members/$(request.auth.uid));
+    }
+
+    function schoolDoc(schoolId) {
+      return get(/databases/$(database)/documents/schools/$(schoolId));
+    }
+
+    function schoolExists(schoolId) {
+      return exists(/databases/$(database)/documents/schools/$(schoolId));
+    }
+
+    function isOwner(schoolId) {
+      return schoolExists(schoolId) &&
+        schoolDoc(schoolId).data.ownerId == request.auth.uid;
+    }
+
+    function isTeacher(schoolId) {
+      return exists(/databases/$(database)/documents/schools/$(schoolId)/members/$(request.auth.uid)) &&
+        memberDoc(schoolId).data.role == 'maestro';
+    }
+
+    // Dueño de la escuela o miembro con rol 'maestro'. Mismo criterio que
+    // SchoolPermissions.canManageSchool en el cliente.
+    //
+    // El caso `!schoolExists` cubre el alta: el wizard crea la escuela, sus
+    // disciplinas y la membresía del maestro en un mismo batch, y las reglas
+    // evalúan cada documento contra el estado ANTERIOR al batch — ahí todavía
+    // no existe ni la escuela ni el member, así que sin esto el alta se rompe.
+    function canManage(schoolId) {
+      return signedIn() && (
+        !schoolExists(schoolId) || isOwner(schoolId) || isTeacher(schoolId)
+      );
+    }
+
+    function isMemberOf(schoolId) {
+      return signedIn() &&
+        exists(/databases/$(database)/documents/schools/$(schoolId)/members/$(request.auth.uid));
+    }
+
+    // Campos que el alumno NUNCA puede tocar de su propia membresía. `progress`
+    // se permite porque ahí viven las técnicas que declara y su nivel; el resto
+    // (poder, rol, estado, plan de pago) es del maestro.
+    function studentTouchesOnlyAllowedFields() {
+      return !request.resource.data.diff(resource.data).affectedKeys()
+        .hasAny(['powerLevel', 'role', 'status', 'assignedPaymentPlanId',
+                 'userId', 'joinDate', 'displayName']);
+    }
+
     // ── users ──────────────────────────────────────────────────────────────
-    // Lectura/actualización/borrado: cualquier usuario autenticado (igual que
-    // antes; los maestros leen y actualizan los docs de sus alumnos, etc.).
     match /users/{userId} {
-      allow read, update, delete: if request.auth != null;
+      allow read, update, delete: if signedIn();
 
       // ANTI-SPAM: un usuario solo puede crear SU PROPIO documento si tiene el
       // email verificado. Esto frena la creación masiva de cuentas por script.
       // La creación de perfiles proxy (hijos / alumnos sin app) la hace otro
       // usuario autenticado con un id distinto, y sigue permitida.
-      allow create: if request.auth != null && (
+      allow create: if signedIn() && (
         (request.auth.uid == userId && request.auth.token.email_verified == true) ||
         (request.auth.uid != userId)
       );
     }
 
-    // ── schools y TODAS sus subcolecciones ─────────────────────────────────
-    // (disciplines, levels, techniques, members, payments, progressionHistory,
-    //  paymentReminders, attendanceRecords, classSchedules, paymentPlans, events)
-    // Se mantiene el comportamiento actual: acceso para autenticados.
+    // ── schools ────────────────────────────────────────────────────────────
     match /schools/{schoolId} {
-      allow read, write: if request.auth != null;
+      // Cualquier autenticado puede leer una escuela: hace falta para el
+      // buscador de escuelas, donde todavía no sos miembro.
+      allow read: if signedIn();
+      // Crear una escuela es libre (es el alta); modificarla, sólo quien gestiona.
+      allow create: if signedIn();
+      allow update, delete: if canManage(schoolId);
+
+      // ── members ──────────────────────────────────────────────────────────
+      match /members/{memberId} {
+        allow read: if signedIn();
+
+        // Postularse: crear tu propia membresía en estado 'pending'. El maestro
+        // también crea members (alumnos sin app).
+        allow create: if canManage(schoolId) || (
+          request.auth.uid == memberId &&
+          request.resource.data.status == 'pending'
+        );
+
+        // El maestro puede todo. El alumno, sólo su propio documento y sin
+        // tocar los campos sensibles: así puede declarar su nivel y sus
+        // técnicas, pero no editarse el poder ni ascenderse a maestro.
+        allow update: if canManage(schoolId) || (
+          request.auth.uid == memberId && studentTouchesOnlyAllowedFields()
+        );
+
+        allow delete: if canManage(schoolId);
+
+        // Historial de progreso: el alumno puede dejar registro de un nivel
+        // auto-declarado, pero no borrar el historial.
+        match /progressionHistory/{historyId} {
+          allow read: if signedIn();
+          allow create: if canManage(schoolId) || request.auth.uid == memberId;
+          allow update, delete: if canManage(schoolId);
+        }
+
+        // Plata: sólo la gestiona el maestro. El alumno la lee.
+        //
+        // A propósito NO hay un `match /{document=**}` acá abajo: las reglas se
+        // combinan con OR, así que un comodín permisivo anularía estas dos y le
+        // dejaría al alumno registrarse sus propios pagos.
+        match /payments/{paymentId} {
+          allow read: if signedIn();
+          allow write: if canManage(schoolId);
+        }
+        match /paymentReminders/{reminderId} {
+          allow read: if signedIn();
+          allow write: if canManage(schoolId);
+        }
+      }
+
+      // ── Resto de la escuela ──────────────────────────────────────────────
+      // Currícula, horarios, eventos, planes, asistencia: los alumnos leen,
+      // sólo el maestro escribe.
+      match /attendanceRecords/{recordId} {
+        allow read: if signedIn();
+        allow write: if canManage(schoolId);
+      }
+
+      match /events/{eventId} {
+        allow read: if signedIn();
+        // El alumno confirma su asistencia a un evento, así que necesita poder
+        // actualizarlo; crear y borrar queda del lado del maestro.
+        allow create, delete: if canManage(schoolId);
+        allow update: if canManage(schoolId) || isMemberOf(schoolId);
+      }
+
       match /{document=**} {
-        allow read, write: if request.auth != null;
+        allow read: if signedIn();
+        allow write: if canManage(schoolId);
       }
     }
 
     // ── guardianships ──────────────────────────────────────────────────────
     match /guardianships/{guardianshipId} {
-      allow read, write: if request.auth != null;
+      allow read, write: if signedIn();
     }
 
     // ── consultas collectionGroup('payments') (pantalla de finanzas) ───────
     // Las queries de grupo de colección necesitan una regla con wildcard
     // recursivo como prefijo; las reglas por ruta específica no aplican a ellas.
     match /{path=**}/payments/{paymentId} {
-      allow read, write: if request.auth != null;
+      allow read: if signedIn();
+    }
+
+    // collectionGroup('members') — lo usa el ruteo post-login.
+    match /{path=**}/members/{memberId} {
+      allow read: if signedIn();
     }
   }
 }

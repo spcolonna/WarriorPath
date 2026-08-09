@@ -156,6 +156,10 @@ class _AchievementsSectionState extends State<AchievementsSection> {
     for (final disciplineProgress in widget.memberProgress.values) {
       final map = disciplineProgress as Map<String, dynamic>? ?? {};
 
+      // A propósito NO se suma `selfReportedTechniqueIds`: sólo cuentan las
+      // técnicas que confirmó el maestro. Si contaran las que el alumno declara
+      // por su cuenta, cualquiera se marca todas y desbloquea los logros de
+      // técnicas sin haber entrenado.
       final ids = List<String>.from(map['assignedTechniqueIds'] ?? []);
 
       totalTechniques += ids.length;

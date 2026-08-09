@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:warrior_path/screens/teacher/techniques/assign_techniques_screen.dart';
+import 'package:warrior_path/services/student_progress_service.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/discipline_model.dart';
 import '../../models/level_model.dart';
@@ -230,17 +231,71 @@ class _ProgressDisciplineTabState extends State<ProgressDisciplineTab> {
     }
   }
 
+  /// El maestro da por buena una técnica que el alumno declaró: pasa a la lista
+  /// de asignadas y desde ahí sí cuenta para los logros.
+  Future<void> _confirmSelfReported(String techniqueId) async {
+    try {
+      await StudentProgressService.confirmSelfReportedTechnique(
+        schoolId: widget.schoolId,
+        studentId: widget.studentId,
+        disciplineId: widget.discipline.id!,
+        techniqueId: techniqueId,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.techniqueConfirmed),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(l10n.saveError(e.toString()))));
+      }
+    }
+  }
+
+  /// Botón de quitar, común a las asignadas y a las declaradas por el alumno.
+  Widget _buildRemoveTechniqueButton(TechniqueModel tech) {
+    return IconButton(
+      icon: const Icon(Icons.remove_circle_outline, color: Colors.redAccent),
+      tooltip: l10n.unassignTechnique,
+      onPressed: () async {
+        final confirm = await showDialog<bool>(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: Text(l10n.unassignTechnique),
+                content: Text(l10n.unassignTechniqueConfirm),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(ctx).pop(false),
+                    child: Text(l10n.cancel),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(ctx).pop(true),
+                    child: Text(l10n.eliminate),
+                  ),
+                ],
+              ),
+            ) ??
+            false;
+        if (confirm) _unassignTechnique(tech.id!);
+      },
+    );
+  }
+
   Future<void> _unassignTechnique(String techniqueId) async {
     try {
-      final memberRef = FirebaseFirestore.instance
-          .collection('schools')
-          .doc(widget.schoolId)
-          .collection('members')
-          .doc(widget.studentId);
-      await memberRef.update({
-        'progress.${widget.discipline.id}.assignedTechniqueIds':
-            FieldValue.arrayRemove([techniqueId]),
-      });
+      // Se saca de las dos listas: si sólo se quitara de las asignadas, una
+      // técnica que el alumno había declarado volvería a aparecer como pendiente.
+      await StudentProgressService.removeTechnique(
+        schoolId: widget.schoolId,
+        studentId: widget.studentId,
+        disciplineId: widget.discipline.id!,
+        techniqueId: techniqueId,
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -264,6 +319,12 @@ class _ProgressDisciplineTabState extends State<ProgressDisciplineTab> {
     final assignedTechniqueIds = List<String>.from(
       widget.studentProgress['assignedTechniqueIds'] ?? [],
     );
+    // Las que el alumno declaró y todavía nadie confirmó. Se listan junto a las
+    // asignadas pero marcadas, para que el maestro sepa qué le falta revisar.
+    final selfReportedIds = List<String>.from(
+      widget.studentProgress['selfReportedTechniqueIds'] ?? [],
+    ).where((id) => !assignedTechniqueIds.contains(id)).toList();
+    final allTechniqueIds = [...assignedTechniqueIds, ...selfReportedIds];
     final roleInDiscipline =
         widget.studentProgress['role'] as String? ?? l10n.student.toLowerCase();
     final primaryColor = Color(
@@ -516,7 +577,7 @@ class _ProgressDisciplineTabState extends State<ProgressDisciplineTab> {
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 8),
-                if (assignedTechniqueIds.isEmpty)
+                if (allTechniqueIds.isEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 16.0),
                     child: Center(child: Text(l10n.noTechniquesForDiscipline)),
@@ -531,7 +592,7 @@ class _ProgressDisciplineTabState extends State<ProgressDisciplineTab> {
                         .collection('techniques')
                         .where(
                           FieldPath.documentId,
-                          whereIn: assignedTechniqueIds,
+                          whereIn: allTechniqueIds,
                         )
                         .snapshots(),
                     builder: (context, techSnapshot) {
@@ -541,46 +602,42 @@ class _ProgressDisciplineTabState extends State<ProgressDisciplineTab> {
                       return Column(
                         children: techSnapshot.data!.docs.map((doc) {
                           final tech = TechniqueModel.fromFirestore(doc);
+                          final isSelfReported =
+                              selfReportedIds.contains(tech.id);
                           return ListTile(
+                            leading: isSelfReported
+                                ? Icon(Icons.person_outline,
+                                    color: Colors.orange.shade700)
+                                : null,
                             title: Text(tech.name),
-                            subtitle: Text(tech.category),
+                            subtitle: Text(
+                              isSelfReported
+                                  ? '${tech.category} · ${l10n.declaredByStudent}'
+                                  : tech.category,
+                              style: isSelfReported
+                                  ? TextStyle(
+                                      color: Colors.orange.shade800,
+                                      fontSize: 12.5)
+                                  : null,
+                            ),
                             trailing: widget.isOwnerViewing
-                                ? IconButton(
-                                    icon: const Icon(
-                                      Icons.remove_circle_outline,
-                                      color: Colors.redAccent,
-                                    ),
-                                    tooltip: l10n.unassignTechnique,
-                                    onPressed: () async {
-                                      final confirm =
-                                          await showDialog<bool>(
-                                            context: context,
-                                            builder: (ctx) => AlertDialog(
-                                              title: Text(
-                                                l10n.unassignTechnique,
-                                              ),
-                                              content: Text(
-                                                l10n.unassignTechniqueConfirm,
-                                              ),
-                                              actions: [
-                                                TextButton(
-                                                  onPressed: () => Navigator.of(
-                                                    ctx,
-                                                  ).pop(false),
-                                                  child: Text(l10n.cancel),
-                                                ),
-                                                ElevatedButton(
-                                                  onPressed: () => Navigator.of(
-                                                    ctx,
-                                                  ).pop(true),
-                                                  child: Text(l10n.eliminate),
-                                                ),
-                                              ],
-                                            ),
-                                          ) ??
-                                          false;
-                                      if (confirm) _unassignTechnique(tech.id!);
-                                    },
+                                ? Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      // Confirmar la pasa a la lista del
+                                      // maestro y recién ahí cuenta para logros.
+                                      if (isSelfReported)
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.check_circle_outline,
+                                            color: Colors.green,
+                                          ),
+                                          tooltip: l10n.confirmTechnique,
+                                          onPressed: () =>
+                                              _confirmSelfReported(tech.id!),
+                                        ),
+                                      _buildRemoveTechniqueButton(tech),
+                                    ],
                                   )
                                 : null,
                           );

@@ -379,6 +379,15 @@ class AppLocalizationsEs extends AppLocalizations {
   String get inactiveInThisSchool => 'Te dieron de baja en esta escuela';
 
   @override
+  String get editStudentTitle => 'Editar alumno';
+
+  @override
+  String get editStudent => 'Editar datos del alumno';
+
+  @override
+  String get updateProfileSuccess => 'Datos actualizados con éxito.';
+
+  @override
   String get orWithEmail => 'o con tu correo';
 
   @override
@@ -1710,4 +1719,48 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get rankingYou => 'Vos';
+
+  @override
+  String get declareMyLevelTitle => '¿Este es tu nivel?';
+
+  @override
+  String declareMyLevelBody(String level) {
+    return 'Vas a quedar registrado como $level. Tu maestro lo va a ver y puede corregirlo si no coincide.';
+  }
+
+  @override
+  String get levelDeclaredSuccess => 'Listo, actualizamos tu nivel.';
+
+  @override
+  String get myTechniquesTitle => 'Las técnicas que sé';
+
+  @override
+  String get myTechniquesHelp =>
+      'Marcá las técnicas que ya sabés. Tu maestro las va a ver como declaradas por vos y podrá confirmarlas.';
+
+  @override
+  String get techniquesReportedSuccess =>
+      'Guardamos las técnicas que marcaste.';
+
+  @override
+  String get confirmedByTeacher => 'Confirmada por tu maestro';
+
+  @override
+  String get noTechniquesDefined =>
+      'Tu escuela todavía no cargó técnicas para esta disciplina.';
+
+  @override
+  String get declaredByStudent => 'Declarada por el alumno';
+
+  @override
+  String get confirmTechnique => 'Confirmar';
+
+  @override
+  String get techniqueConfirmed => 'Técnica confirmada.';
+
+  @override
+  String get iKnowTheseTechniques => 'Marcar las que ya sé';
+
+  @override
+  String get pendingTeacherReview => 'pendiente de confirmar';
 }

@@ -148,6 +148,10 @@ class _WizardCreateSchoolScreenState extends State<WizardCreateSchoolScreen> {
         batch.set(disciplineRef, {
           'name': theme.name,
           'isPrimary': i == 0,
+          // Sin este campo, las consultas que filtran por `isActive` no
+          // devuelven la disciplina (Firestore ignora los docs donde el campo
+          // no existe). Es lo que dejaba el selector de eventos vacío.
+          'isActive': true,
           'theme': {
             'primaryColor': theme.primaryColor.value.toRadixString(16),
             'accentColor': theme.accentColor.value.toRadixString(16),

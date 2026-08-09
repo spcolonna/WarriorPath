@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:warrior_path/models/technique_model.dart';
+import 'package:warrior_path/services/student_progress_service.dart';
 
 import '../../../l10n/app_localizations.dart';
 
@@ -61,14 +62,18 @@ class _AssignTechniquesScreenState extends State<AssignTechniquesScreen> {
   Future<void> _saveAssignments() async {
     setState(() => _isLoading = true);
     try {
-      final fieldToUpdate = 'progress.${widget.disciplineId}.assignedTechniqueIds';
-
-      await FirebaseFirestore.instance
-          .collection('schools').doc(widget.schoolId)
-          .collection('members').doc(widget.studentId)
-          .update({
-        fieldToUpdate: _selectedIds.toList(),
-      });
+      // Se guardan sólo las diferencias contra lo que había al abrir la
+      // pantalla. Antes se reescribía el array completo, así que si el alumno
+      // declaraba una técnica mientras el maestro tenía esto abierto, al
+      // guardar se la borraba sin que nadie se enterara.
+      final original = Set<String>.from(widget.alreadyAssignedIds);
+      await StudentProgressService.applyTeacherAssignments(
+        schoolId: widget.schoolId,
+        studentId: widget.studentId,
+        disciplineId: widget.disciplineId,
+        added: _selectedIds.difference(original),
+        removed: original.difference(_selectedIds),
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.techniquesAssignedSuccess), backgroundColor: Colors.green));
