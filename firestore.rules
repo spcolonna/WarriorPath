@@ -112,9 +112,20 @@ service cloud.firestore {
         // A propósito NO hay un `match /{document=**}` acá abajo: las reglas se
         // combinan con OR, así que un comodín permisivo anularía estas dos y le
         // dejaría al alumno registrarse sus propios pagos.
+        // El alumno puede DECLARAR un pago, pero nace pendiente de confirmar y
+        // no puede tocarlo después: confirmarlo o borrarlo es del maestro.
+        // Sin esto, cualquiera se daría por pagado y además inflaría el reporte
+        // de ingresos de la escuela.
         match /payments/{paymentId} {
           allow read: if signedIn();
-          allow write: if canManage(schoolId);
+
+          allow create: if canManage(schoolId) || (
+            request.auth.uid == memberId &&
+            request.resource.data.status == 'pending_confirmation' &&
+            request.resource.data.declaredBy == request.auth.uid
+          );
+
+          allow update, delete: if canManage(schoolId);
         }
         match /paymentReminders/{reminderId} {
           allow read: if signedIn();
@@ -125,9 +136,29 @@ service cloud.firestore {
       // ── Resto de la escuela ──────────────────────────────────────────────
       // Currícula, horarios, eventos, planes, asistencia: los alumnos leen,
       // sólo el maestro escribe.
+      // El alumno puede marcarse presente él mismo (check-in del día y carga de
+      // clases pasadas), pero sólo a SÍ MISMO: no puede marcar a un compañero
+      // ni tocar el resto del documento.
       match /attendanceRecords/{recordId} {
         allow read: if signedIn();
-        allow write: if canManage(schoolId);
+
+        allow create: if canManage(schoolId) || (
+          isMemberOf(schoolId) &&
+          request.resource.data.presentStudentIds == [request.auth.uid]
+        );
+
+        // En el update sólo se admite que cambie `presentStudentIds`, y que el
+        // resultado agregue al propio alumno sin sacar a nadie.
+        allow update: if canManage(schoolId) || (
+          isMemberOf(schoolId) &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['presentStudentIds']) &&
+          request.resource.data.presentStudentIds.hasAll(resource.data.presentStudentIds) &&
+          request.resource.data.presentStudentIds.hasOnly(
+            resource.data.presentStudentIds.concat([request.auth.uid]))
+        );
+
+        allow delete: if canManage(schoolId);
       }
 
       match /events/{eventId} {

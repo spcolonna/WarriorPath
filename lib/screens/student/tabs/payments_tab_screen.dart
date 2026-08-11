@@ -1,8 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:warrior_path/services/student_payment_service.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../declare_payment_dialog.dart';
 
 class PaymentsTabScreen extends StatelessWidget {
   final String schoolId;
@@ -21,6 +23,29 @@ class PaymentsTabScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF2F2F7),
       appBar: AppBar(title: Text(l10n.myPayments)),
+      floatingActionButton: FloatingActionButton.extended(
+        icon: const Icon(Icons.add_card),
+        label: Text(l10n.declarePayment),
+        onPressed: () async {
+          final name = (await FirebaseFirestore.instance
+                      .collection('schools')
+                      .doc(schoolId)
+                      .collection('members')
+                      .doc(memberId)
+                      .get())
+                  .data()?['displayName'] as String? ??
+              '';
+          if (!context.mounted) return;
+          await showDialog(
+            context: context,
+            builder: (_) => DeclarePaymentDialog(
+              schoolId: schoolId,
+              studentId: memberId,
+              studentName: name,
+            ),
+          );
+        },
+      ),
       body: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(
@@ -452,23 +477,34 @@ class _PaymentHistoryTile extends StatelessWidget {
     final amount = (payment['amount'] as num?) ?? 0;
     final currency = payment['currency'] as String? ?? 'UYU';
 
+    // Un pago declarado por el alumno todavía no es un pago cobrado: se
+    // distingue para que no crea que ya está resuelto.
+    final confirmed = StudentPaymentService.isConfirmed(payment);
+    final accent = confirmed ? const Color(0xFF2E9E5B) : Colors.orange.shade700;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(
+          color: confirmed ? Colors.grey.shade200 : Colors.orange.shade200,
+        ),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFF2E9E5B).withValues(alpha: 0.12),
+              color: accent.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.check, color: Color(0xFF2E9E5B), size: 18),
+            child: Icon(
+              confirmed ? Icons.check : Icons.hourglass_empty,
+              color: accent,
+              size: 18,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -483,8 +519,15 @@ class _PaymentHistoryTile extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  l10n.paidOn(formattedDate),
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                  confirmed
+                      ? l10n.paidOn(formattedDate)
+                      : '${l10n.paidOn(formattedDate)} · ${l10n.pendingConfirmation}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: confirmed ? Colors.grey.shade500 : accent,
+                    fontWeight:
+                        confirmed ? FontWeight.normal : FontWeight.w600,
+                  ),
                 ),
               ],
             ),

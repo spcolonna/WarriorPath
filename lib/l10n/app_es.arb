@@ -678,5 +678,21 @@
     "confirmTechnique": "Confirmar",
     "techniqueConfirmed": "Técnica confirmada.",
     "iKnowTheseTechniques": "Marcar las que ya sé",
-    "pendingTeacherReview": "pendiente de confirmar"
+    "pendingTeacherReview": "pendiente de confirmar",
+    "declarePaymentTitle": "Declarar un pago",
+    "declarePaymentHelp": "Registrá un pago que ya hiciste. Tu maestro lo va a revisar y confirmar.",
+    "declarePayment": "Declarar pago",
+    "payMyPlan": "Pagué mi cuota",
+    "paymentMethod": "Método de pago",
+    "methodCash": "Efectivo",
+    "methodTransfer": "Transferencia",
+    "methodOther": "Otro",
+    "paymentDeclaredSuccess": "Listo, tu maestro lo va a confirmar.",
+    "pendingConfirmation": "Pendiente de confirmar",
+    "declaredByStudentPayment": "Declarado por el alumno",
+    "confirmPayment": "Confirmar pago",
+    "rejectPayment": "Rechazar",
+    "paymentConfirmed": "Pago confirmado.",
+    "paymentRejected": "Pago rechazado.",
+    "rejectPaymentConfirm": "Se va a borrar el pago declarado. ¿Confirmás?"
 }

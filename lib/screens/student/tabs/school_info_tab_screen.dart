@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:warrior_path/providers/session_provider.dart';
 import 'package:warrior_path/screens/role_selector_screen.dart';
 import 'package:warrior_path/models/event_model.dart';
+import 'package:warrior_path/services/attendance_service.dart';
 import 'package:warrior_path/widgets/power_level_card.dart';
 import '../../../l10n/app_localizations.dart';
 import '../student_event_detail_screen.dart';
@@ -192,33 +193,17 @@ class _TodaySectionState extends State<_TodaySection> {
   }) async {
     setState(() => _loadingIds.add(scheduleId));
     try {
-      final now = DateTime.now();
-      final startOfDay = DateTime(now.year, now.month, now.day);
-      final endOfDay   = startOfDay.add(const Duration(days: 1));
-
-      final snap = await FirebaseFirestore.instance
-          .collection('schools').doc(widget.schoolId)
-          .collection('attendanceRecords')
-          .where('scheduleTitle', isEqualTo: scheduleTitle)
-          .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
-          .where('date', isLessThan: Timestamp.fromDate(endOfDay))
-          .limit(1)
-          .get();
-
-      if (snap.docs.isNotEmpty) {
-        await snap.docs.first.reference.update({
-          'presentStudentIds': FieldValue.arrayUnion([memberId]),
-        });
-      } else {
-        await FirebaseFirestore.instance
-            .collection('schools').doc(widget.schoolId)
-            .collection('attendanceRecords')
-            .add({
-          'date': Timestamp.now(),
-          'scheduleTitle': scheduleTitle,
-          'presentStudentIds': [memberId],
-        });
-      }
+      // Antes esto creaba el registro con `Timestamp.now()` sin normalizar,
+      // mientras que el maestro lo guardaba a medianoche: el mismo día podía
+      // quedar con dos documentos para la misma clase. El servicio unifica el
+      // criterio para las tres formas de registrar asistencia.
+      await AttendanceService.markPresent(
+        schoolId: widget.schoolId,
+        studentId: memberId,
+        scheduleTitle: scheduleTitle,
+        scheduleId: scheduleId,
+        date: DateTime.now(),
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

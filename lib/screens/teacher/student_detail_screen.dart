@@ -13,6 +13,7 @@ import '../../constants/school_roles.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/payment_plan_model.dart';
 import '../../services/school_permissions.dart';
+import '../../services/student_payment_service.dart';
 import '../../widgets/register_payment_dialog.dart';
 
 class StudentDetailScreen extends StatefulWidget {
@@ -1227,6 +1228,33 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
     );
   }
 
+  /// El maestro valida un pago que declaró el alumno. Recién ahí cuenta como
+  /// ingreso y se cierra el recordatorio de la cuota de ese mes.
+  Future<void> _confirmDeclaredPayment(String paymentId, DateTime date) async {
+    try {
+      await StudentPaymentService.confirm(
+        schoolId: widget.schoolId,
+        studentId: widget.studentId,
+        paymentId: paymentId,
+        paymentDate: date,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.paymentConfirmed),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.saveError(e.toString()))),
+        );
+      }
+    }
+  }
+
   Widget _buildPaymentsHistoryTab() {
     final startDate = Timestamp.fromDate(DateTime(_selectedPaymentYear));
     final endDate = Timestamp.fromDate(DateTime(_selectedPaymentYear + 1));
@@ -1309,18 +1337,40 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
                         'dd/MM/yyyy',
                       ).format(date);
 
+                      // Los pagos que declara el alumno llegan sin confirmar y
+                      // no cuentan como ingreso hasta que el maestro los valida.
+                      final pendiente =
+                          !StudentPaymentService.isConfirmed(payment);
+
                       return Card(
                         margin: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 4,
                         ),
+                        color: pendiente
+                            ? Colors.orange.withValues(alpha: 0.06)
+                            : null,
                         child: ListTile(
-                          leading: const Icon(
-                            Icons.receipt_long,
-                            color: Colors.green,
+                          leading: Icon(
+                            pendiente
+                                ? Icons.hourglass_empty
+                                : Icons.receipt_long,
+                            color: pendiente
+                                ? Colors.orange.shade700
+                                : Colors.green,
                           ),
                           title: Text(payment['concept'] ?? l10n.payment),
-                          subtitle: Text(formattedDate),
+                          subtitle: Text(
+                            pendiente
+                                ? '$formattedDate · ${l10n.declaredByStudentPayment}'
+                                : formattedDate,
+                            style: pendiente
+                                ? TextStyle(
+                                    color: Colors.orange.shade800,
+                                    fontSize: 12.5,
+                                  )
+                                : null,
+                          ),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -1330,6 +1380,16 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
+                              if (pendiente)
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.check_circle_outline,
+                                    color: Colors.green,
+                                  ),
+                                  tooltip: l10n.confirmPayment,
+                                  onPressed: () =>
+                                      _confirmDeclaredPayment(doc.id, date),
+                                ),
                               IconButton(
                                 icon: const Icon(
                                   Icons.delete_outline,

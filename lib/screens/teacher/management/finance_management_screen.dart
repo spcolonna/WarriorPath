@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:warrior_path/services/student_payment_service.dart';
 import 'package:intl/intl.dart';
 import 'package:warrior_path/models/payment_plan_model.dart';
 
@@ -125,6 +126,12 @@ class _FinanceManagementScreenState extends State<FinanceManagementScreen> with 
 
     for (var doc in snapshot.docs) {
       final payment = doc.data();
+
+      // Sólo cuenta la plata efectivamente confirmada. Un pago declarado por el
+      // alumno y todavía sin validar no es un ingreso: si se sumara, el reporte
+      // mostraría dinero que quizá nunca entró.
+      if (!StudentPaymentService.isConfirmed(payment)) continue;
+
       final date = (payment['paymentDate'] as Timestamp).toDate();
       final amount = (payment['amount'] as num).toDouble();
       yearTotal += amount;

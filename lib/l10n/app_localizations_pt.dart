@@ -1765,4 +1765,54 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get pendingTeacherReview => 'pendente de confirmação';
+
+  @override
+  String get declarePaymentTitle => 'Declarar um pagamento';
+
+  @override
+  String get declarePaymentHelp =>
+      'Registre um pagamento que você já fez. Seu mestre vai revisar e confirmar.';
+
+  @override
+  String get declarePayment => 'Declarar pagamento';
+
+  @override
+  String get payMyPlan => 'Paguei minha mensalidade';
+
+  @override
+  String get paymentMethod => 'Forma de pagamento';
+
+  @override
+  String get methodCash => 'Dinheiro';
+
+  @override
+  String get methodTransfer => 'Transferência';
+
+  @override
+  String get methodOther => 'Outro';
+
+  @override
+  String get paymentDeclaredSuccess => 'Pronto, seu mestre vai confirmar.';
+
+  @override
+  String get pendingConfirmation => 'Pendente de confirmação';
+
+  @override
+  String get declaredByStudentPayment => 'Declarado pelo aluno';
+
+  @override
+  String get confirmPayment => 'Confirmar pagamento';
+
+  @override
+  String get rejectPayment => 'Rejeitar';
+
+  @override
+  String get paymentConfirmed => 'Pagamento confirmado.';
+
+  @override
+  String get paymentRejected => 'Pagamento rejeitado.';
+
+  @override
+  String get rejectPaymentConfirm =>
+      'O pagamento declarado será excluído. Confirma?';
 }

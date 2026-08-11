@@ -1758,4 +1758,54 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pendingTeacherReview => 'pending confirmation';
+
+  @override
+  String get declarePaymentTitle => 'Declare a payment';
+
+  @override
+  String get declarePaymentHelp =>
+      'Record a payment you already made. Your teacher will review and confirm it.';
+
+  @override
+  String get declarePayment => 'Declare payment';
+
+  @override
+  String get payMyPlan => 'I paid my plan';
+
+  @override
+  String get paymentMethod => 'Payment method';
+
+  @override
+  String get methodCash => 'Cash';
+
+  @override
+  String get methodTransfer => 'Bank transfer';
+
+  @override
+  String get methodOther => 'Other';
+
+  @override
+  String get paymentDeclaredSuccess => 'Done, your teacher will confirm it.';
+
+  @override
+  String get pendingConfirmation => 'Pending confirmation';
+
+  @override
+  String get declaredByStudentPayment => 'Declared by the student';
+
+  @override
+  String get confirmPayment => 'Confirm payment';
+
+  @override
+  String get rejectPayment => 'Reject';
+
+  @override
+  String get paymentConfirmed => 'Payment confirmed.';
+
+  @override
+  String get paymentRejected => 'Payment rejected.';
+
+  @override
+  String get rejectPaymentConfirm =>
+      'The declared payment will be deleted. Confirm?';
 }

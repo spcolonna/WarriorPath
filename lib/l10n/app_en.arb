@@ -954,5 +954,21 @@
     "confirmTechnique": "Confirm",
     "techniqueConfirmed": "Technique confirmed.",
     "iKnowTheseTechniques": "Check the ones I know",
-    "pendingTeacherReview": "pending confirmation"
+    "pendingTeacherReview": "pending confirmation",
+    "declarePaymentTitle": "Declare a payment",
+    "declarePaymentHelp": "Record a payment you already made. Your teacher will review and confirm it.",
+    "declarePayment": "Declare payment",
+    "payMyPlan": "I paid my plan",
+    "paymentMethod": "Payment method",
+    "methodCash": "Cash",
+    "methodTransfer": "Bank transfer",
+    "methodOther": "Other",
+    "paymentDeclaredSuccess": "Done, your teacher will confirm it.",
+    "pendingConfirmation": "Pending confirmation",
+    "declaredByStudentPayment": "Declared by the student",
+    "confirmPayment": "Confirm payment",
+    "rejectPayment": "Reject",
+    "paymentConfirmed": "Payment confirmed.",
+    "paymentRejected": "Payment rejected.",
+    "rejectPaymentConfirm": "The declared payment will be deleted. Confirm?"
 }

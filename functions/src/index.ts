@@ -309,22 +309,82 @@ exports.onPaymentCreated = onDocumentWritten(
     const amount = paymentData.amount ?? 0;
     const currency = paymentData.currency ?? "";
     const concept = paymentData.concept ?? "un pago";
-    const payload = {
-      notification: {
-        title: "Nuevo Pago Registrado",
-        body: `Tu maestro ha registrado un pago de ${amount} ${currency}` +
-                    ` por concepto de "${concept}".`,
-      },
-      data: {
-        type: "payment_registered",
-        schoolId: event.params.schoolId,
-        memberId: studentId,
-      },
-    };
+    const schoolId = event.params.schoolId;
+
+    // Un pago puede llegar de dos lados y el aviso NO es el mismo: si lo declaró
+    // el alumno, decirle "tu maestro registró un pago" sería falso, y además el
+    // que necesita enterarse es el maestro, que lo tiene que confirmar.
+    const declaredByStudent =
+      paymentData.status === "pending_confirmation" ||
+      paymentData.declaredBy === studentId;
+
     try {
-      await sendNotificationsToUser(studentId, payload);
+      if (declaredByStudent) {
+        const studentName = paymentData.studentName ?? "Un alumno";
+        const recipients = await getSchoolManagerIds(schoolId);
+        await Promise.all(recipients.map((uid) =>
+          sendNotificationsToUser(uid, {
+            notification: {
+              title: "Pago para confirmar",
+              body: `${studentName} declaró un pago de ${amount} ${currency}` +
+                ` por "${concept}". Revisalo para confirmarlo.`,
+            },
+            data: {
+              type: "payment_to_confirm",
+              schoolId,
+              memberId: studentId,
+            },
+          })));
+        return;
+      }
+
+      await sendNotificationsToUser(studentId, {
+        notification: {
+          title: "Nuevo Pago Registrado",
+          body: `Tu maestro ha registrado un pago de ${amount} ${currency}` +
+                      ` por concepto de "${concept}".`,
+        },
+        data: {
+          type: "payment_registered",
+          schoolId,
+          memberId: studentId,
+        },
+      });
     } catch (error) {
       logger.error("Error al notificar sobre nuevo pago:", error);
+    }
+  });
+
+// ===============================================================================================
+// NOTIFICAR AL ALUMNO CUANDO SU PAGO DECLARADO QUEDA CONFIRMADO
+// ===============================================================================================
+exports.onPaymentConfirmed = onDocumentWritten(
+  "/schools/{schoolId}/members/{studentId}/payments/{paymentId}",
+  async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (!before || !after) return;
+
+    // Sólo el salto pendiente → confirmado.
+    if (before.status !== "pending_confirmation" ||
+        after.status !== "confirmed") return;
+
+    const studentId = event.params.studentId;
+    try {
+      await sendNotificationsToUser(studentId, {
+        notification: {
+          title: "Pago confirmado",
+          body: `Tu maestro confirmó el pago de ${after.amount ?? 0}` +
+            ` ${after.currency ?? ""} por "${after.concept ?? "tu cuota"}".`,
+        },
+        data: {
+          type: "payment_registered",
+          schoolId: event.params.schoolId,
+          memberId: studentId,
+        },
+      });
+    } catch (error) {
+      logger.error("Error al notificar pago confirmado:", error);
     }
   });
 

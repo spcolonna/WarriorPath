@@ -3219,6 +3219,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'pending confirmation'**
   String get pendingTeacherReview;
+
+  /// No description provided for @declarePaymentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Declare a payment'**
+  String get declarePaymentTitle;
+
+  /// No description provided for @declarePaymentHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Record a payment you already made. Your teacher will review and confirm it.'**
+  String get declarePaymentHelp;
+
+  /// No description provided for @declarePayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Declare payment'**
+  String get declarePayment;
+
+  /// No description provided for @payMyPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'I paid my plan'**
+  String get payMyPlan;
+
+  /// No description provided for @paymentMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment method'**
+  String get paymentMethod;
+
+  /// No description provided for @methodCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash'**
+  String get methodCash;
+
+  /// No description provided for @methodTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Bank transfer'**
+  String get methodTransfer;
+
+  /// No description provided for @methodOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get methodOther;
+
+  /// No description provided for @paymentDeclaredSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Done, your teacher will confirm it.'**
+  String get paymentDeclaredSuccess;
+
+  /// No description provided for @pendingConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending confirmation'**
+  String get pendingConfirmation;
+
+  /// No description provided for @declaredByStudentPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Declared by the student'**
+  String get declaredByStudentPayment;
+
+  /// No description provided for @confirmPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm payment'**
+  String get confirmPayment;
+
+  /// No description provided for @rejectPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject'**
+  String get rejectPayment;
+
+  /// No description provided for @paymentConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment confirmed.'**
+  String get paymentConfirmed;
+
+  /// No description provided for @paymentRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment rejected.'**
+  String get paymentRejected;
+
+  /// No description provided for @rejectPaymentConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'The declared payment will be deleted. Confirm?'**
+  String get rejectPaymentConfirm;
 }
 
 class _AppLocalizationsDelegate
