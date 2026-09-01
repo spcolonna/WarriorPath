@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../screens/student/student_dashboard_screen.dart';
+import '../screens/teacher/student_detail_screen.dart';
 import '../screens/teacher_dashboard_screen.dart';
 
 /// Lleva al usuario a la pantalla correcta cuando toca una notificación.
@@ -33,14 +34,27 @@ class NotificationRouter {
     final navigator = navigatorKey.currentState;
     if (navigator == null) return;
 
-    final destination = _destinationFor(type);
+    final destination = _destinationFor(type, data);
     if (destination == null) return;
 
     navigator.push(MaterialPageRoute(builder: (_) => destination));
   }
 
-  static Widget? _destinationFor(String type) {
+  static Widget? _destinationFor(String type, Map<String, dynamic> data) {
     switch (type) {
+      // Para el maestro: un alumno declaró un pago y hay que confirmarlo.
+      // A diferencia del resto, acá no alcanza con abrir un dashboard: hay que
+      // llevarlo a la ficha del alumno concreto, que es donde puede actuar.
+      case 'payment_to_confirm':
+        final schoolId = data['schoolId'] as String?;
+        final memberId = data['memberId'] as String?;
+        if (schoolId == null || memberId == null) return null;
+        return StudentDetailScreen(
+          schoolId: schoolId,
+          studentId: memberId,
+          initialTabIndex: StudentDetailScreen.tabPayments,
+        );
+
       // Para el maestro: alguien quiere entrar a la escuela.
       case 'join_request':
         return const TeacherDashboardScreen(

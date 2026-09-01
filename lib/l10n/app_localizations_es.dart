@@ -1813,4 +1813,10 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get rejectPaymentConfirm =>
       'Se va a borrar el pago declarado. ¿Confirmás?';
+
+  @override
+  String get correctAndConfirm => 'Corregir y confirmar';
+
+  @override
+  String get payToConfirm => 'Por confirmar';
 }

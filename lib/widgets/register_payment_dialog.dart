@@ -10,13 +10,28 @@ class RegisterPaymentDialog extends StatefulWidget {
   final String currency;
   final Function(String, double, String?, DateTime) onSave;
 
+  /// Valores iniciales, para reusar el diálogo al corregir un pago que declaró
+  /// el alumno en vez de sólo dar de alta uno nuevo.
+  final String? initialConcept;
+  final double? initialAmount;
+  final DateTime? initialDate;
+
+  /// Título alternativo (al corregir no es "Registrar Pago").
+  final String? title;
+
   const RegisterPaymentDialog({
     super.key,
     required this.allPlans,
     this.assignedPlanId,
     required this.currency,
     required this.onSave,
+    this.initialConcept,
+    this.initialAmount,
+    this.initialDate,
+    this.title,
   });
+
+  bool get isEditing => initialConcept != null || initialAmount != null;
 
   @override
   State<RegisterPaymentDialog> createState() => _RegisterPaymentDialogState();
@@ -43,7 +58,7 @@ class _RegisterPaymentDialogState extends State<RegisterPaymentDialog> {
   void initState() {
     super.initState();
     final now = DateTime.now();
-    _paymentDate = DateTime(now.year, now.month, 1);
+    _paymentDate = widget.initialDate ?? DateTime(now.year, now.month, 1);
 
     if (widget.assignedPlanId != null &&
         widget.allPlans.any((p) => p.id == widget.assignedPlanId)) {
@@ -54,6 +69,15 @@ class _RegisterPaymentDialogState extends State<RegisterPaymentDialog> {
       _selectedPlan = widget.allPlans.first;
     }
     _updateFieldsFromPlan();
+
+    // Al corregir un pago declarado se arranca en "Pago Especial" con los
+    // valores del alumno cargados: si se dejara el modo plan, los campos serían
+    // de sólo lectura y no se podría corregir el monto, que es justo el punto.
+    if (widget.isEditing) {
+      _paymentType = PaymentType.special;
+      _conceptController.text = widget.initialConcept ?? '';
+      _amountController.text = (widget.initialAmount ?? 0).toString();
+    }
   }
 
   @override
@@ -92,7 +116,7 @@ class _RegisterPaymentDialogState extends State<RegisterPaymentDialog> {
     ).format(_paymentDate);
 
     return AlertDialog(
-      title: Text(l10n.registerPayment),
+      title: Text(widget.title ?? l10n.registerPayment),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,

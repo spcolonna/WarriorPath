@@ -112,6 +112,40 @@ class StudentPaymentService {
     );
   }
 
+  /// El maestro corrige lo que declaró el alumno y lo confirma en un solo paso.
+  ///
+  /// Es el caso real: el alumno puso 1500 pero entregó 1200. Se guarda el monto
+  /// original en `declaredAmount` para que quede rastro de la diferencia y no
+  /// parezca que el alumno declaró lo que finalmente se registró.
+  static Future<void> correctAndConfirm({
+    required String schoolId,
+    required String studentId,
+    required String paymentId,
+    required String concept,
+    required double amount,
+    required DateTime paymentDate,
+    required double declaredAmount,
+    String? paymentPlanId,
+  }) async {
+    await _payments(schoolId, studentId).doc(paymentId).update({
+      'concept': concept,
+      'amount': amount,
+      'paymentDate': Timestamp.fromDate(paymentDate),
+      'paymentPlanId': paymentPlanId,
+      'status': PaymentStatus.confirmed,
+      'confirmedBy': FirebaseAuth.instance.currentUser?.uid,
+      'confirmedAt': FieldValue.serverTimestamp(),
+      // Sólo se deja rastro si efectivamente hubo corrección.
+      if (declaredAmount != amount) 'declaredAmount': declaredAmount,
+    });
+
+    await _closeReminderForPeriod(
+      schoolId: schoolId,
+      studentId: studentId,
+      date: paymentDate,
+    );
+  }
+
   /// El maestro rechaza un pago declarado: se borra.
   static Future<void> reject({
     required String schoolId,
@@ -145,6 +179,21 @@ class StudentPaymentService {
       'status': 'paid',
       'paidAt': FieldValue.serverTimestamp(),
     });
+  }
+
+  /// Todos los pagos por confirmar de la escuela, sin importar de qué alumno.
+  ///
+  /// Alimenta el contador y el filtro del maestro, para que no dependa de haber
+  /// visto la notificación. Necesita el índice compuesto de `payments`
+  /// (`schoolId` + `status`) declarado en `firestore.indexes.json`.
+  static Stream<QuerySnapshot<Map<String, dynamic>>> pendingInSchool(
+    String schoolId,
+  ) {
+    return FirebaseFirestore.instance
+        .collectionGroup('payments')
+        .where('schoolId', isEqualTo: schoolId)
+        .where('status', isEqualTo: PaymentStatus.pendingConfirmation)
+        .snapshots();
   }
 
   /// Pagos declarados y todavía sin confirmar de un alumno.

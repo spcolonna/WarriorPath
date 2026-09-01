@@ -3315,6 +3315,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The declared payment will be deleted. Confirm?'**
   String get rejectPaymentConfirm;
+
+  /// No description provided for @correctAndConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Correct and confirm'**
+  String get correctAndConfirm;
+
+  /// No description provided for @payToConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'To confirm'**
+  String get payToConfirm;
 }
 
 class _AppLocalizationsDelegate

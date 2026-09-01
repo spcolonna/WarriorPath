@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:warrior_path/constants/school_roles.dart';
 import 'package:warrior_path/providers/session_provider.dart';
+import 'package:warrior_path/services/student_payment_service.dart';
 import 'package:warrior_path/providers/theme_provider.dart';
 import 'package:warrior_path/screens/school_pending_validation_screen.dart';
 
@@ -167,6 +168,9 @@ class _PendingBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Dos cosas distintas piden atención en la misma pestaña: alumnos que
+    // quieren entrar y pagos que declararon y hay que confirmar. Se suman en un
+    // solo número para no llenar la barra de puntitos.
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('schools')
@@ -174,14 +178,22 @@ class _PendingBadge extends StatelessWidget {
           .collection('members')
           .where('status', isEqualTo: MemberStatus.pending)
           .snapshots(),
-      builder: (context, snapshot) {
-        final count = snapshot.data?.docs.length ?? 0;
-        if (count == 0) return child;
+      builder: (context, applicationsSnap) {
+        final applications = applicationsSnap.data?.docs.length ?? 0;
 
-        return Badge(
-          label: Text('$count'),
-          backgroundColor: Colors.red,
-          child: child,
+        return StreamBuilder<QuerySnapshot>(
+          stream: StudentPaymentService.pendingInSchool(schoolId),
+          builder: (context, paymentsSnap) {
+            final payments = paymentsSnap.data?.docs.length ?? 0;
+            final count = applications + payments;
+            if (count == 0) return child;
+
+            return Badge(
+              label: Text('$count'),
+              backgroundColor: Colors.red,
+              child: child,
+            );
+          },
         );
       },
     );

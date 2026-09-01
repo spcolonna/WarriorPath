@@ -20,11 +20,21 @@ class StudentDetailScreen extends StatefulWidget {
   final String schoolId;
   final String studentId;
 
+  /// Pestaña en la que abrir. La usa el deep link de la notificación de pago
+  /// declarado, para caer directo en Pagos en vez de en General.
+  final int initialTabIndex;
+
   const StudentDetailScreen({
     super.key,
     required this.schoolId,
     required this.studentId,
+    this.initialTabIndex = 0,
   });
+
+  /// Índices de las pestañas fijas (después vienen las de cada disciplina).
+  static const int tabGeneral = 0;
+  static const int tabAttendance = 1;
+  static const int tabPayments = 2;
 
   @override
   _StudentDetailScreenState createState() => _StudentDetailScreenState();
@@ -82,7 +92,14 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
     _confettiController = ConfettiController(
       duration: const Duration(seconds: 4),
     );
-    _tabController = TabController(length: _staticTabsCount, vsync: this);
+    // El índice inicial se conserva cuando el controller se recrea con las
+    // disciplinas ya cargadas (ver `_loadAllData`), así el deep link cae en la
+    // pestaña pedida y no se pierde en el rebuild.
+    _tabController = TabController(
+      length: _staticTabsCount,
+      vsync: this,
+      initialIndex: widget.initialTabIndex.clamp(0, _staticTabsCount - 1),
+    );
     _loadAllData();
   }
 
@@ -174,8 +191,12 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
           }
 
           if (mounted) {
+            // Tiene que coincidir con las Tabs que arma el build, que se
+            // muestran según `_canManage` (dueño **o** maestro). Usar
+            // `_isOwnerViewing` acá dejaba al co-maestro con un TabController
+            // más corto que la cantidad de pestañas: Flutter lanza assertion.
             int staticTabs = 1;
-            if (_isOwnerViewing) {
+            if (_canManage) {
               staticTabs += 2;
             }
             int totalTabs = staticTabs + _enrolledDisciplines.length;
@@ -1255,6 +1276,80 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
     }
   }
 
+  /// Corregir lo que declaró el alumno y confirmarlo de una.
+  ///
+  /// Es el caso real: declaró 1500 pero entregó 1200. Rechazarlo y volver a
+  /// cargarlo sería el doble de trabajo, así que se edita y se confirma junto.
+  Future<void> _editDeclaredPayment(
+    String paymentId,
+    Map<String, dynamic> payment,
+  ) async {
+    final fs = FirebaseFirestore.instance;
+    final schoolRef = fs.collection('schools').doc(widget.schoolId);
+
+    final results = await Future.wait([
+      schoolRef.collection('paymentPlans').get(),
+      schoolRef.get(),
+    ]);
+    if (!mounted) return;
+
+    final allPlans = (results[0] as QuerySnapshot<Map<String, dynamic>>)
+        .docs
+        .map((d) => PaymentPlanModel.fromFirestore(d))
+        .toList();
+    final schoolData =
+        (results[1] as DocumentSnapshot<Map<String, dynamic>>).data();
+    final currency =
+        (schoolData?['financials'] as Map<String, dynamic>?)?['currency'] ??
+            payment['currency'] ??
+            'USD';
+
+    final declaredAmount = (payment['amount'] as num?)?.toDouble() ?? 0;
+    final declaredDate =
+        (payment['paymentDate'] as Timestamp?)?.toDate() ?? DateTime.now();
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => RegisterPaymentDialog(
+        allPlans: allPlans,
+        assignedPlanId: payment['paymentPlanId'] as String?,
+        currency: currency,
+        title: l10n.correctAndConfirm,
+        initialConcept: payment['concept'] as String? ?? '',
+        initialAmount: declaredAmount,
+        initialDate: declaredDate,
+        onSave: (concept, amount, planId, date) async {
+          try {
+            await StudentPaymentService.correctAndConfirm(
+              schoolId: widget.schoolId,
+              studentId: widget.studentId,
+              paymentId: paymentId,
+              concept: concept.trim(),
+              amount: amount,
+              paymentDate: date,
+              declaredAmount: declaredAmount,
+              paymentPlanId: planId,
+            );
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(l10n.paymentConfirmed),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            }
+          } catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(l10n.saveError(e.toString()))),
+              );
+            }
+          }
+        },
+      ),
+    );
+  }
+
   Widget _buildPaymentsHistoryTab() {
     final startDate = Timestamp.fromDate(DateTime(_selectedPaymentYear));
     final endDate = Timestamp.fromDate(DateTime(_selectedPaymentYear + 1));
@@ -1389,6 +1484,16 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
                                   tooltip: l10n.confirmPayment,
                                   onPressed: () =>
                                       _confirmDeclaredPayment(doc.id, date),
+                                ),
+                              if (pendiente)
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.edit_outlined,
+                                    color: Colors.blueGrey,
+                                  ),
+                                  tooltip: l10n.correctAndConfirm,
+                                  onPressed: () =>
+                                      _editDeclaredPayment(doc.id, payment),
                                 ),
                               IconButton(
                                 icon: const Icon(

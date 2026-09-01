@@ -6,6 +6,7 @@ import 'package:warrior_path/providers/session_provider.dart';
 import 'package:warrior_path/screens/teacher/add_offline_student_screen.dart';
 import 'package:warrior_path/screens/teacher/student_detail_screen.dart';
 import 'package:warrior_path/services/student_application_service.dart';
+import 'package:warrior_path/services/student_payment_service.dart';
 
 import '../../../l10n/app_localizations.dart';
 
@@ -176,29 +177,51 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
                   if (k == 3) atrasado++;
                 }
 
-                final filtered = members.where((m) {
-                  if (_payFilter == 0) return true;
-                  return _payKind(m.id, owing) == _payFilter;
-                }).toList();
+                // Los pagos por confirmar son ortogonales al estado de deuda:
+                // un alumno puede estar al día y haber declarado un pago nuevo.
+                // Por eso el filtro es aparte y no otro valor de `_payKind`.
+                return StreamBuilder<QuerySnapshot>(
+                  stream: StudentPaymentService.pendingInSchool(schoolId),
+                  builder: (context, pendSnap) {
+                    final toConfirm = <String>{
+                      for (final p in pendSnap.data?.docs ?? [])
+                        (p.data() as Map<String, dynamic>)['studentId']
+                                as String? ??
+                            '',
+                    }..remove('');
 
-                return Column(
-                  children: [
-                    _cobrosHeader(members.length, alDia, vence, atrasado),
-                    Expanded(
-                      child: filtered.isEmpty
-                          ? Center(child: Text(l10n.noStudentsWithStatus('active')))
-                          : ListView.builder(
-                              padding: const EdgeInsets.only(bottom: 90),
-                              itemCount: filtered.length,
-                              itemBuilder: (context, i) {
-                                final doc = filtered[i];
-                                final data = doc.data() as Map<String, dynamic>;
-                                return _cobroRow(
-                                    doc.id, data, plans, owing, schoolId);
-                              },
-                            ),
-                    ),
-                  ],
+                    final filtered = members.where((m) {
+                      if (_payFilter == 0) return true;
+                      if (_payFilter == 4) return toConfirm.contains(m.id);
+                      return _payKind(m.id, owing) == _payFilter;
+                    }).toList();
+
+                    return Column(
+                      children: [
+                        _cobrosHeader(members.length, alDia, vence, atrasado,
+                            toConfirm.length),
+                        Expanded(
+                          child: filtered.isEmpty
+                              ? Center(
+                                  child: Text(
+                                      l10n.noStudentsWithStatus('active')))
+                              : ListView.builder(
+                                  padding: const EdgeInsets.only(bottom: 90),
+                                  itemCount: filtered.length,
+                                  itemBuilder: (context, i) {
+                                    final doc = filtered[i];
+                                    final data =
+                                        doc.data() as Map<String, dynamic>;
+                                    return _cobroRow(doc.id, data, plans, owing,
+                                        schoolId,
+                                        hasPendingPayment:
+                                            toConfirm.contains(doc.id));
+                                  },
+                                ),
+                        ),
+                      ],
+                    );
+                  },
                 );
               },
             );
@@ -219,7 +242,8 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
     return isToday ? 2 : 3;
   }
 
-  Widget _cobrosHeader(int total, int alDia, int vence, int atrasado) {
+  Widget _cobrosHeader(
+      int total, int alDia, int vence, int atrasado, int porConfirmar) {
     Widget chip(int f, String label, int count, Color color) {
       final selected = _payFilter == f;
       return GestureDetector(
@@ -252,13 +276,18 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
           chip(1, l10n.payAlDia, alDia, const Color(0xFF2E9E5B)),
           chip(2, l10n.payVenceHoy, vence, const Color(0xFFE0682B)),
           chip(3, l10n.payAtrasado, atrasado, const Color(0xFFC0392B)),
+          // Sólo aparece si hay algo para confirmar: si no, es ruido.
+          if (porConfirmar > 0)
+            chip(4, l10n.payToConfirm, porConfirmar,
+                const Color(0xFFE08A00)),
         ],
       ),
     );
   }
 
   Widget _cobroRow(String memberId, Map<String, dynamic> data,
-      Map<String, String> plans, Map<String, DateTime?> owing, String schoolId) {
+      Map<String, String> plans, Map<String, DateTime?> owing, String schoolId,
+      {bool hasPendingPayment = false}) {
     final name = data['displayName'] as String? ?? l10n.noName;
     final planId = data['assignedPaymentPlanId'] as String?;
     final planName = planId != null ? (plans[planId] ?? '') : null;
@@ -270,9 +299,12 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
         .map((w) => w.isNotEmpty ? w[0].toUpperCase() : '')
         .join();
 
-    // Pill de estado
+    // Pill de estado. El pago por confirmar tiene prioridad sobre el estado de
+    // deuda: es lo único que requiere una acción del maestro ahora mismo.
     Widget pill;
-    if (planId == null) {
+    if (hasPendingPayment) {
+      pill = _pill(l10n.payToConfirm, const Color(0xFFE08A00));
+    } else if (planId == null) {
       pill = _pill(l10n.paySinPlan, Colors.grey);
     } else {
       final k = _payKind(memberId, owing);
@@ -308,7 +340,13 @@ class _StudentsTabScreenState extends State<StudentsTabScreen> with SingleTicker
           Navigator.of(context).push(
             MaterialPageRoute(
                 builder: (context) =>
-                    StudentDetailScreen(schoolId: schoolId, studentId: memberId)),
+                    StudentDetailScreen(
+                      schoolId: schoolId,
+                      studentId: memberId,
+                      // Desde el panel de cobros se entra a ver plata, y si hay
+                      // un pago para confirmar es directamente la acción pendiente.
+                      initialTabIndex: StudentDetailScreen.tabPayments,
+                    )),
           );
         },
       ),

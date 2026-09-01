@@ -692,5 +692,7 @@
     "rejectPayment": "Rejeitar",
     "paymentConfirmed": "Pagamento confirmado.",
     "paymentRejected": "Pagamento rejeitado.",
-    "rejectPaymentConfirm": "O pagamento declarado será excluído. Confirma?"
+    "rejectPaymentConfirm": "O pagamento declarado será excluído. Confirma?",
+    "correctAndConfirm": "Corrigir e confirmar",
+    "payToConfirm": "A confirmar"
 }
